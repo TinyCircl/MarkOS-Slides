@@ -1,0 +1,23 @@
+{
+  "name": "@pebble/slidev-renderer",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node --watch src/server.mjs",
+    "start": "node src/server.mjs"
+  },
+  "dependencies": {
+    "@slidev/cli": "^52.14.1",
+    "@slidev/theme-default": "^0.25.0",
+    "cors": "^2.8.5",
+    "express": "^5.1.0",
+    "zod": "^4.3.6"
+  },
+  "optionalDependencies": {
+    "playwright-chromium": "^1.55.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}
