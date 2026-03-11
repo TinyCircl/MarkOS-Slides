@@ -6,6 +6,7 @@ import { Readable } from "node:stream";
 import { fileURLToPath } from "node:url";
 import { z } from "zod";
 import { ensurePreviewSession, getPreviewSession, touchPreviewSession } from "./preview-manager.mjs";
+import { isR2Configured, publishPreviewSiteToR2 } from "./r2-client.mjs";
 import { buildPreviewSite, renderArtifact } from "./render-manager.mjs";
 
 const PORT = Number(process.env.PORT || 3210);
@@ -44,6 +45,7 @@ const previewBuildRequestSchema = z.object({
   previewId: z.string().trim().regex(/^[A-Za-z0-9][A-Za-z0-9._-]*$/),
   basePath: z.string().trim().optional(),
   entry: z.string().trim().optional(),
+  publish: z.boolean().optional(),
   title: z.string().trim().nullable().optional(),
   content: z.string().optional(),
   assets: z.array(z.object({
@@ -166,6 +168,13 @@ app.post("/api/previews/build", async (req, res) => {
   try {
     const payload = previewBuildRequestSchema.parse(req.body);
     const preview = await buildPreviewSite(payload);
+    const publishResult = payload.publish
+      ? await publishPreviewSiteToR2({
+        previewId: preview.previewId,
+        outputDir: preview.outputDir,
+      })
+      : null;
+
     res.json({
       previewId: preview.previewId,
       buildId: preview.buildId,
@@ -174,6 +183,8 @@ app.post("/api/previews/build", async (req, res) => {
       manifest: preview.manifest,
       outputDir: preview.outputDir,
       manifestFilePath: preview.manifestFilePath,
+      r2Configured: isR2Configured(),
+      publishResult,
     });
   } catch (error) {
     if (error instanceof z.ZodError) {
