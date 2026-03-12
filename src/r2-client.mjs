@@ -1,6 +1,15 @@
-import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import {
+  DeleteObjectsCommand,
+  ListObjectsV2Command,
+  PutObjectCommand,
+  S3Client,
+} from "@aws-sdk/client-s3";
 import { readdir, readFile } from "node:fs/promises";
 import { extname, join } from "node:path";
+
+const MAX_R2_UPLOAD_CONCURRENCY = 6;
+const MAX_R2_DELETE_BATCH_SIZE = 1000;
+const R2_LIST_PAGE_SIZE = 1000;
 
 const MIME_TYPES = new Map([
   [".css", "text/css; charset=utf-8"],
@@ -123,6 +132,11 @@ export function getR2PublicUrl(objectKey) {
   return `${publicDomain}/${joinR2Key(objectKey)}`;
 }
 
+function getR2ObjectPrefix(keyPrefix) {
+  const normalizedPrefix = joinR2Key(keyPrefix);
+  return normalizedPrefix ? `${normalizedPrefix}/` : "";
+}
+
 function getContentType(filePath) {
   return MIME_TYPES.get(extname(filePath).toLowerCase()) || "application/octet-stream";
 }
@@ -160,6 +174,46 @@ async function listLocalFiles(rootDir, currentDir = rootDir) {
   return results.sort((left, right) => left.localeCompare(right));
 }
 
+async function mapWithConcurrency(items, concurrency, mapper) {
+  if (items.length === 0) {
+    return [];
+  }
+
+  const results = new Array(items.length);
+  let nextIndex = 0;
+  const workerCount = Math.min(Math.max(1, concurrency), items.length);
+
+  await Promise.all(Array.from({ length: workerCount }, async () => {
+    while (true) {
+      const currentIndex = nextIndex;
+      nextIndex += 1;
+
+      if (currentIndex >= items.length) {
+        return;
+      }
+
+      results[currentIndex] = await mapper(items[currentIndex], currentIndex);
+    }
+  }));
+
+  return results;
+}
+
+function chunkItems(items, chunkSize) {
+  const results = [];
+
+  for (let index = 0; index < items.length; index += chunkSize) {
+    results.push(items.slice(index, index + chunkSize));
+  }
+
+  return results;
+}
+
+function shouldReuseRemoteObject(relativePath, objectKey, remoteKeySet) {
+  const normalizedPath = relativePath.replace(/\\/g, "/");
+  return normalizedPath.startsWith("assets/") && remoteKeySet.has(objectKey);
+}
+
 export async function putR2Object({ key, body, contentType, cacheControl }) {
   const config = assertR2Configured();
   const objectKey = joinR2Key(key);
@@ -179,29 +233,134 @@ export async function putR2Object({ key, body, contentType, cacheControl }) {
   };
 }
 
+export async function listR2Objects({ keyPrefix }) {
+  const config = assertR2Configured();
+  const objectPrefix = getR2ObjectPrefix(keyPrefix);
+  const objects = [];
+  let continuationToken;
+
+  while (true) {
+    const result = await getR2Client().send(new ListObjectsV2Command({
+      Bucket: config.bucket,
+      Prefix: objectPrefix,
+      ContinuationToken: continuationToken,
+      MaxKeys: R2_LIST_PAGE_SIZE,
+    }));
+
+    for (const object of result.Contents ?? []) {
+      if (!object.Key) {
+        continue;
+      }
+
+      objects.push({
+        key: object.Key,
+        etag: object.ETag ?? null,
+        size: typeof object.Size === "number" ? object.Size : null,
+      });
+    }
+
+    if (!result.IsTruncated || !result.NextContinuationToken) {
+      break;
+    }
+
+    continuationToken = result.NextContinuationToken;
+  }
+
+  return {
+    bucket: config.bucket,
+    objectPrefix,
+    objects,
+  };
+}
+
+export async function deleteR2Objects({ keys }) {
+  const config = assertR2Configured();
+  const objectKeys = Array.from(new Set(
+    keys
+      .filter((key) => key != null && String(key).trim().length > 0)
+      .map((key) => joinR2Key(key)),
+  ));
+
+  if (objectKeys.length === 0) {
+    return {
+      bucket: config.bucket,
+      deletedFileCount: 0,
+      deletedKeys: [],
+    };
+  }
+
+  for (const keyChunk of chunkItems(objectKeys, MAX_R2_DELETE_BATCH_SIZE)) {
+    await getR2Client().send(new DeleteObjectsCommand({
+      Bucket: config.bucket,
+      Delete: {
+        Objects: keyChunk.map((key) => ({ Key: key })),
+        Quiet: true,
+      },
+    }));
+  }
+
+  return {
+    bucket: config.bucket,
+    deletedFileCount: objectKeys.length,
+    deletedKeys: objectKeys,
+  };
+}
+
 export async function uploadDirectoryToR2({ localDir, keyPrefix }) {
   const relativeFiles = await listLocalFiles(localDir);
-  const uploadedKeys = [];
+  const objectPrefix = getR2ObjectPrefix(keyPrefix);
+  const remoteObjects = await listR2Objects({ keyPrefix });
+  const remoteKeySet = new Set(remoteObjects.objects.map((object) => object.key));
+  const currentObjectKeys = relativeFiles.map((relativePath) => joinR2Key(keyPrefix, relativePath));
+  const currentObjectKeySet = new Set(currentObjectKeys);
+  const skippedKeys = [];
+  const filesToUpload = [];
 
   for (const relativePath of relativeFiles) {
+    const objectKey = joinR2Key(keyPrefix, relativePath);
+    if (shouldReuseRemoteObject(relativePath, objectKey, remoteKeySet)) {
+      skippedKeys.push(objectKey);
+      continue;
+    }
+
+    filesToUpload.push({
+      relativePath,
+      objectKey,
+    });
+  }
+
+  const uploadedKeys = await mapWithConcurrency(filesToUpload, MAX_R2_UPLOAD_CONCURRENCY, async ({ relativePath, objectKey }) => {
     const absolutePath = join(localDir, relativePath);
     const body = await readFile(absolutePath);
-    const key = joinR2Key(keyPrefix, relativePath);
 
     await putR2Object({
-      key,
+      key: objectKey,
       body,
       contentType: getContentType(relativePath),
       cacheControl: getCacheControl(relativePath),
     });
 
-    uploadedKeys.push(key);
+    return objectKey;
+  });
+
+  const deletedKeys = remoteObjects.objects
+    .map((object) => object.key)
+    .filter((key) => !currentObjectKeySet.has(key));
+
+  if (deletedKeys.length > 0) {
+    await deleteR2Objects({ keys: deletedKeys });
   }
 
   return {
     uploadedFileCount: uploadedKeys.length,
     uploadedKeys,
+    skippedUploadFileCount: skippedKeys.length,
+    skippedUploadKeys: skippedKeys,
+    deletedFileCount: deletedKeys.length,
+    deletedKeys,
+    remoteFileCountBefore: remoteObjects.objects.length,
     objectPrefix: joinR2Key(keyPrefix),
+    listedObjectPrefix: objectPrefix,
     publicBaseUrl: getR2PublicUrl(joinR2Key(keyPrefix, "")) || null,
   };
 }
@@ -222,5 +381,10 @@ export async function publishPreviewSiteToR2({ previewId, outputDir }) {
     publicBaseUrl: config.publicDomain ? `${config.publicDomain}/${objectPrefix}/` : null,
     uploadedFileCount: result.uploadedFileCount,
     uploadedKeys: result.uploadedKeys,
+    skippedUploadFileCount: result.skippedUploadFileCount,
+    skippedUploadKeys: result.skippedUploadKeys,
+    deletedFileCount: result.deletedFileCount,
+    deletedKeys: result.deletedKeys,
+    remoteFileCountBefore: result.remoteFileCountBefore,
   };
 }

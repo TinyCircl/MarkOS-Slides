@@ -1,9 +1,10 @@
-import { randomUUID } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { spawn } from "node:child_process";
-import { mkdir, readdir, rm, writeFile } from "node:fs/promises";
+import { mkdir, readFile, readdir, rm, stat, writeFile } from "node:fs/promises";
 import { dirname, join, normalize } from "node:path";
 
 const ARTIFACT_IDLE_TTL_MS = Number(process.env.SLIDEV_ARTIFACT_TTL_MS || 60 * 60 * 1000);
+const PREVIEW_BUILD_CACHE_VERSION = 1;
 
 function normalizeText(value) {
   return value.replace(/\r\n?/g, "\n");
@@ -83,6 +84,10 @@ function getPreviewArtifactDir(previewId) {
   return join(process.cwd(), ".slidev-artifacts", "previews", previewId);
 }
 
+function getPreviewBuildCacheFilePath(previewId) {
+  return join(process.cwd(), ".slidev-artifacts", "preview-cache", `${previewId}.json`);
+}
+
 async function writeAssets(rootDir, assets = []) {
   for (const asset of assets) {
     const relativePath = sanitizeRelativePath(asset.path);
@@ -102,6 +107,23 @@ async function writeSourceFiles(rootDir, files = []) {
       continue;
     }
     await writeFile(targetPath, Buffer.from(file.contentBase64, "base64"));
+  }
+}
+
+async function isFile(filePath) {
+  try {
+    const fileStat = await stat(filePath);
+    return fileStat.isFile();
+  } catch {
+    return false;
+  }
+}
+
+async function readJsonFile(filePath) {
+  try {
+    return JSON.parse(await readFile(filePath, "utf8"));
+  } catch {
+    return null;
   }
 }
 
@@ -204,6 +226,133 @@ function ensureSourceEntryExists(files, sourceEntry) {
   return normalizedEntry;
 }
 
+function normalizeSourceFilesForHash(files) {
+  return files
+    .map((file) => ({
+      path: sanitizeRelativePath(file.path),
+      content: typeof file.content === "string" ? file.content : null,
+      contentBase64: typeof file.contentBase64 === "string" ? file.contentBase64 : null,
+    }))
+    .sort((left, right) => left.path.localeCompare(right.path));
+}
+
+function createPreviewSourceHash({ basePath, sourceEntry, sourceFiles }) {
+  return createHash("sha256")
+    .update(JSON.stringify({
+      version: PREVIEW_BUILD_CACHE_VERSION,
+      basePath,
+      sourceEntry,
+      sourceFiles: normalizeSourceFilesForHash(sourceFiles),
+    }))
+    .digest("hex");
+}
+
+async function readPreviewBuildCache(previewId) {
+  return readJsonFile(getPreviewBuildCacheFilePath(previewId));
+}
+
+async function writePreviewBuildCache({
+  previewId,
+  buildId,
+  basePath,
+  sourceEntry,
+  sourceHash,
+  outputDir,
+  manifestFilePath,
+  createdAt,
+  publishResult,
+}) {
+  const cacheFilePath = getPreviewBuildCacheFilePath(previewId);
+  await mkdir(dirname(cacheFilePath), { recursive: true });
+  await writeFile(cacheFilePath, `${JSON.stringify({
+    version: PREVIEW_BUILD_CACHE_VERSION,
+    previewId,
+    buildId,
+    basePath,
+    sourceEntry,
+    sourceHash,
+    outputDir,
+    manifestFilePath,
+    createdAt,
+    publishResult: publishResult ?? null,
+  }, null, 2)}\n`, "utf8");
+}
+
+async function resolveCachedPreviewBuild({
+  previewId,
+  basePath,
+  sourceEntry,
+  sourceHash,
+  outputDir,
+  manifestFilePath,
+}) {
+  const cache = await readPreviewBuildCache(previewId);
+  if (!cache) {
+    return null;
+  }
+
+  if (
+    cache.version !== PREVIEW_BUILD_CACHE_VERSION
+    || cache.previewId !== previewId
+    || cache.basePath !== basePath
+    || cache.sourceEntry !== sourceEntry
+    || cache.sourceHash !== sourceHash
+  ) {
+    return null;
+  }
+
+  const manifest = await readJsonFile(manifestFilePath);
+  if (!manifest || manifest.buildId !== cache.buildId) {
+    return null;
+  }
+
+  const entry = typeof manifest.entry === "string" && manifest.entry ? manifest.entry : "index.html";
+  if (!await isFile(join(outputDir, entry))) {
+    return null;
+  }
+
+  return {
+    buildId: cache.buildId,
+    previewId,
+    basePath,
+    sourceEntry,
+    sourceHash,
+    previewPath: basePath,
+    outputDir,
+    manifest,
+    manifestFilePath,
+    cacheHit: true,
+  };
+}
+
+export async function getCachedPreviewPublishResult({ previewId, buildId }) {
+  const cache = await readPreviewBuildCache(previewId);
+  if (!cache || cache.buildId !== buildId || !cache.publishResult) {
+    return null;
+  }
+
+  return cache.publishResult;
+}
+
+export async function updateCachedPreviewPublishResult({ previewId, buildId, publishResult }) {
+  const cache = await readPreviewBuildCache(previewId);
+  if (!cache || cache.buildId !== buildId) {
+    return;
+  }
+
+  await writePreviewBuildCache({
+    previewId,
+    buildId,
+    basePath: cache.basePath,
+    sourceEntry: cache.sourceEntry,
+    sourceHash: cache.sourceHash,
+    outputDir: cache.outputDir,
+    manifestFilePath: cache.manifestFilePath,
+    createdAt: cache.createdAt,
+    publishResult,
+  });
+}
+
 async function writePreviewManifest({ previewId, buildId, basePath, outputDir, sourceEntry }) {
   const files = await listRelativeFiles(outputDir);
   const manifest = {
@@ -289,12 +438,27 @@ export async function renderArtifact(input) {
 
 export async function buildPreviewSite(input) {
   const previewId = input.previewId.trim();
-  const buildId = randomUUID();
   const basePath = normalizeBasePath(input.basePath || `/p/${previewId}/`);
   const sourceFiles = createInlineSourceFiles(input);
   const sourceEntry = ensureSourceEntryExists(sourceFiles, input.entry || "slides.md");
-  const workDir = getWorkDir(buildId);
   const outputDir = getPreviewArtifactDir(previewId);
+  const manifestFilePath = join(outputDir, "manifest.json");
+  const sourceHash = createPreviewSourceHash({ basePath, sourceEntry, sourceFiles });
+
+  const cachedPreview = await resolveCachedPreviewBuild({
+    previewId,
+    basePath,
+    sourceEntry,
+    sourceHash,
+    outputDir,
+    manifestFilePath,
+  });
+  if (cachedPreview) {
+    return cachedPreview;
+  }
+
+  const buildId = randomUUID();
+  const workDir = getWorkDir(buildId);
   const entryFilePath = join(workDir, sourceEntry);
 
   await rm(workDir, { recursive: true, force: true });
@@ -324,15 +488,28 @@ export async function buildPreviewSite(input) {
       sourceEntry,
     });
 
+    await writePreviewBuildCache({
+      previewId,
+      buildId,
+      basePath,
+      sourceEntry,
+      sourceHash,
+      outputDir,
+      manifestFilePath,
+      createdAt: manifest.createdAt,
+    });
+
     return {
       buildId,
       previewId,
       basePath,
       sourceEntry,
+      sourceHash,
       previewPath: basePath,
       outputDir,
       manifest,
       manifestFilePath,
+      cacheHit: false,
     };
   } finally {
     await rm(workDir, { recursive: true, force: true }).catch(() => {});

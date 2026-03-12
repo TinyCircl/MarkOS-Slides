@@ -1,3 +1,4 @@
+import "./load-env.mjs";
 import cors from "cors";
 import express from "express";
 import { mkdir, readFile, stat } from "node:fs/promises";
@@ -7,10 +8,16 @@ import { fileURLToPath } from "node:url";
 import { z } from "zod";
 import { ensurePreviewSession, getPreviewSession, touchPreviewSession } from "./preview-manager.mjs";
 import { isR2Configured, publishPreviewSiteToR2 } from "./r2-client.mjs";
-import { buildPreviewSite, renderArtifact } from "./render-manager.mjs";
+import {
+  buildPreviewSite,
+  getCachedPreviewPublishResult,
+  renderArtifact,
+  updateCachedPreviewPublishResult,
+} from "./render-manager.mjs";
 
 const PORT = Number(process.env.PORT || 3210);
 const PUBLIC_BASE_URL = process.env.SLIDEV_PUBLIC_BASE_URL?.replace(/\/$/, "") || null;
+const PREVIEW_SITE_BASE_URL = process.env.SLIDEV_PREVIEW_SITE_BASE_URL?.replace(/\/$/, "") || null;
 const BODY_LIMIT = process.env.SLIDEV_BODY_LIMIT || "20mb";
 const ARTIFACT_ROOT = join(process.cwd(), ".slidev-artifacts");
 
@@ -91,6 +98,13 @@ function absolutize(req, path) {
   return new URL(path, `${getOrigin(req)}/`).toString();
 }
 
+function getPublishedPreviewUrl(previewId) {
+  if (!PREVIEW_SITE_BASE_URL) {
+    return null;
+  }
+  return new URL(`/p/${encodeURIComponent(previewId)}/`, `${PREVIEW_SITE_BASE_URL}/`).toString();
+}
+
 function copyResponseHeaders(sourceHeaders, target) {
   for (const [key, value] of sourceHeaders.entries()) {
     if (key.toLowerCase() === "transfer-encoding") continue;
@@ -118,6 +132,18 @@ function sanitizePreviewObjectPath(objectPath) {
   }
 
   return normalizedPath;
+}
+
+async function sendPreviewFile(res, previewRoot, relativePath) {
+  await new Promise((resolve, reject) => {
+    res.sendFile(relativePath, { root: previewRoot }, (error) => {
+      if (error) {
+        reject(error);
+        return;
+      }
+      resolve();
+    });
+  });
 }
 
 app.get("/healthz", (_req, res) => {
@@ -166,24 +192,62 @@ app.post("/api/render", async (req, res) => {
 
 app.post("/api/previews/build", async (req, res) => {
   try {
+    const requestStartedAt = Date.now();
     const payload = previewBuildRequestSchema.parse(req.body);
+    const buildStartedAt = Date.now();
     const preview = await buildPreviewSite(payload);
-    const publishResult = payload.publish
-      ? await publishPreviewSiteToR2({
-        previewId: preview.previewId,
-        outputDir: preview.outputDir,
-      })
-      : null;
+    const buildDurationMs = Date.now() - buildStartedAt;
+    let publishResult = null;
+    let publishCacheHit = false;
+    let publishDurationMs = null;
+
+    if (payload.publish) {
+      const publishStartedAt = Date.now();
+      if (preview.cacheHit === true) {
+        publishResult = await getCachedPreviewPublishResult({
+          previewId: preview.previewId,
+          buildId: preview.buildId,
+        });
+        publishCacheHit = publishResult != null;
+      }
+
+      if (!publishResult) {
+        publishResult = await publishPreviewSiteToR2({
+          previewId: preview.previewId,
+          outputDir: preview.outputDir,
+        });
+        await updateCachedPreviewPublishResult({
+          previewId: preview.previewId,
+          buildId: preview.buildId,
+          publishResult,
+        });
+      }
+      publishDurationMs = Date.now() - publishStartedAt;
+    }
+
+    const localPreviewUrl = absolutize(req, preview.previewPath);
+    const publishedPreviewUrl = payload.publish ? getPublishedPreviewUrl(preview.previewId) : null;
+    const totalDurationMs = Date.now() - requestStartedAt;
 
     res.json({
       previewId: preview.previewId,
       buildId: preview.buildId,
       basePath: preview.basePath,
-      previewUrl: absolutize(req, preview.previewPath),
+      sourceHash: preview.sourceHash ?? null,
+      cacheHit: preview.cacheHit === true,
+      publishCacheHit,
+      previewUrl: localPreviewUrl,
+      localPreviewUrl,
+      publishedPreviewUrl,
       manifest: preview.manifest,
       outputDir: preview.outputDir,
       manifestFilePath: preview.manifestFilePath,
       r2Configured: isR2Configured(),
+      timings: {
+        totalMs: totalDurationMs,
+        buildMs: buildDurationMs,
+        publishMs: publishDurationMs,
+      },
       publishResult,
     });
   } catch (error) {
@@ -227,69 +291,82 @@ app.use("/preview/:sessionId", async (req, res) => {
 });
 
 app.use("/p/:previewId", async (req, res) => {
-  const previewId = req.params.previewId;
-  const pathname = decodeURIComponent(new URL(req.originalUrl, `${getOrigin(req)}/`).pathname);
-
-  if (pathname === `/p/${previewId}`) {
-    res.redirect(301, `${getOrigin(req)}/p/${previewId}/`);
-    return;
-  }
-
-  const basePrefix = `/p/${previewId}/`;
-  const subPath = pathname.startsWith(basePrefix) ? pathname.slice(basePrefix.length) : "";
-  const previewRoot = join(ARTIFACT_ROOT, "previews", previewId);
-  const manifestFilePath = join(previewRoot, "manifest.json");
-
-  let manifest;
   try {
-    manifest = JSON.parse(await readFile(manifestFilePath, "utf8"));
-  } catch {
-    res.status(404).json({ error: "Preview site not found." });
+    const previewId = req.params.previewId;
+    const pathname = decodeURIComponent(new URL(req.originalUrl, `${getOrigin(req)}/`).pathname);
+
+    if (pathname === `/p/${previewId}`) {
+      res.redirect(301, `${getOrigin(req)}/p/${previewId}/`);
+      return;
+    }
+
+    const basePrefix = `/p/${previewId}/`;
+    const subPath = pathname.startsWith(basePrefix) ? pathname.slice(basePrefix.length) : "";
+    const previewRoot = join(ARTIFACT_ROOT, "previews", previewId);
+    const manifestFilePath = join(previewRoot, "manifest.json");
+
+    let manifest;
+    try {
+      manifest = JSON.parse(await readFile(manifestFilePath, "utf8"));
+    } catch {
+      res.status(404).json({ error: "Preview site not found." });
+      return;
+    }
+
+    const entry = typeof manifest.entry === "string" && manifest.entry ? manifest.entry : "index.html";
+    const spaFallback = manifest.spaFallback === true;
+    const assetPrefixes = Array.isArray(manifest.assetPrefixes) ? manifest.assetPrefixes : [];
+    const privateFiles = Array.isArray(manifest.privateFiles) ? manifest.privateFiles : [];
+    const objectPath = subPath || entry;
+
+    if (privateFiles.includes(objectPath)) {
+      res.status(403).send("Forbidden");
+      return;
+    }
+
+    const safeObjectPath = sanitizePreviewObjectPath(objectPath);
+    if (!safeObjectPath) {
+      res.status(400).send("Invalid path");
+      return;
+    }
+
+    const objectFilePath = join(previewRoot, safeObjectPath);
+    if (await isFile(objectFilePath)) {
+      await sendPreviewFile(res, previewRoot, safeObjectPath);
+      return;
+    }
+
+    const isAssetPath = assetPrefixes.some((prefix) => objectPath.startsWith(prefix));
+    if (isAssetPath) {
+      res.status(404).send("Asset Not Found");
+      return;
+    }
+
+    if (!spaFallback) {
+      res.status(404).send("Not Found");
+      return;
+    }
+
+    const fallbackRelativePath = sanitizePreviewObjectPath(entry);
+    if (!fallbackRelativePath) {
+      res.status(500).send("Invalid entry file");
+      return;
+    }
+
+    const fallbackFilePath = join(previewRoot, fallbackRelativePath);
+    if (!await isFile(fallbackFilePath)) {
+      res.status(404).send("Entry file not found");
+      return;
+    }
+
+    res.type("html");
+    await sendPreviewFile(res, previewRoot, fallbackRelativePath);
+  } catch (error) {
+    if (!res.headersSent) {
+      res.status(500).json({ error: error instanceof Error ? error.message : "Failed to serve preview site." });
+    }
     return;
   }
-
-  const entry = typeof manifest.entry === "string" && manifest.entry ? manifest.entry : "index.html";
-  const spaFallback = manifest.spaFallback === true;
-  const assetPrefixes = Array.isArray(manifest.assetPrefixes) ? manifest.assetPrefixes : [];
-  const privateFiles = Array.isArray(manifest.privateFiles) ? manifest.privateFiles : [];
-  const objectPath = subPath || entry;
-
-  if (privateFiles.includes(objectPath)) {
-    res.status(403).send("Forbidden");
-    return;
-  }
-
-  const safeObjectPath = sanitizePreviewObjectPath(objectPath);
-  if (!safeObjectPath) {
-    res.status(400).send("Invalid path");
-    return;
-  }
-
-  const objectFilePath = join(previewRoot, safeObjectPath);
-  if (await isFile(objectFilePath)) {
-    res.sendFile(objectFilePath);
-    return;
-  }
-
-  const isAssetPath = assetPrefixes.some((prefix) => objectPath.startsWith(prefix));
-  if (isAssetPath) {
-    res.status(404).send("Asset Not Found");
-    return;
-  }
-
-  if (!spaFallback) {
-    res.status(404).send("Not Found");
-    return;
-  }
-
-  const fallbackFilePath = join(previewRoot, entry);
-  if (!await isFile(fallbackFilePath)) {
-    res.status(404).send("Entry file not found");
-    return;
-  }
-
-  res.type("html");
-  res.sendFile(fallbackFilePath);
 });
 
 app.use("/artifacts", express.static(ARTIFACT_ROOT, { index: ["index.html"] }));
