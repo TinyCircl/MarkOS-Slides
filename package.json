@@ -9,6 +9,8 @@
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1006.0",
+    "@grpc/grpc-js": "^1.13.4",
+    "@grpc/proto-loader": "^0.7.15",
     "@slidev/cli": "^52.14.1",
     "@slidev/theme-default": "^0.25.0",
     "cors": "^2.8.5",

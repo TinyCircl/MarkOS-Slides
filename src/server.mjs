@@ -1,6 +1,7 @@
 import "./load-env.mjs";
 import cors from "cors";
 import express from "express";
+import { startGrpcServer } from "./grpc-server.mjs";
 import { mkdir, readFile, stat } from "node:fs/promises";
 import { join } from "node:path";
 import { Readable } from "node:stream";
@@ -373,6 +374,7 @@ app.use("/artifacts", express.static(ARTIFACT_ROOT, { index: ["index.html"] }));
 
 export async function startServer() {
   await mkdir(ARTIFACT_ROOT, { recursive: true });
+  await startGrpcServer();
   return app.listen(PORT, () => {
     console.log(`[slidev-renderer] listening on :${PORT}`);
   });

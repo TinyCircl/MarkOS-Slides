@@ -1,0 +1,57 @@
+syntax = "proto3";
+
+package paperpuppy.backendintl.slidev;
+
+option java_multiple_files = true;
+option java_package = "com.xiaoyuan.paperpuppybackendintl.grpc.slidev";
+option java_outer_classname = "SlidevServiceProto";
+
+service SlidevService {
+  rpc BuildPreview(BuildPreviewRequest) returns (BuildPreviewResponse);
+  rpc RenderArtifact(RenderArtifactRequest) returns (RenderArtifactResponse);
+}
+
+message BuildPreviewRequest {
+  string preview_id = 1;
+  string content = 2;
+  string title = 3;
+  bool publish = 4;
+  string base_path = 5;
+}
+
+message BuildPreviewResponse {
+  string preview_id = 1;
+  string build_id = 2;
+  string source_hash = 3;
+  bool cache_hit = 4;
+  string local_preview_url = 5;
+  string published_preview_url = 6;
+  BuildTimings timings = 7;
+}
+
+message BuildTimings {
+  int64 total_ms = 1;
+  int64 build_ms = 2;
+  int64 publish_ms = 3;
+}
+
+enum RenderFormat {
+  RENDER_FORMAT_WEB = 0;
+  RENDER_FORMAT_PDF = 1;
+  RENDER_FORMAT_PPTX = 2;
+}
+
+message RenderArtifactRequest {
+  string content = 1;
+  string title = 2;
+  RenderFormat format = 3;
+  string file_name = 4;
+}
+
+message RenderArtifactResponse {
+  string job_id = 1;
+  string format = 2;
+  string artifact_url = 3;
+  string file_name = 4;
+  string site_url = 5;
+}

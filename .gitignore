@@ -3,3 +3,4 @@ dist/
 .slidev-preview/
 .slidev-artifacts/
 .slidev-workspaces/
+.env
