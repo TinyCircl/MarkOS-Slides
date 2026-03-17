@@ -83,6 +83,22 @@ jobs:
     environment: prod
 
     steps:
+      - name: Checkout renderer branch
+        uses: actions/checkout@v4
+        with:
+          ref: renderer
+
+      - name: Sync docker-compose.yml to server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          passphrase: ${{ secrets.DEPLOY_SSH_PASSPHRASE }}
+          source: docs/deploy/docker-compose.yml
+          target: ${{ env.DEPLOY_DIR }}
+          strip_components: 2
+
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
