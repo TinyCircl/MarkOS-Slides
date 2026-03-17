@@ -98,10 +98,11 @@ async function buildPreviewHandler(call, callback) {
             },
         });
     } catch (error) {
-        console.error(`[gRPC] BuildPreview error: previewId=${req.previewId}, err=${error instanceof Error ? error.message : error}`);
+        const fullMsg = error instanceof Error ? error.message : "Failed to build Slidev preview.";
+        console.error(`[gRPC] BuildPreview error: previewId=${req.previewId}, err=${fullMsg}`);
         callback({
             code: grpc.status.INTERNAL,
-            message: error instanceof Error ? error.message : "Failed to build Slidev preview.",
+            message: fullMsg.length > 1024 ? fullMsg.slice(0, 1024) + "… (truncated)" : fullMsg,
         });
     }
 }
@@ -130,10 +131,11 @@ async function renderArtifactHandler(call, callback) {
             site_url: artifact.format === "web" ? `${base}${artifact.artifactPath}` : "",
         });
     } catch (error) {
-        console.error(`[gRPC] RenderArtifact error: format=${format}, err=${error instanceof Error ? error.message : error}`);
+        const fullMsg = error instanceof Error ? error.message : "Failed to render Slidev artifact.";
+        console.error(`[gRPC] RenderArtifact error: format=${format}, err=${fullMsg}`);
         callback({
             code: grpc.status.INTERNAL,
-            message: error instanceof Error ? error.message : "Failed to render Slidev artifact.",
+            message: fullMsg.length > 1024 ? fullMsg.slice(0, 1024) + "… (truncated)" : fullMsg,
         });
     }
 }
