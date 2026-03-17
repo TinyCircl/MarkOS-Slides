@@ -1,0 +1,22 @@
+{
+	"folders": [
+		{
+			"path": "../../slidev"
+		},
+		{
+			"path": ".."
+		},
+		{
+			"path": "../../PaperPuppy-backend-Intl"
+		},
+		{
+			"path": "../../PaperPuppy-Agent"
+		}
+	],
+	"settings": {
+		"typescript.tsdk": "node_modules/typescript/lib",
+		"files.associations": {
+			"*.css": "postcss"
+		}
+	}
+}

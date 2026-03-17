@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  nginx:
+    image: nginx:alpine
+    container_name: slidev-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./nginx/certs:/etc/nginx/certs:ro
+    networks:
+      - slidev-net
+    depends_on:
+      - renderer
+
+  renderer:
+    # 动态读取运行环境中的 SLIDEV_VERSION
+    image: us-central1-docker.pkg.dev/juzilab-480209/jgda-repo/slidev-renderer:${SLIDEV_VERSION}
+    container_name: slidev-renderer
+    restart: unless-stopped
+    
+    # 显式引入敏感环境变量文件，将其注入到容器内
+    env_file:
+      - slidev.env
+      
+    expose:
+      - "3210"
+    networks:
+      - slidev-net
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "200m"
+        max-file: "3"
+
+networks:
+  slidev-net:
+    driver: bridge

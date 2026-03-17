@@ -1,0 +1,8 @@
+.git
+.idea
+.env
+.slidev-artifacts
+.slidev-workspaces
+node_modules
+docs
+README.md
