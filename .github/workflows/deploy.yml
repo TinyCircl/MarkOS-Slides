@@ -17,7 +17,7 @@ permissions:
 env:
   IMAGE_NAME: xuao575/slidev-renderer
   DOCKER_PLATFORMS: linux/amd64
-  DEPLOY_DIR: /opt/slidev-renderer
+  DEPLOY_DIR: /opt/slidev-server
 
 jobs:
   build:
