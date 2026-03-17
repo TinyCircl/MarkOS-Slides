@@ -15,10 +15,8 @@ permissions:
   packages: write
 
 env:
-  REGISTRY: us-central1-docker.pkg.dev
-  PROJECT_ID: juzilab-480209
-  AR_REPO: jgda-repo
-  IMAGE_NAME: slidev-renderer
+  IMAGE_NAME: xuao575/slidev-renderer
+  DOCKER_PLATFORMS: linux/amd64
   DEPLOY_DIR: /opt/slidev-renderer
 
 jobs:
@@ -28,7 +26,6 @@ jobs:
     environment: prod
     outputs:
       image_tag: ${{ steps.meta.outputs.tag }}
-      image_full: ${{ steps.meta.outputs.image_full }}
 
     steps:
       - name: Checkout renderer branch
@@ -54,27 +51,14 @@ jobs:
             SHA=$(git -C slidev-renderer rev-parse --short HEAD)
             TAG="snapshot-${SHA}"
           fi
-          FULL="${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/${{ env.AR_REPO }}/${{ env.IMAGE_NAME }}:${TAG}"
           echo "tag=${TAG}" >> $GITHUB_OUTPUT
-          echo "image_full=${FULL}" >> $GITHUB_OUTPUT
-          echo "Image: ${FULL}"
+          echo "Image: ${{ env.IMAGE_NAME }}:${TAG}"
 
-      - name: Setup GCP credentials (SA JSON)
-        run: |
-          mkdir -p "$HOME/gcp"
-          echo "${{ secrets.GCP_SA_KEY_BASE64 }}" | base64 --decode > "$HOME/gcp/sa.json"
-          chmod 600 "$HOME/gcp/sa.json"
-          echo "GOOGLE_APPLICATION_CREDENTIALS=$HOME/gcp/sa.json" >> $GITHUB_ENV
-
-      - name: Verify GCP credentials file
-        run: |
-          echo "Credential file path: $GOOGLE_APPLICATION_CREDENTIALS"
-          ls -l "$GOOGLE_APPLICATION_CREDENTIALS"
-
-      - name: Configure Docker for Artifact Registry
-        run: |
-          gcloud auth activate-service-account --key-file="$HOME/gcp/sa.json"
-          gcloud auth configure-docker ${{ env.REGISTRY }} --quiet
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -84,10 +68,11 @@ jobs:
         with:
           context: ${{ github.workspace }}
           file: slidev-renderer/Dockerfile
+          platforms: ${{ env.DOCKER_PLATFORMS }}
           push: true
           tags: |
-            ${{ steps.meta.outputs.image_full }}
-            ${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/${{ env.AR_REPO }}/${{ env.IMAGE_NAME }}:latest
+            ${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.tag }}
+            ${{ env.IMAGE_NAME }}:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
 

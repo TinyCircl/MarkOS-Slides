@@ -18,7 +18,7 @@ services:
 
   renderer:
     # 动态读取运行环境中的 SLIDEV_VERSION
-    image: us-central1-docker.pkg.dev/juzilab-480209/jgda-repo/slidev-renderer:${SLIDEV_VERSION}
+    image: xuao575/slidev-renderer:${SLIDEV_VERSION}
     container_name: slidev-renderer
     restart: unless-stopped
     
