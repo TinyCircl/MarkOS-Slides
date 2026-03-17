@@ -2,8 +2,8 @@ name: Build & Deploy
 
 on:
   push:
-    branches: [renderer]
-    tags: ['v*.*.*']
+    tags:
+      - 'renderer/v*'
   workflow_dispatch:
     inputs:
       tag:
@@ -43,11 +43,11 @@ jobs:
         run: |
           if [[ -n "${{ inputs.tag }}" ]]; then
             TAG="${{ inputs.tag }}"
-          elif [[ "$GITHUB_REF" == refs/tags/* ]]; then
-            TAG="${GITHUB_REF#refs/tags/}"
+          elif [[ "$GITHUB_REF" == refs/tags/renderer/* ]]; then
+            TAG="${GITHUB_REF#refs/tags/renderer/}"
           else
             SHA=$(git -C slidev-renderer rev-parse --short HEAD)
-            TAG="main-${SHA}"
+            TAG="snapshot-${SHA}"
           fi
           FULL="${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/${{ env.AR_REPO }}/${{ env.IMAGE_NAME }}:${TAG}"
           echo "tag=${TAG}" >> $GITHUB_OUTPUT
