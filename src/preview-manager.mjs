@@ -3,6 +3,7 @@ import { createHash } from "node:crypto";
 import { mkdir, rm, writeFile } from "node:fs/promises";
 import { createServer } from "node:net";
 import { dirname, join } from "node:path";
+import { buildDeckMarkdown } from "./render-manager.mjs";
 
 const SESSION_IDLE_TTL_MS = Number(process.env.SLIDEV_SESSION_TTL_MS || 15 * 60 * 1000);
 const SESSION_START_TIMEOUT_MS = 60 * 1000;
@@ -27,41 +28,6 @@ function buildSessionId(input) {
     .join("::");
   const source = stableIdentity || `${normalizeTitle(input.title)}\n${normalizeText(input.content)}`;
   return createHash("sha1").update(source).digest("hex").slice(0, 12);
-}
-
-function buildDeckMarkdown(input) {
-  const title = normalizeTitle(input.title);
-  const content = normalizeText(input.content).trim();
-
-  if (!content) {
-    return [
-      "---",
-      `title: ${JSON.stringify(title)}`,
-      "theme: default",
-      "mdc: true",
-      "---",
-      "",
-      `# ${title}`,
-      "",
-      "Start writing to generate slides.",
-      "",
-    ].join("\n");
-  }
-
-  if (content.startsWith("---")) {
-    return `${content}\n`;
-  }
-
-  return [
-    "---",
-    `title: ${JSON.stringify(title)}`,
-    "theme: default",
-    "mdc: true",
-    "---",
-    "",
-    content,
-    "",
-  ].join("\n");
 }
 
 async function reservePort() {
@@ -94,6 +60,9 @@ function getPreviewDir(sessionId) {
 }
 
 function getSlidevCliPath() {
+  if (process.env.SLIDEV_CLI_PATH) {
+    return process.env.SLIDEV_CLI_PATH;
+  }
   return join(process.cwd(), "node_modules", "@slidev", "cli", "bin", "slidev.mjs");
 }
 

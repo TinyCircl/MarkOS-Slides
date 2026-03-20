@@ -15,10 +15,9 @@ function normalizeTitle(title) {
     return trimmed && trimmed.length > 0 ? trimmed : "Untitled Slides";
 }
 
-// Service-level build defaults: disable all features not needed for static slide rendering.
-// These are only injected when the slide's own frontmatter does not specify the key,
-// so user-provided values always take priority.
-const SERVICE_BUILD_DEFAULTS = [
+// Service-level forced config: permanently disable features that are not needed
+// in the hosted renderer. These values override the incoming entry markdown.
+const SERVICE_FORCED_FRONTMATTER = [
     ["monaco", "false"],
     ["presenter", "false"],
     ["drawings", "{enabled: false}"],
@@ -30,40 +29,143 @@ const SERVICE_BUILD_DEFAULTS = [
     ["preloadImages", "false"],
 ];
 
-function injectServiceDefaults(frontmatter) {
-    let result = frontmatter;
-    for (const [key, value] of SERVICE_BUILD_DEFAULTS) {
-        if (!new RegExp(`^${key}\\s*:`, "m").test(result)) {
-            result += `\n${key}: ${value}`;
-        }
-    }
-    return result;
+const RE_MONACO_CODE_FENCE = /^(```[^\n]*?)\s*\{monaco(?:-run|-diff)?\}([^\n]*)$/gm;
+const RE_MONACO_SNIPPET = /^(\s*<<<[^\n]*?)\{monaco-write\}([^\n]*)$/gm;
+
+function escapeRegExp(value) {
+    return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
-function buildDeckMarkdown(input) {
+function removeTopLevelFrontmatterKey(frontmatter, key) {
+    const lines = frontmatter.split("\n");
+    const remaining = [];
+
+    for (let index = 0; index < lines.length; index++) {
+        const line = lines[index];
+        const match = line.match(new RegExp(`^${escapeRegExp(key)}\\s*:\\s*(.*)$`));
+        if (!match) {
+            remaining.push(line);
+            continue;
+        }
+
+        const indentLength = 0;
+        const tail = match[1].trim();
+        if (!tail) {
+            let cursor = index + 1;
+            while (cursor < lines.length) {
+                const nextLine = lines[cursor];
+                if (!nextLine.trim()) {
+                    const lookahead = lines.slice(cursor + 1).find((candidate) => candidate.trim());
+                    if (!lookahead) {
+                        cursor = lines.length;
+                        break;
+                    }
+                    const lookaheadIndent = lookahead.match(/^(\s*)/)?.[1].length ?? 0;
+                    if (lookaheadIndent > indentLength) {
+                        cursor += 1;
+                        continue;
+                    }
+                    break;
+                }
+
+                const nextIndentLength = nextLine.match(/^(\s*)/)?.[1].length ?? 0;
+                if (nextIndentLength > indentLength) {
+                    cursor += 1;
+                    continue;
+                }
+                break;
+            }
+            index = cursor - 1;
+        }
+    }
+
+    return remaining.join("\n").trim();
+}
+
+function enforceServiceFrontmatter(frontmatter) {
+    let result = frontmatter.trim();
+    for (const [key] of SERVICE_FORCED_FRONTMATTER) {
+        result = removeTopLevelFrontmatterKey(result, key);
+    }
+
+    const injectedLines = SERVICE_FORCED_FRONTMATTER
+        .map(([key, value]) => `${key}: ${value}`)
+        .join("\n");
+
+    return result
+        ? `${result}\n${injectedLines}`
+        : injectedLines;
+}
+
+function joinMarkdownLine(prefix, suffix = "") {
+    const normalizedPrefix = prefix.replace(/\s+$/g, "");
+    const normalizedSuffix = suffix.trim();
+    return normalizedSuffix
+        ? `${normalizedPrefix} ${normalizedSuffix}`
+        : normalizedPrefix;
+}
+
+function sanitizeHostedRendererMarkdownSyntax(markdown) {
+    return markdown
+        .replace(RE_MONACO_CODE_FENCE, (_full, prefix = "", suffix = "") => joinMarkdownLine(prefix, suffix))
+        .replace(RE_MONACO_SNIPPET, (_full, prefix = "", suffix = "") => joinMarkdownLine(prefix, suffix));
+}
+
+function enforceServiceFrontmatterOnMarkdown(markdown, {
+    title,
+    includeRendererDefaults = false,
+} = {}) {
+    const normalizedMarkdown = normalizeText(markdown);
+    const trimmed = normalizedMarkdown.trim();
+
+    if (!trimmed) {
+        const frontmatterLines = [];
+        if (title) {
+            frontmatterLines.push(`title: ${JSON.stringify(title)}`);
+        }
+        if (includeRendererDefaults) {
+            frontmatterLines.push("theme: default", "mdc: true");
+        }
+        const enforced = enforceServiceFrontmatter(frontmatterLines.join("\n"));
+        return `---\n${enforced}\n---\n`;
+    }
+
+    if (trimmed.startsWith("---")) {
+        const match = normalizedMarkdown.match(/^---\r?\n([\s\S]*?)\r?\n---/);
+        if (match) {
+            const enforced = enforceServiceFrontmatter(match[1]);
+            const withForcedFrontmatter = normalizedMarkdown.replace(match[1], enforced).replace(/\s*$/, "\n");
+            return sanitizeHostedRendererMarkdownSyntax(withForcedFrontmatter);
+        }
+    }
+
+    const frontmatterLines = [];
+    if (title) {
+        frontmatterLines.push(`title: ${JSON.stringify(title)}`);
+    }
+    if (includeRendererDefaults) {
+        frontmatterLines.push("theme: default", "mdc: true");
+    }
+
+    const enforced = enforceServiceFrontmatter(frontmatterLines.join("\n"));
+    return sanitizeHostedRendererMarkdownSyntax(`---\n${enforced}\n---\n\n${trimmed}\n`);
+}
+
+export function buildDeckMarkdown(input) {
     const title = normalizeTitle(input.title);
     const content = normalizeText(input.content).trim();
 
     if (!content) {
-        const fm = injectServiceDefaults(
-            [`title: ${JSON.stringify(title)}`, "theme: default", "mdc: true"].join("\n")
-        );
-        return `---\n${fm}\n---\n\n# ${title}\n\nStart writing to generate slides.\n`;
+        return `${enforceServiceFrontmatterOnMarkdown("", {
+            title,
+            includeRendererDefaults: true,
+        })}\n# ${title}\n\nStart writing to generate slides.\n`;
     }
 
-    if (content.startsWith("---")) {
-        const match = content.match(/^---\r?\n([\s\S]*?)\r?\n---/);
-        if (match) {
-            const injected = injectServiceDefaults(match[1]);
-            return content.replace(match[1], injected) + "\n";
-        }
-        return `${content}\n`;
-    }
-
-    const fm = injectServiceDefaults(
-        [`title: ${JSON.stringify(title)}`, "theme: default", "mdc: true"].join("\n")
-    );
-    return `---\n${fm}\n---\n\n${content}\n`;
+    return enforceServiceFrontmatterOnMarkdown(content, {
+        title,
+        includeRendererDefaults: true,
+    });
 }
 
 function sanitizeRelativePath(relativePath) {
@@ -209,12 +311,15 @@ async function listRelativeFiles(rootDir, currentDir = rootDir) {
 
 function createInlineSourceFiles(input) {
     if (input.source?.files?.length) {
+        const entryPath = sanitizeRelativePath(input.entry || "slides.md");
         return input.source.files.map((file) => {
             const relativePath = sanitizeRelativePath(file.path);
             if (typeof file.content === "string") {
                 return {
                     path: relativePath,
-                    content: file.content,
+                    content: relativePath === entryPath
+                        ? enforceServiceFrontmatterOnMarkdown(file.content, {title: input.title})
+                        : file.content,
                 };
             }
             return {
