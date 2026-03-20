@@ -5,6 +5,7 @@ import {dirname, join, normalize} from "node:path";
 
 const ARTIFACT_IDLE_TTL_MS = Number(process.env.SLIDEV_ARTIFACT_TTL_MS || 60 * 60 * 1000);
 const PREVIEW_BUILD_CACHE_VERSION = 1;
+const SLIDEV_RENDERER_CLI_ARGS = ["--fault-tolerant"];
 
 function normalizeText(value) {
     return value.replace(/\r\n?/g, "\n");
@@ -249,9 +250,10 @@ async function readJsonFile(filePath) {
 }
 
 async function runSlidevCommand(args, cwd) {
-    console.log(`[slidev] run: ${args.join(" ")}`);
+    const cliArgs = [...args, ...SLIDEV_RENDERER_CLI_ARGS];
+    console.log(`[slidev] run: ${cliArgs.join(" ")}`);
     return new Promise((resolve, reject) => {
-        const child = spawn(process.execPath, [getCliPath(), ...args], {
+        const child = spawn(process.execPath, [getCliPath(), ...cliArgs], {
             cwd,
             stdio: ["ignore", "pipe", "pipe"],
             windowsHide: true,
