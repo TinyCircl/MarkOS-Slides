@@ -27,8 +27,13 @@ COPY slidev-renderer/package.json slidev-renderer/package-lock.json ./
 # Install all npm dependencies (includes @slidev/cli from npm registry)
 RUN npm ci --include=optional
 
-# Overwrite @slidev/cli dist with the locally optimized build
+# Overwrite the npm-installed Slidev runtime with the locally built fork.
+# These packages must stay in sync:
+# - @slidev/cli consumes parser/types at runtime
+# - fault-tolerant build behavior depends on parser + cli being updated together
 COPY --from=slidev-builder /slidev/packages/slidev/dist /app/node_modules/@slidev/cli/dist/
+COPY --from=slidev-builder /slidev/packages/parser/dist /app/node_modules/@slidev/parser/dist/
+COPY --from=slidev-builder /slidev/packages/types/dist /app/node_modules/@slidev/types/dist/
 
 RUN npx playwright install --with-deps chromium
 
