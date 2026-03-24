@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "node --watch src/server.mjs",
-    "start": "node src/server.mjs"
+    "start": "node src/server.mjs",
+    "check:fixtures": "node scripts/check-fixtures.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1006.0",

@@ -9,7 +9,7 @@ const SESSION_IDLE_TTL_MS = Number(process.env.SLIDEV_SESSION_TTL_MS || 15 * 60 
 const SESSION_START_TIMEOUT_MS = 60 * 1000;
 const SESSION_POLL_INTERVAL_MS = 250;
 const LOG_BUFFER_LIMIT = 40;
-const SLIDEV_RENDERER_CLI_ARGS = ["--fault-tolerant"];
+const SLIDEV_RENDERER_CLI_ARGS = [];
 
 const previewSessions = new Map();
 

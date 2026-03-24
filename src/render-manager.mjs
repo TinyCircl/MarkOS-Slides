@@ -5,7 +5,7 @@ import {dirname, join, normalize} from "node:path";
 
 const ARTIFACT_IDLE_TTL_MS = Number(process.env.SLIDEV_ARTIFACT_TTL_MS || 60 * 60 * 1000);
 const PREVIEW_BUILD_CACHE_VERSION = 1;
-const SLIDEV_RENDERER_CLI_ARGS = ["--fault-tolerant"];
+const SLIDEV_RENDERER_CLI_ARGS = [];
 
 function normalizeText(value) {
     return value.replace(/\r\n?/g, "\n");
@@ -16,22 +16,77 @@ function normalizeTitle(title) {
     return trimmed && trimmed.length > 0 ? trimmed : "Untitled Slides";
 }
 
-// Service-level forced config: permanently disable features that are not needed
-// in the hosted renderer. These values override the incoming entry markdown.
-const SERVICE_FORCED_FRONTMATTER = [
-    ["monaco", "false"],
-    ["presenter", "false"],
-    ["drawings", "{enabled: false}"],
-    ["wakeLock", "false"],
-    ["record", "false"],
-    ["browserExporter", "false"],
-    ["codeCopy", "false"],
-    ["contextMenu", "false"],
-    ["preloadImages", "false"],
+// Performance-sensitive frontmatter overrides for the hosted renderer.
+// Each key supports three states:
+// - "true" / "false" (or any other raw YAML scalar/object string): force override
+// - "default": do not modify the deck's original value
+//
+// You can change these defaults here, or override them from `.env` with the
+// corresponding `SLIDEV_OVERRIDE_*` variable.
+const SERVICE_FRONTMATTER_OVERRIDE_DEFAULTS = {
+    // Enable fault-tolerant builds by default so malformed decks can still render a preview.
+    faultTolerance: "true",
+    // Preview builds should not implicitly generate extra export artifacts unless explicitly requested.
+    download: "false",
+    // Prevent post-build OG image generation in preview/static-site mode.
+    seoMetaOgImage: "false",
+    // Monaco and related type loading are expensive and unnecessary for hosted preview rendering.
+    monaco: "false",
+    presenter: "false",
+    drawings: "{enabled: false}",
+    wakeLock: "false",
+    record: "false",
+    browserExporter: "false",
+    codeCopy: "false",
+    contextMenu: "false",
+    preloadImages: "false",
+    remoteAssets: "false",
+    twoslash: "default",
+    addons: "default",
+    theme: "default",
+    info: "default",
+    mdc: "default",
+};
+
+// `type: "top-level"` maps to `key: value`
+// `type: "nested"` maps to `parentKey.key: value`, while keeping other nested fields intact.
+const SERVICE_FRONTMATTER_OVERRIDE_DEFINITIONS = [
+    {id: "faultTolerance", env: "SLIDEV_OVERRIDE_FAULT_TOLERANCE", type: "top-level", key: "faultTolerance"},
+    {id: "download", env: "SLIDEV_OVERRIDE_DOWNLOAD", type: "top-level", key: "download"},
+    {id: "seoMetaOgImage", env: "SLIDEV_OVERRIDE_SEO_META_OG_IMAGE", type: "nested", parentKey: "seoMeta", key: "ogImage"},
+    {id: "monaco", env: "SLIDEV_OVERRIDE_MONACO", type: "top-level", key: "monaco"},
+    {id: "presenter", env: "SLIDEV_OVERRIDE_PRESENTER", type: "top-level", key: "presenter"},
+    {id: "drawings", env: "SLIDEV_OVERRIDE_DRAWINGS", type: "top-level", key: "drawings"},
+    {id: "wakeLock", env: "SLIDEV_OVERRIDE_WAKE_LOCK", type: "top-level", key: "wakeLock"},
+    {id: "record", env: "SLIDEV_OVERRIDE_RECORD", type: "top-level", key: "record"},
+    {id: "browserExporter", env: "SLIDEV_OVERRIDE_BROWSER_EXPORTER", type: "top-level", key: "browserExporter"},
+    {id: "codeCopy", env: "SLIDEV_OVERRIDE_CODE_COPY", type: "top-level", key: "codeCopy"},
+    {id: "contextMenu", env: "SLIDEV_OVERRIDE_CONTEXT_MENU", type: "top-level", key: "contextMenu"},
+    {id: "preloadImages", env: "SLIDEV_OVERRIDE_PRELOAD_IMAGES", type: "top-level", key: "preloadImages"},
+    {id: "remoteAssets", env: "SLIDEV_OVERRIDE_REMOTE_ASSETS", type: "top-level", key: "remoteAssets"},
+    {id: "twoslash", env: "SLIDEV_OVERRIDE_TWOSLASH", type: "top-level", key: "twoslash"},
+    {id: "addons", env: "SLIDEV_OVERRIDE_ADDONS", type: "top-level", key: "addons"},
+    {id: "theme", env: "SLIDEV_OVERRIDE_THEME", type: "top-level", key: "theme"},
+    {id: "info", env: "SLIDEV_OVERRIDE_INFO", type: "top-level", key: "info"},
+    {id: "mdc", env: "SLIDEV_OVERRIDE_MDC", type: "top-level", key: "mdc"},
 ];
 
 const RE_MONACO_CODE_FENCE = /^(```[^\n]*?)\s*\{monaco(?:-run|-diff)?\}([^\n]*)$/gm;
 const RE_MONACO_SNIPPET = /^(\s*<<<[^\n]*?)\{monaco-write\}([^\n]*)$/gm;
+const RE_MARKDOWN_IMAGE = /!\[([^\]]*)]\(([^)]+)\)/g;
+const RE_SNIPPET_IMPORT = /^(\s*<<<\s+)(\S+)(.*)$/gm;
+const RE_HTML_COMMENT = /<!--[\s\S]*?-->/g;
+const RE_BR_TAG = /<br\s*\/?>/gi;
+const RE_IMG_TAG = /<img\b[^>]*>/gi;
+const RE_RESOURCE_BLOCK = /<(video|audio|iframe|embed)\b[^>]*>[\s\S]*?<\/\1>/gi;
+const RE_RESOURCE_TAG = /<(video|audio|source|iframe|embed)\b[^>]*>/gi;
+const RE_RESOURCE_CLOSE_TAG = /<\/(video|audio|source|iframe|embed)>/gi;
+const RE_OBJECT_BLOCK = /<object\b[^>]*>[\s\S]*?<\/object>/gi;
+const RE_OBJECT_TAG = /<object\b[^>]*>/gi;
+const RE_OBJECT_CLOSE_TAG = /<\/object>/gi;
+const RE_SELF_CLOSING_CUSTOM_TAG = /<([A-Z][\w]*|[a-z][\w]*(?:-[\w-]+)+)\b[^>]*\/>/g;
+const RE_CUSTOM_OPEN_CLOSE_TAG = /<\/?([A-Z][\w]*|[a-z][\w]*(?:-[\w-]+)+)\b[^>]*>/g;
+const RE_CODE_FENCE_MARKER = /^(\s*)(`{3,}|~{3,})/;
 
 function escapeRegExp(value) {
     return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -83,19 +138,129 @@ function removeTopLevelFrontmatterKey(frontmatter, key) {
     return remaining.join("\n").trim();
 }
 
+function normalizeOverrideValue(value) {
+    const trimmed = String(value ?? "").trim();
+    if (!trimmed) {
+        return "default";
+    }
+    return /^default$/i.test(trimmed) ? "default" : trimmed;
+}
+
+function resolveServiceFrontmatterOverrides() {
+    return SERVICE_FRONTMATTER_OVERRIDE_DEFINITIONS
+        .map((definition) => {
+            const value = normalizeOverrideValue(
+                process.env[definition.env] ?? SERVICE_FRONTMATTER_OVERRIDE_DEFAULTS[definition.id] ?? "default",
+            );
+            return {
+                ...definition,
+                value,
+            };
+        })
+        .filter((definition) => definition.value !== "default");
+}
+
 function enforceServiceFrontmatter(frontmatter) {
+    const activeOverrides = resolveServiceFrontmatterOverrides();
     let result = frontmatter.trim();
-    for (const [key] of SERVICE_FORCED_FRONTMATTER) {
-        result = removeTopLevelFrontmatterKey(result, key);
+
+    for (const definition of activeOverrides) {
+        if (definition.type === "top-level") {
+            result = removeTopLevelFrontmatterKey(result, definition.key);
+        }
     }
 
-    const injectedLines = SERVICE_FORCED_FRONTMATTER
-        .map(([key, value]) => `${key}: ${value}`)
+    const injectedLines = activeOverrides
+        .filter((definition) => definition.type === "top-level")
+        .map((definition) => `${definition.key}: ${definition.value}`)
         .join("\n");
 
-    return result
+    result = result
         ? `${result}\n${injectedLines}`
         : injectedLines;
+
+    for (const definition of activeOverrides) {
+        if (definition.type === "nested") {
+            result = upsertTopLevelNestedKey(result, definition.parentKey, definition.key, definition.value);
+        }
+    }
+
+    return result;
+}
+
+function upsertTopLevelNestedKey(frontmatter, parentKey, childKey, value) {
+    const lines = frontmatter.split("\n");
+    const parentIndex = lines.findIndex((line) => new RegExp(`^${escapeRegExp(parentKey)}\\s*:\\s*(.*)$`).test(line));
+
+    if (parentIndex === -1) {
+        return frontmatter
+            ? `${frontmatter}\n${parentKey}:\n  ${childKey}: ${value}`
+            : `${parentKey}:\n  ${childKey}: ${value}`;
+    }
+
+    const match = lines[parentIndex].match(new RegExp(`^${escapeRegExp(parentKey)}\\s*:\\s*(.*)$`));
+    const tail = match?.[1]?.trim() ?? "";
+
+    if (tail.startsWith("{") && tail.endsWith("}")) {
+        const body = tail.slice(1, -1).trim();
+        const entries = body
+            .split(",")
+            .map((part) => part.trim())
+            .filter(Boolean)
+            .filter((part) => !new RegExp(`^${escapeRegExp(childKey)}\\s*:`).test(part));
+
+        entries.push(`${childKey}: ${value}`);
+        lines[parentIndex] = `${parentKey}: { ${entries.join(", ")} }`;
+        return lines.join("\n");
+    }
+
+    if (tail) {
+        lines.splice(parentIndex, 1, `${parentKey}:`, `  ${childKey}: ${value}`);
+        return lines.join("\n");
+    }
+
+    let blockEnd = parentIndex + 1;
+    let childIndent = "  ";
+
+    while (blockEnd < lines.length) {
+        const line = lines[blockEnd];
+        if (!line.trim()) {
+            blockEnd += 1;
+            continue;
+        }
+
+        const indent = line.match(/^(\s*)/)?.[1] ?? "";
+        if (indent.length === 0) {
+            break;
+        }
+
+        childIndent = indent;
+        blockEnd += 1;
+    }
+
+    const nextLines = [lines[parentIndex]];
+    let inserted = false;
+
+    for (let index = parentIndex + 1; index < blockEnd; index += 1) {
+        const line = lines[index];
+        if (!inserted && line.trim()) {
+            nextLines.push(`${childIndent}${childKey}: ${value}`);
+            inserted = true;
+        }
+
+        if (new RegExp(`^\\s+${escapeRegExp(childKey)}\\s*:`).test(line)) {
+            continue;
+        }
+
+        nextLines.push(line);
+    }
+
+    if (!inserted) {
+        nextLines.push(`${childIndent}${childKey}: ${value}`);
+    }
+
+    lines.splice(parentIndex, blockEnd - parentIndex, ...nextLines);
+    return lines.join("\n");
 }
 
 function joinMarkdownLine(prefix, suffix = "") {
@@ -106,10 +271,121 @@ function joinMarkdownLine(prefix, suffix = "") {
         : normalizedPrefix;
 }
 
+function extractHtmlAttribute(tag, name) {
+    const quoted = tag.match(new RegExp(`\\b${name}\\s*=\\s*(['"])(.*?)\\1`, "i"));
+    if (quoted?.[2]) {
+        return quoted[2];
+    }
+
+    const bare = tag.match(new RegExp(`\\b${name}\\s*=\\s*([^\\s>]+)`, "i"));
+    return bare?.[1] ?? "";
+}
+
+function extractImgAltText(tag) {
+    return extractHtmlAttribute(tag, "alt");
+}
+
+function isPathReference(value) {
+    const trimmed = value?.trim();
+    if (!trimmed) {
+        return false;
+    }
+
+    if (/^(https?:|mailto:|tel:|data:|blob:|#|\/\/)/i.test(trimmed)) {
+        return false;
+    }
+
+    return true;
+}
+
+function stripResourcePathReferences(chunk) {
+    return chunk
+        .replace(RE_MARKDOWN_IMAGE, (_full, alt = "", target = "") => isPathReference(target) ? alt.trim() : _full)
+        .replace(RE_SNIPPET_IMPORT, (_full, prefix = "", target = "", suffix = "") => isPathReference(target) ? "" : joinMarkdownLine(`${prefix}${target}`, suffix))
+        .replace(RE_HTML_COMMENT, "")
+        .replace(RE_BR_TAG, "\n")
+        .replace(RE_RESOURCE_BLOCK, (tag) => {
+            const src = extractHtmlAttribute(tag, "src");
+            return isPathReference(src) ? "" : tag;
+        })
+        .replace(RE_OBJECT_BLOCK, (tag) => {
+            const data = extractHtmlAttribute(tag, "data");
+            return isPathReference(data) ? "" : tag;
+        })
+        .replace(RE_IMG_TAG, (tag) => {
+            const src = extractHtmlAttribute(tag, "src");
+            return isPathReference(src) ? extractImgAltText(tag) : tag;
+        })
+        .replace(RE_RESOURCE_TAG, (tag) => {
+            const src = extractHtmlAttribute(tag, "src");
+            return isPathReference(src) ? "" : tag;
+        })
+        .replace(RE_OBJECT_TAG, (tag) => {
+            const data = extractHtmlAttribute(tag, "data");
+            return isPathReference(data) ? "" : tag;
+        })
+        .replace(RE_RESOURCE_CLOSE_TAG, "")
+        .replace(RE_OBJECT_CLOSE_TAG, "")
+        .replace(RE_SELF_CLOSING_CUSTOM_TAG, "")
+        .replace(RE_CUSTOM_OPEN_CLOSE_TAG, "")
+        .split("\n")
+        .map((line) => {
+            const trimmed = line.trim();
+            if (/^<\/?[A-Za-z][^>\n]*$/.test(trimmed)) {
+                return "";
+            }
+            return line;
+        })
+        .join("\n")
+        .replace(/\n{3,}/g, "\n\n");
+}
+
+function transformMarkdownOutsideCodeFences(markdown, transform) {
+    const lines = markdown.split("\n");
+    const output = [];
+    let buffer = [];
+    let activeFence = null;
+
+    function flushBuffer() {
+        if (!buffer.length) {
+            return;
+        }
+        output.push(...transform(buffer.join("\n")).split("\n"));
+        buffer = [];
+    }
+
+    for (const line of lines) {
+        const fenceMatch = line.match(RE_CODE_FENCE_MARKER);
+        if (!activeFence) {
+            if (fenceMatch) {
+                flushBuffer();
+                activeFence = {
+                    char: fenceMatch[2][0],
+                    size: fenceMatch[2].length,
+                };
+                output.push(line);
+                continue;
+            }
+            buffer.push(line);
+            continue;
+        }
+
+        output.push(line);
+        if (fenceMatch && fenceMatch[2][0] === activeFence.char && fenceMatch[2].length >= activeFence.size) {
+            activeFence = null;
+        }
+    }
+
+    flushBuffer();
+    return output.join("\n");
+}
+
 function sanitizeHostedRendererMarkdownSyntax(markdown) {
-    return markdown
+    const withoutHeavyFeatures = markdown
         .replace(RE_MONACO_CODE_FENCE, (_full, prefix = "", suffix = "") => joinMarkdownLine(prefix, suffix))
         .replace(RE_MONACO_SNIPPET, (_full, prefix = "", suffix = "") => joinMarkdownLine(prefix, suffix));
+
+    return transformMarkdownOutsideCodeFences(withoutHeavyFeatures, stripResourcePathReferences);
 }
 
 function enforceServiceFrontmatterOnMarkdown(markdown, {
