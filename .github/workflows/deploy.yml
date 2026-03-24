@@ -112,13 +112,20 @@ jobs:
 
             echo "Deploying image tag: ${{ needs.build.outputs.image_tag }}"
 
-            # Pull the new renderer image
-            SLIDEV_VERSION=${{ needs.build.outputs.image_tag }} \
-              docker compose pull renderer
+            # Persist the deployed image tag on the server so manual restarts
+            # and version checks use the same source of truth as CI/CD.
+            cat > versions.env <<'EOF'
+            SLIDEV_VERSION=${{ needs.build.outputs.image_tag }}
+            EOF
 
-            # Rolling restart: only renderer restarts, nginx stays up
-            SLIDEV_VERSION=${{ needs.build.outputs.image_tag }} \
-              docker compose up -d --no-deps renderer
+            echo "Using versions.env:"
+            cat versions.env
+
+            # Pull the new renderer image using the persisted version file.
+            docker compose --env-file versions.env pull renderer
+
+            # Rolling restart: only renderer restarts, nginx stays up.
+            docker compose --env-file versions.env up -d --no-deps renderer
 
             # Prune dangling images to free disk space
             docker image prune -f

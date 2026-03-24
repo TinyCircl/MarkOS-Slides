@@ -17,7 +17,10 @@ services:
       - renderer
 
   renderer:
-    # 动态读取运行环境中的 SLIDEV_VERSION
+    # The image tag is resolved from versions.env.
+    # CI writes that file on the server before `docker compose pull/up`.
+    # Manual restarts should also use:
+    #   docker compose --env-file versions.env up -d --no-deps renderer
     image: xuao575/slidev-renderer:${SLIDEV_VERSION}
     container_name: slidev-renderer
     restart: unless-stopped
