@@ -15,6 +15,9 @@ RUN pnpm --filter "@slidev/types" run build && \
     pnpm --filter "@slidev/parser" run build && \
     pnpm --filter "@slidev/cli" run build
 
+# Remove pnpm node_modules from client so COPY won't conflict with npm layout
+RUN rm -rf /slidev/packages/client/node_modules
+
 # ============================================================
 # Stage 2: slidev-renderer (production image)
 # ============================================================
