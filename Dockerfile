@@ -10,7 +10,7 @@ COPY slidev/ ./
 
 RUN pnpm install --frozen-lockfile
 
-# Build in dependency order: types → parser → cli (@slidev/client has no build script)
+# Build in dependency order: types → parser → cli (client is raw .vue, no build needed)
 RUN pnpm --filter "@slidev/types" run build && \
     pnpm --filter "@slidev/parser" run build && \
     pnpm --filter "@slidev/cli" run build
@@ -34,6 +34,7 @@ RUN npm ci --include=optional
 COPY --from=slidev-builder /slidev/packages/slidev/dist /app/node_modules/@slidev/cli/dist/
 COPY --from=slidev-builder /slidev/packages/parser/dist /app/node_modules/@slidev/parser/dist/
 COPY --from=slidev-builder /slidev/packages/types/dist /app/node_modules/@slidev/types/dist/
+COPY --from=slidev-builder /slidev/packages/client/ /app/node_modules/@slidev/client/
 
 RUN npx playwright install --with-deps chromium
 

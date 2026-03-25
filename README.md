@@ -7,7 +7,9 @@ Standalone Node service that wraps `@slidev/cli` for Pebble.
 - `GET /healthz`
 - `POST /api/preview/session`
 - `POST /api/render`
+- `POST /api/previews/build`
 - `GET /preview/:sessionId/*`
+- `GET /p/:previewId/*`
 - `GET /artifacts/*`
 
 ## Local development
@@ -17,7 +19,123 @@ npm install
 npm run dev
 ```
 
-Default local URL: `http://localhost:3210`
+建议直接在 WebStorm 里运行 `dev`。
+
+服务启动成功后，控制台会看到：
+
+```text
+[slidev-renderer] gRPC server listening on :50051
+[slidev-renderer] listening on :3210
+```
+
+本地地址：
+
+- HTTP: `http://localhost:3210`
+- gRPC: `localhost:50051`
+
+## Apifox 调试
+
+本地 `dev` 跑起来之后，可以直接用 Apifox 请求 HTTP 接口来编译 Slidev。
+
+### 1. 导出渲染产物
+
+请求：
+
+- Method: `POST`
+- URL: `http://localhost:3210/api/render`
+- Header: `Content-Type: application/json`
+
+请求体最小示例：
+
+```json
+{
+  "title": "demo",
+  "content": "---\nlayout: cover\n---\n\n# Hello Slidev\n\n---\n\n# Page 2\n",
+  "format": "web"
+}
+```
+
+可选字段：
+
+- `format`: `web` / `pdf` / `pptx`
+- `fileName`: 导出文件名，可选
+- `assets`: 额外资源文件，可选，格式为 `[{ "path": "images/a.png", "contentBase64": "..." }]`
+
+返回里重点看：
+
+- `artifactUrl`: 产物地址
+- `siteUrl`: 当 `format` 为 `web` 时可直接打开
+
+### 2. 构建预览站点
+
+如果要构建 `/p/:previewId/` 这种预览站点，请求：
+
+- Method: `POST`
+- URL: `http://localhost:3210/api/previews/build`
+- Header: `Content-Type: application/json`
+
+请求体示例：
+
+```json
+{
+  "previewId": "demo-preview",
+  "basePath": "/p/demo-preview/",
+  "entry": "slides.md",
+  "title": "demo-preview",
+  "content": "---\nlayout: cover\n---\n\n# Hello Slidev\n"
+}
+```
+
+返回里重点看：
+
+- `previewUrl`
+- `localPreviewUrl`
+- `publishedPreviewUrl`
+
+## Markdown 转 JSON 脚本
+
+仓库内新增了一个脚本：`scripts/md_to_request_json.py`
+
+它会把 `.md` 文件读出来，并转成可以直接粘到 Apifox Body 里的 JSON。
+
+脚本默认会转义非 ASCII 字符，避免 Windows 控制台因为 GBK 编码报错；如果明确需要直接输出 UTF-8 字符，可以追加 `--no-ascii-escape`。
+
+### 生成 `/api/render` 请求体
+
+```bash
+python scripts/md_to_request_json.py test/fixtures/markdown/base.md > render.json
+```
+
+如果要导出 PDF：
+
+```bash
+python scripts/md_to_request_json.py test/fixtures/markdown/base.md --format pdf --file-name base > render-pdf.json
+```
+
+### 生成 `/api/previews/build` 请求体
+
+```bash
+python scripts/md_to_request_json.py test/fixtures/markdown/base.md --api preview-build --preview-id demo-preview > preview-build.json
+```
+
+### 生成 `/api/preview/session` 请求体
+
+```bash
+python scripts/md_to_request_json.py test/fixtures/markdown/base.md --api preview-session --project-id demo-project > preview-session.json
+```
+
+### 使用方式
+
+1. 运行上面的命令生成 JSON 文件。
+2. 打开生成的 `*.json`。
+3. 把文件内容整体复制到 Apifox 的 `Body -> raw -> JSON`。
+4. 发送请求。
+
+如果你在 PowerShell 里想直接查看生成结果，也可以：
+
+```powershell
+python scripts/md_to_request_json.py test/fixtures/markdown/base.md | Out-String
+```
 
 ## Notes
 
