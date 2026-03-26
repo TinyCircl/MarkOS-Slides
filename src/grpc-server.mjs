@@ -2,6 +2,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import grpc from "@grpc/grpc-js";
 import protoLoader from "@grpc/proto-loader";
+import { z } from "zod";
 import {
     buildPreviewSite,
     getCachedPreviewPublishResult,
@@ -15,6 +16,7 @@ const PROTO_PATH = join(__dirname, "slidev_service.proto");
 const GRPC_PORT = Number(process.env.GRPC_PORT || 50051);
 const PUBLIC_BASE_URL = process.env.SLIDEV_PUBLIC_BASE_URL?.replace(/\/$/, "") || null;
 const PREVIEW_SITE_BASE_URL = process.env.SLIDEV_PREVIEW_SITE_BASE_URL?.replace(/\/$/, "") || null;
+const PREVIEW_ID_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._-]*$/;
 
 const RENDER_FORMAT_MAP = {
     0: "web",
@@ -25,9 +27,44 @@ const RENDER_FORMAT_MAP = {
     RENDER_FORMAT_PPTX: "pptx",
 };
 
-function getLocalPreviewUrl(previewId) {
-    const base = PUBLIC_BASE_URL || `http://localhost:${process.env.PORT || 3210}`;
-    return `${base}/p/${encodeURIComponent(previewId)}/`;
+const grpcBuildPreviewRequestSchema = z.object({
+    previewId: z.string().trim().regex(PREVIEW_ID_PATTERN),
+    content: z.string(),
+    title: z.string().trim().nullable().optional(),
+    publish: z.boolean().optional(),
+    basePath: z.string().trim().optional(),
+}).superRefine((value, ctx) => {
+    if (value.basePath) {
+        const normalizedBasePath = `/${value.basePath.replace(/^\/+|\/+$/g, "")}/`;
+        const expectedBasePath = `/p/${value.previewId}/`;
+        if (normalizedBasePath !== expectedBasePath) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: `basePath must match ${expectedBasePath}`,
+                path: ["basePath"],
+            });
+        }
+    }
+});
+
+const grpcRenderArtifactRequestSchema = z.object({
+    content: z.string(),
+    title: z.string().trim().nullable().optional(),
+    format: z.enum(["web", "pdf", "pptx"]),
+    fileName: z.string().trim().nullable().optional(),
+});
+
+function getServiceBaseUrl() {
+    return PUBLIC_BASE_URL || `http://localhost:${process.env.PORT || 3210}`;
+}
+
+function joinServiceUrl(path) {
+    const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+    return `${getServiceBaseUrl()}${normalizedPath}`;
+}
+
+function getLocalPreviewUrl(previewPath) {
+    return joinServiceUrl(previewPath);
 }
 
 function getPublishedPreviewUrl(previewId) {
@@ -37,18 +74,71 @@ function getPublishedPreviewUrl(previewId) {
     return new URL(`/p/${encodeURIComponent(previewId)}/`, `${PREVIEW_SITE_BASE_URL}/`).toString();
 }
 
+function formatZodError(error) {
+    return error.issues
+        .map((issue) => {
+            const path = issue.path.length > 0 ? `${issue.path.join(".")}: ` : "";
+            return `${path}${issue.message}`;
+        })
+        .join("; ");
+}
+
+export function createGrpcError(error, fallbackMessage) {
+    const fullMsg = error instanceof z.ZodError
+        ? formatZodError(error)
+        : error instanceof Error
+            ? error.message
+            : fallbackMessage;
+
+    return {
+        code: error instanceof z.ZodError ? grpc.status.INVALID_ARGUMENT : grpc.status.INTERNAL,
+        message: fullMsg.length > 1024 ? `${fullMsg.slice(0, 1024)}… (truncated)` : fullMsg,
+    };
+}
+
+export function parseGrpcBuildPreviewRequest(request) {
+    return grpcBuildPreviewRequestSchema.parse({
+        previewId: request.previewId,
+        content: request.content,
+        title: request.title || undefined,
+        publish: request.publish,
+        basePath: request.basePath || undefined,
+    });
+}
+
+export function parseGrpcRenderArtifactRequest(request) {
+    return grpcRenderArtifactRequestSchema.parse({
+        content: request.content,
+        title: request.title || undefined,
+        format: RENDER_FORMAT_MAP[request.format] ?? "",
+        fileName: request.fileName || undefined,
+    });
+}
+
+export function buildRenderArtifactGrpcResponse(artifact) {
+    const artifactUrl = joinServiceUrl(artifact.artifactPath);
+    return {
+        jobId: artifact.jobId,
+        format: artifact.format,
+        artifactUrl,
+        fileName: artifact.fileName,
+        siteUrl: artifact.format === "web" ? artifactUrl : "",
+    };
+}
+
 async function buildPreviewHandler(call, callback) {
     const req = call.request;
     const requestStartedAt = Date.now();
     console.log(`[gRPC] BuildPreview: previewId=${req.previewId}, contentLen=${req.content?.length ?? 0}, publish=${req.publish}`);
 
     try {
+        const payload = parseGrpcBuildPreviewRequest(req);
         const buildStartedAt = Date.now();
         const preview = await buildPreviewSite({
-            previewId: req.previewId,
-            content: req.content,
-            title: req.title || undefined,
-            basePath: req.basePath || undefined,
+            previewId: payload.previewId,
+            content: payload.content,
+            title: payload.title || undefined,
+            basePath: payload.basePath || undefined,
             publish: false,
         });
         const buildDurationMs = Date.now() - buildStartedAt;
@@ -57,7 +147,7 @@ async function buildPreviewHandler(call, callback) {
         let publishDurationMs = 0;
         let publishedPreviewUrl = "";
 
-        if (req.publish && isR2Configured()) {
+        if (payload.publish && isR2Configured()) {
             const publishStartedAt = Date.now();
             let publishResult = null;
 
@@ -89,7 +179,7 @@ async function buildPreviewHandler(call, callback) {
             buildId: preview.buildId,
             sourceHash: preview.sourceHash ?? "",
             cacheHit: preview.cacheHit === true,
-            localPreviewUrl: getLocalPreviewUrl(preview.previewId),
+            localPreviewUrl: getLocalPreviewUrl(preview.previewPath),
             publishedPreviewUrl: publishedPreviewUrl,
             timings: {
                 totalMs: Date.now() - requestStartedAt,
@@ -98,45 +188,33 @@ async function buildPreviewHandler(call, callback) {
             },
         });
     } catch (error) {
-        const fullMsg = error instanceof Error ? error.message : "Failed to build Slidev preview.";
-        console.error(`[gRPC] BuildPreview error: previewId=${req.previewId}, err=${fullMsg}`);
-        callback({
-            code: grpc.status.INTERNAL,
-            message: fullMsg.length > 1024 ? fullMsg.slice(0, 1024) + "… (truncated)" : fullMsg,
-        });
+        const grpcError = createGrpcError(error, "Failed to build Slidev preview.");
+        console.error(`[gRPC] BuildPreview error: previewId=${req.previewId}, err=${grpcError.message}`);
+        callback(grpcError);
     }
 }
 
 async function renderArtifactHandler(call, callback) {
     const req = call.request;
-    const format = RENDER_FORMAT_MAP[req.format] ?? "web";
-    const base = PUBLIC_BASE_URL || `http://localhost:${process.env.PORT || 3210}`;
-    console.log(`[gRPC] RenderArtifact: format=${format}, contentLen=${req.content?.length ?? 0}`);
+    const requestedFormat = RENDER_FORMAT_MAP[req.format] ?? "invalid";
+    console.log(`[gRPC] RenderArtifact: format=${requestedFormat}, contentLen=${req.content?.length ?? 0}`);
     const startedAt = Date.now();
 
     try {
+        const payload = parseGrpcRenderArtifactRequest(req);
         const artifact = await renderArtifact({
-            content: req.content,
-            title: req.title || undefined,
-            format,
-            fileName: req.fileName || undefined,
+            content: payload.content,
+            title: payload.title || undefined,
+            format: payload.format,
+            fileName: payload.fileName || undefined,
         });
 
         console.log(`[gRPC] RenderArtifact done: jobId=${artifact.jobId}, format=${artifact.format}, costMs=${Date.now() - startedAt}`);
-        callback(null, {
-            job_id: artifact.jobId,
-            format: artifact.format,
-            artifact_url: `${base}${artifact.artifactPath}`,
-            file_name: artifact.fileName,
-            site_url: artifact.format === "web" ? `${base}${artifact.artifactPath}` : "",
-        });
+        callback(null, buildRenderArtifactGrpcResponse(artifact));
     } catch (error) {
-        const fullMsg = error instanceof Error ? error.message : "Failed to render Slidev artifact.";
-        console.error(`[gRPC] RenderArtifact error: format=${format}, err=${fullMsg}`);
-        callback({
-            code: grpc.status.INTERNAL,
-            message: fullMsg.length > 1024 ? fullMsg.slice(0, 1024) + "… (truncated)" : fullMsg,
-        });
+        const grpcError = createGrpcError(error, "Failed to render Slidev artifact.");
+        console.error(`[gRPC] RenderArtifact error: format=${requestedFormat}, err=${grpcError.message}`);
+        callback(grpcError);
     }
 }
 

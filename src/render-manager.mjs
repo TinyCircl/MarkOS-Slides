@@ -4,8 +4,11 @@ import {mkdir, readFile, readdir, rm, stat, writeFile} from "node:fs/promises";
 import {dirname, join, normalize} from "node:path";
 
 const ARTIFACT_IDLE_TTL_MS = Number(process.env.SLIDEV_ARTIFACT_TTL_MS || 60 * 60 * 1000);
-const PREVIEW_BUILD_CACHE_VERSION = 1;
+// Preview artifacts are persisted across deploys, so semantic renderer changes
+// must invalidate the cache to avoid serving stale builds.
+const PREVIEW_BUILD_CACHE_VERSION = 2;
 const SLIDEV_RENDERER_CLI_ARGS = [];
+const PREVIEW_ID_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._-]*$/;
 
 function normalizeText(value) {
     return value.replace(/\r\n?/g, "\n");
@@ -463,6 +466,23 @@ function normalizeBasePath(basePath) {
     return `/${trimmed.replace(/^\/+|\/+$/g, "")}/`;
 }
 
+function sanitizePreviewId(previewId) {
+    const normalizedId = previewId?.trim();
+    if (!normalizedId || !PREVIEW_ID_PATTERN.test(normalizedId)) {
+        throw new Error("Invalid previewId. Only letters, numbers, dot, underscore, and dash are allowed.");
+    }
+    return normalizedId;
+}
+
+function normalizePreviewBasePath(previewId, basePath) {
+    const normalizedBasePath = normalizeBasePath(basePath || `/p/${previewId}/`);
+    const expectedBasePath = `/p/${previewId}/`;
+    if (normalizedBasePath !== expectedBasePath) {
+        throw new Error(`Preview basePath must match ${expectedBasePath}`);
+    }
+    return normalizedBasePath;
+}
+
 function getCliPath() {
     if (process.env.SLIDEV_CLI_PATH) {
         return process.env.SLIDEV_CLI_PATH;
@@ -479,11 +499,11 @@ function getArtifactDir(jobId) {
 }
 
 function getPreviewArtifactDir(previewId) {
-    return join(process.cwd(), ".slidev-artifacts", "previews", previewId);
+    return join(process.cwd(), ".slidev-artifacts", "previews", sanitizePreviewId(previewId));
 }
 
 function getPreviewBuildCacheFilePath(previewId) {
-    return join(process.cwd(), ".slidev-artifacts", "preview-cache", `${previewId}.json`);
+    return join(process.cwd(), ".slidev-artifacts", "preview-cache", `${sanitizePreviewId(previewId)}.json`);
 }
 
 async function writeAssets(rootDir, assets = []) {
@@ -844,8 +864,8 @@ export async function renderArtifact(input) {
 }
 
 export async function buildPreviewSite(input) {
-    const previewId = input.previewId.trim();
-    const basePath = normalizeBasePath(input.basePath || `/p/${previewId}/`);
+    const previewId = sanitizePreviewId(input.previewId);
+    const basePath = normalizePreviewBasePath(previewId, input.basePath);
     const sourceFiles = createInlineSourceFiles(input);
     const sourceEntry = ensureSourceEntryExists(sourceFiles, input.entry || "slides.md");
     const outputDir = getPreviewArtifactDir(previewId);
