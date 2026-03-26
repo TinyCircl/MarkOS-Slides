@@ -10,10 +10,13 @@ COPY slidev/ ./
 
 RUN pnpm install --frozen-lockfile
 
-# Build in dependency order: types → parser → cli (@slidev/client has no build script)
+# Build in dependency order: types → parser → cli (client is raw .vue, no build needed)
 RUN pnpm --filter "@slidev/types" run build && \
     pnpm --filter "@slidev/parser" run build && \
     pnpm --filter "@slidev/cli" run build
+
+# Remove pnpm node_modules from client so COPY won't conflict with npm layout
+RUN rm -rf /slidev/packages/client/node_modules
 
 # ============================================================
 # Stage 2: slidev-renderer (production image)
@@ -27,8 +30,14 @@ COPY slidev-renderer/package.json slidev-renderer/package-lock.json ./
 # Install all npm dependencies (includes @slidev/cli from npm registry)
 RUN npm ci --include=optional
 
-# Overwrite @slidev/cli dist with the locally optimized build
+# Overwrite the npm-installed Slidev runtime with the locally built fork.
+# These packages must stay in sync:
+# - @slidev/cli consumes parser/types at runtime
+# - fault-tolerant build behavior depends on parser + cli being updated together
 COPY --from=slidev-builder /slidev/packages/slidev/dist /app/node_modules/@slidev/cli/dist/
+COPY --from=slidev-builder /slidev/packages/parser/dist /app/node_modules/@slidev/parser/dist/
+COPY --from=slidev-builder /slidev/packages/types/dist /app/node_modules/@slidev/types/dist/
+COPY --from=slidev-builder /slidev/packages/client/ /app/node_modules/@slidev/client/
 
 RUN npx playwright install --with-deps chromium
 
