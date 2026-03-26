@@ -144,6 +144,7 @@ python scripts/md_to_request_json.py test/fixtures/markdown/base.md | Out-String
 
 - `pdf` / `pptx` export relies on Playwright. Install optional dependencies locally if needed.
 - In Docker / Cloud Run, prefer baking Playwright + Chromium into the image.
+- `SLIDEV_EXPORT_TIMEOUT_MS` controls the Slidev CLI export page-render timeout for `pdf` / `pptx`. The current default is `30000`.
 - Local compiled artifacts are now retained for up to 7 days by default and cleaned by a periodic background sweep.
 - Preview/site caches live under `.slidev-artifacts/previews` + `.slidev-artifacts/preview-cache`; one-off exports live under `.slidev-artifacts/renders` + `.slidev-artifacts/render-cache`.
 

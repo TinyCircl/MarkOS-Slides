@@ -5,6 +5,7 @@ import {dirname, join, normalize, resolve} from "node:path";
 
 const LOCAL_ARTIFACT_RETENTION_MS = Number(process.env.SLIDEV_LOCAL_ARTIFACT_RETENTION_MS || 7 * 24 * 60 * 60 * 1000);
 const LOCAL_ARTIFACT_CLEANUP_INTERVAL_MS = Number(process.env.SLIDEV_LOCAL_ARTIFACT_CLEANUP_INTERVAL_MS || 60 * 60 * 1000);
+const EXPORT_TIMEOUT_MS = Number(process.env.SLIDEV_EXPORT_TIMEOUT_MS || 30000);
 // Preview artifacts are persisted across deploys, so semantic renderer changes
 // must invalidate the cache to avoid serving stale builds.
 const PREVIEW_BUILD_CACHE_VERSION = 2;
@@ -1270,6 +1271,8 @@ export async function renderArtifact(input) {
                 input.format,
                 "--output",
                 outputFilePath,
+                "--timeout",
+                String(EXPORT_TIMEOUT_MS),
             ],
             workDir,
         );
