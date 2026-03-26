@@ -11,6 +11,9 @@
 		},
 		{
 			"path": "../../PaperPuppy-Agent"
+		},
+		{
+			"path": "../../PaperPuppy-AI-Intl"
 		}
 	],
 	"settings": {
