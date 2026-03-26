@@ -46,6 +46,7 @@ message RenderArtifactRequest {
   string title = 2;
   RenderFormat format = 3;
   string file_name = 4;
+  bool publish = 5;
 }
 
 message RenderArtifactResponse {
@@ -54,4 +55,7 @@ message RenderArtifactResponse {
   string artifact_url = 3;
   string file_name = 4;
   string site_url = 5;
+  bool cache_hit = 6;
+  bool publish_cache_hit = 7;
+  string published_artifact_url = 8;
 }

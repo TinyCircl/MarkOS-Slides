@@ -6,10 +6,12 @@ import { z } from "zod";
 import {
     buildPreviewSite,
     getCachedPreviewPublishResult,
+    getCachedRenderPublishResult,
     renderArtifact,
     updateCachedPreviewPublishResult,
+    updateCachedRenderPublishResult,
 } from "./render-manager.mjs";
-import { isR2Configured, publishPreviewSiteToR2 } from "./r2-client.mjs";
+import { isR2Configured, publishPreviewSiteToR2, publishRenderArtifactToR2 } from "./r2-client.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PROTO_PATH = join(__dirname, "slidev_service.proto");
@@ -52,6 +54,7 @@ const grpcRenderArtifactRequestSchema = z.object({
     title: z.string().trim().nullable().optional(),
     format: z.enum(["web", "pdf", "pptx"]),
     fileName: z.string().trim().nullable().optional(),
+    publish: z.boolean().optional(),
 });
 
 function getServiceBaseUrl() {
@@ -112,10 +115,14 @@ export function parseGrpcRenderArtifactRequest(request) {
         title: request.title || undefined,
         format: RENDER_FORMAT_MAP[request.format] ?? "",
         fileName: request.fileName || undefined,
+        publish: request.publish,
     });
 }
 
-export function buildRenderArtifactGrpcResponse(artifact) {
+export function buildRenderArtifactGrpcResponse(artifact, {
+    publishCacheHit = false,
+    publishedArtifactUrl = "",
+} = {}) {
     const artifactUrl = joinServiceUrl(artifact.artifactPath);
     return {
         jobId: artifact.jobId,
@@ -123,6 +130,9 @@ export function buildRenderArtifactGrpcResponse(artifact) {
         artifactUrl,
         fileName: artifact.fileName,
         siteUrl: artifact.format === "web" ? artifactUrl : "",
+        cacheHit: artifact.cacheHit === true,
+        publishCacheHit,
+        publishedArtifactUrl,
     };
 }
 
@@ -208,9 +218,39 @@ async function renderArtifactHandler(call, callback) {
             format: payload.format,
             fileName: payload.fileName || undefined,
         });
+        let publishResult = null;
+        let publishCacheHit = false;
+
+        if (payload.publish) {
+            if (artifact.cacheHit === true) {
+                publishResult = await getCachedRenderPublishResult({
+                    cacheKey: artifact.cacheKey,
+                    jobId: artifact.jobId,
+                });
+                publishCacheHit = publishResult != null;
+            }
+
+            if (!publishResult) {
+                publishResult = await publishRenderArtifactToR2({
+                    renderId: artifact.jobId,
+                    format: artifact.format,
+                    fileName: artifact.fileName,
+                    artifactFilePath: artifact.artifactFilePath,
+                    outputDir: artifact.outputDir,
+                });
+                await updateCachedRenderPublishResult({
+                    cacheKey: artifact.cacheKey,
+                    jobId: artifact.jobId,
+                    publishResult,
+                });
+            }
+        }
 
         console.log(`[gRPC] RenderArtifact done: jobId=${artifact.jobId}, format=${artifact.format}, costMs=${Date.now() - startedAt}`);
-        callback(null, buildRenderArtifactGrpcResponse(artifact));
+        callback(null, buildRenderArtifactGrpcResponse(artifact, {
+            publishCacheHit,
+            publishedArtifactUrl: publishResult?.publishedArtifactUrl ?? "",
+        }));
     } catch (error) {
         const grpcError = createGrpcError(error, "Failed to render Slidev artifact.");
         console.error(`[gRPC] RenderArtifact error: format=${requestedFormat}, err=${grpcError.message}`);

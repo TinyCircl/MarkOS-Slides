@@ -59,12 +59,15 @@ npm run dev
 
 - `format`: `web` / `pdf` / `pptx`
 - `fileName`: 导出文件名，可选
+- `publish`: 是否同时上传到 R2，可选，默认 `false`
 - `assets`: 额外资源文件，可选，格式为 `[{ "path": "images/a.png", "contentBase64": "..." }]`
 
 返回里重点看：
 
 - `artifactUrl`: 产物地址
 - `siteUrl`: 当 `format` 为 `web` 时可直接打开
+- `cacheHit`: 是否命中本地导出缓存
+- `publishedArtifactUrl`: 当 `publish=true` 且上传成功时返回
 
 ### 2. 构建预览站点
 
@@ -141,6 +144,8 @@ python scripts/md_to_request_json.py test/fixtures/markdown/base.md | Out-String
 
 - `pdf` / `pptx` export relies on Playwright. Install optional dependencies locally if needed.
 - In Docker / Cloud Run, prefer baking Playwright + Chromium into the image.
+- Local compiled artifacts are now retained for up to 7 days by default and cleaned by a periodic background sweep.
+- Preview/site caches live under `.slidev-artifacts/previews` + `.slidev-artifacts/preview-cache`; one-off exports live under `.slidev-artifacts/renders` + `.slidev-artifacts/render-cache`.
 
 ## Hosted Renderer 需求
 

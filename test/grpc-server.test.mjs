@@ -41,6 +41,9 @@ test("RenderArtifact gRPC responses survive proto serialization", () => {
         artifactUrl: "http://localhost:3210/artifacts/job-123/demo.pdf",
         fileName: "demo.pdf",
         siteUrl: "",
+        cacheHit: false,
+        publishCacheHit: false,
+        publishedArtifactUrl: "",
     });
 });
 

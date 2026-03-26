@@ -4,4 +4,5 @@ dist/
 .slidev-artifacts/
 .slidev-workspaces/
 .env
+.env.local
 scripts/nCine_14Years_Presentation.render.json

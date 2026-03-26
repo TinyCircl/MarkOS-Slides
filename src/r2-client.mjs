@@ -10,6 +10,7 @@ import { extname, join } from "node:path";
 const MAX_R2_UPLOAD_CONCURRENCY = 6;
 const MAX_R2_DELETE_BATCH_SIZE = 1000;
 const R2_LIST_PAGE_SIZE = 1000;
+const DEFAULT_RENDER_EXPORT_PATH_SEGMENT = "exports";
 
 const MIME_TYPES = new Map([
   [".css", "text/css; charset=utf-8"],
@@ -24,6 +25,7 @@ const MIME_TYPES = new Map([
   [".md", "text/markdown; charset=utf-8"],
   [".pdf", "application/pdf"],
   [".png", "image/png"],
+  [".pptx", "application/vnd.openxmlformats-officedocument.presentationml.presentation"],
   [".svg", "image/svg+xml"],
   [".txt", "text/plain; charset=utf-8"],
   [".webp", "image/webp"],
@@ -130,6 +132,16 @@ export function getR2PublicUrl(objectKey) {
     return null;
   }
   return `${publicDomain}/${joinR2Key(objectKey)}`;
+}
+
+function getRenderArtifactPathPrefix() {
+  const explicit = process.env.R2_RENDER_PATH_PREFIX?.trim();
+  if (explicit) {
+    return joinR2Key(explicit);
+  }
+
+  const { privatePathPrefix } = getR2Config();
+  return joinR2Key(privatePathPrefix, DEFAULT_RENDER_EXPORT_PATH_SEGMENT);
 }
 
 function getR2ObjectPrefix(keyPrefix) {
@@ -386,5 +398,74 @@ export async function publishPreviewSiteToR2({ previewId, outputDir }) {
     deletedFileCount: result.deletedFileCount,
     deletedKeys: result.deletedKeys,
     remoteFileCountBefore: result.remoteFileCountBefore,
+  };
+}
+
+export async function publishRenderArtifactToR2({
+  renderId,
+  format,
+  fileName,
+  artifactFilePath,
+  outputDir,
+}) {
+  const config = assertR2Configured();
+
+  if (format === "web") {
+    if (!outputDir) {
+      throw new Error("outputDir is required when publishing a web artifact.");
+    }
+
+    // Web export builds are emitted with a fixed base of `/artifacts/{renderId}/web/`,
+    // so the published object prefix must mirror that absolute path.
+    const objectPrefix = joinR2Key("artifacts", renderId, "web");
+
+    const result = await uploadDirectoryToR2({
+      localDir: outputDir,
+      keyPrefix: objectPrefix,
+    });
+
+    return {
+      bucket: config.bucket,
+      objectPrefix,
+      publishedArtifactUrl: config.publicDomain ? `${config.publicDomain}/${objectPrefix}/` : null,
+      format,
+      uploadedFileCount: result.uploadedFileCount,
+      uploadedKeys: result.uploadedKeys,
+      skippedUploadFileCount: result.skippedUploadFileCount,
+      skippedUploadKeys: result.skippedUploadKeys,
+      deletedFileCount: result.deletedFileCount,
+      deletedKeys: result.deletedKeys,
+      remoteFileCountBefore: result.remoteFileCountBefore,
+    };
+  }
+
+  const objectPrefix = joinR2Key(getRenderArtifactPathPrefix(), renderId);
+
+  if (!artifactFilePath || !fileName) {
+    throw new Error("artifactFilePath and fileName are required when publishing a file artifact.");
+  }
+
+  const objectKey = joinR2Key(objectPrefix, fileName);
+  const body = await readFile(artifactFilePath);
+  const uploaded = await putR2Object({
+    key: objectKey,
+    body,
+    contentType: getContentType(fileName),
+    cacheControl: "public, max-age=31536000, immutable",
+  });
+
+  return {
+    bucket: config.bucket,
+    objectPrefix,
+    objectKey,
+    publishedArtifactUrl: uploaded.url,
+    format,
+    uploadedFileCount: 1,
+    uploadedKeys: [objectKey],
+    skippedUploadFileCount: 0,
+    skippedUploadKeys: [],
+    deletedFileCount: 0,
+    deletedKeys: [],
+    remoteFileCountBefore: null,
   };
 }

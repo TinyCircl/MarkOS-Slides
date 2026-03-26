@@ -8,12 +8,16 @@ import { Readable } from "node:stream";
 import { fileURLToPath } from "node:url";
 import { z } from "zod";
 import { ensurePreviewSession, getPreviewSession, touchPreviewSession } from "./preview-manager.mjs";
-import { isR2Configured, publishPreviewSiteToR2 } from "./r2-client.mjs";
+import { isR2Configured, publishPreviewSiteToR2, publishRenderArtifactToR2 } from "./r2-client.mjs";
 import {
   buildPreviewSite,
+  cleanupExpiredLocalArtifacts,
   getCachedPreviewPublishResult,
+  getCachedRenderPublishResult,
   renderArtifact,
+  startArtifactCleanupScheduler,
   updateCachedPreviewPublishResult,
+  updateCachedRenderPublishResult,
 } from "./render-manager.mjs";
 
 const PORT = Number(process.env.PORT || 3210);
@@ -21,6 +25,7 @@ const PUBLIC_BASE_URL = process.env.SLIDEV_PUBLIC_BASE_URL?.replace(/\/$/, "") |
 const PREVIEW_SITE_BASE_URL = process.env.SLIDEV_PREVIEW_SITE_BASE_URL?.replace(/\/$/, "") || null;
 const BODY_LIMIT = process.env.SLIDEV_BODY_LIMIT || "20mb";
 const ARTIFACT_ROOT = join(process.cwd(), ".slidev-artifacts");
+const RENDER_ARTIFACT_ROOT = join(ARTIFACT_ROOT, "renders");
 
 const previewSessionRequestSchema = z.object({
   projectId: z.string().trim().nullable().optional(),
@@ -35,6 +40,7 @@ const renderJobRequestSchema = z.object({
   content: z.string(),
   format: z.enum(["web", "pdf", "pptx"]),
   fileName: z.string().trim().nullable().optional(),
+  publish: z.boolean().optional(),
   assets: z.array(z.object({
     path: z.string().min(1),
     contentBase64: z.string().min(1),
@@ -173,14 +179,51 @@ app.post("/api/preview/session", async (req, res) => {
 
 app.post("/api/render", async (req, res) => {
   try {
+    const requestStartedAt = Date.now();
     const payload = renderJobRequestSchema.parse(req.body);
     const artifact = await renderArtifact(payload);
+    let publishResult = null;
+    let publishCacheHit = false;
+
+    if (payload.publish) {
+      if (artifact.cacheHit === true) {
+        publishResult = await getCachedRenderPublishResult({
+          cacheKey: artifact.cacheKey,
+          jobId: artifact.jobId,
+        });
+        publishCacheHit = publishResult != null;
+      }
+
+      if (!publishResult) {
+        publishResult = await publishRenderArtifactToR2({
+          renderId: artifact.jobId,
+          format: artifact.format,
+          fileName: artifact.fileName,
+          artifactFilePath: artifact.artifactFilePath,
+          outputDir: artifact.outputDir,
+        });
+        await updateCachedRenderPublishResult({
+          cacheKey: artifact.cacheKey,
+          jobId: artifact.jobId,
+          publishResult,
+        });
+      }
+    }
+
     res.json({
       jobId: artifact.jobId,
       format: artifact.format,
       fileName: artifact.fileName,
       artifactUrl: absolutize(req, artifact.artifactPath),
       siteUrl: artifact.format === "web" ? absolutize(req, artifact.artifactPath) : null,
+      cacheHit: artifact.cacheHit === true,
+      publishCacheHit,
+      publishedArtifactUrl: publishResult?.publishedArtifactUrl ?? null,
+      r2Configured: isR2Configured(),
+      timings: {
+        totalMs: Date.now() - requestStartedAt,
+      },
+      publishResult,
     });
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -370,10 +413,13 @@ app.use("/p/:previewId", async (req, res) => {
   }
 });
 
-app.use("/artifacts", express.static(ARTIFACT_ROOT, { index: ["index.html"] }));
+app.use("/artifacts", express.static(RENDER_ARTIFACT_ROOT, { index: ["index.html"] }));
 
 export async function startServer() {
   await mkdir(ARTIFACT_ROOT, { recursive: true });
+  await mkdir(RENDER_ARTIFACT_ROOT, { recursive: true });
+  await cleanupExpiredLocalArtifacts();
+  startArtifactCleanupScheduler();
   await startGrpcServer();
   return app.listen(PORT, () => {
     console.log(`[slidev-renderer] listening on :${PORT}`);

@@ -1,14 +1,23 @@
 import {createHash, randomUUID} from "node:crypto";
 import {spawn} from "node:child_process";
 import {mkdir, readFile, readdir, rm, stat, writeFile} from "node:fs/promises";
-import {dirname, join, normalize} from "node:path";
+import {dirname, join, normalize, resolve} from "node:path";
 
-const ARTIFACT_IDLE_TTL_MS = Number(process.env.SLIDEV_ARTIFACT_TTL_MS || 60 * 60 * 1000);
+const LOCAL_ARTIFACT_RETENTION_MS = Number(process.env.SLIDEV_LOCAL_ARTIFACT_RETENTION_MS || 7 * 24 * 60 * 60 * 1000);
+const LOCAL_ARTIFACT_CLEANUP_INTERVAL_MS = Number(process.env.SLIDEV_LOCAL_ARTIFACT_CLEANUP_INTERVAL_MS || 60 * 60 * 1000);
 // Preview artifacts are persisted across deploys, so semantic renderer changes
 // must invalidate the cache to avoid serving stale builds.
 const PREVIEW_BUILD_CACHE_VERSION = 2;
+const RENDER_BUILD_CACHE_VERSION = 1;
 const SLIDEV_RENDERER_CLI_ARGS = [];
 const PREVIEW_ID_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._-]*$/;
+const RENDER_ARTIFACTS_DIRNAME = "renders";
+const PREVIEW_ARTIFACTS_DIRNAME = "previews";
+const PREVIEW_BUILD_CACHE_DIRNAME = "preview-cache";
+const RENDER_BUILD_CACHE_DIRNAME = "render-cache";
+const renderArtifactCleanupTimers = new Map();
+let artifactCleanupTimer = null;
+let artifactCleanupRun = null;
 
 function normalizeText(value) {
     return value.replace(/\r\n?/g, "\n");
@@ -495,15 +504,79 @@ function getWorkDir(jobId) {
 }
 
 function getArtifactDir(jobId) {
-    return join(process.cwd(), ".slidev-artifacts", jobId);
+    return join(process.cwd(), ".slidev-artifacts", RENDER_ARTIFACTS_DIRNAME, jobId);
 }
 
 function getPreviewArtifactDir(previewId) {
-    return join(process.cwd(), ".slidev-artifacts", "previews", sanitizePreviewId(previewId));
+    return join(process.cwd(), ".slidev-artifacts", PREVIEW_ARTIFACTS_DIRNAME, sanitizePreviewId(previewId));
 }
 
 function getPreviewBuildCacheFilePath(previewId) {
-    return join(process.cwd(), ".slidev-artifacts", "preview-cache", `${sanitizePreviewId(previewId)}.json`);
+    return join(process.cwd(), ".slidev-artifacts", PREVIEW_BUILD_CACHE_DIRNAME, `${sanitizePreviewId(previewId)}.json`);
+}
+
+function getRenderBuildCacheFilePath(cacheKey) {
+    return join(process.cwd(), ".slidev-artifacts", RENDER_BUILD_CACHE_DIRNAME, `${cacheKey}.json`);
+}
+
+function getPreviewArtifactsRootDir() {
+    return join(process.cwd(), ".slidev-artifacts", PREVIEW_ARTIFACTS_DIRNAME);
+}
+
+function getRenderArtifactsRootDir() {
+    return join(process.cwd(), ".slidev-artifacts", RENDER_ARTIFACTS_DIRNAME);
+}
+
+function getPreviewCacheRootDir() {
+    return join(process.cwd(), ".slidev-artifacts", PREVIEW_BUILD_CACHE_DIRNAME);
+}
+
+function getRenderCacheRootDir() {
+    return join(process.cwd(), ".slidev-artifacts", RENDER_BUILD_CACHE_DIRNAME);
+}
+
+function isPathInside(rootDir, targetPath) {
+    if (!rootDir || !targetPath) {
+        return false;
+    }
+
+    const normalizedRoot = resolve(rootDir).replace(/[\\/]+$/, "").toLowerCase();
+    const normalizedTarget = resolve(targetPath).toLowerCase();
+    return normalizedTarget === normalizedRoot || normalizedTarget.startsWith(`${normalizedRoot}\\`) || normalizedTarget.startsWith(`${normalizedRoot}/`);
+}
+
+function parseCreatedAt(value) {
+    const createdAtMs = Date.parse(String(value ?? ""));
+    return Number.isFinite(createdAtMs) ? createdAtMs : null;
+}
+
+function isExpired(createdAt, now = Date.now()) {
+    const createdAtMs = parseCreatedAt(createdAt);
+    if (createdAtMs == null) {
+        return true;
+    }
+    return now - createdAtMs >= LOCAL_ARTIFACT_RETENTION_MS;
+}
+
+async function listSubdirectories(rootDir) {
+    try {
+        const entries = await readdir(rootDir, {withFileTypes: true});
+        return entries
+            .filter((entry) => entry.isDirectory())
+            .map((entry) => join(rootDir, entry.name));
+    } catch {
+        return [];
+    }
+}
+
+async function removeDirIfExists(dirPath) {
+    await rm(dirPath, {recursive: true, force: true}).catch(() => {
+    });
+}
+
+async function removeFileIfExists(filePath) {
+    await rm(filePath, {force: true}).catch(() => {
+    });
 }
 
 async function writeAssets(rootDir, assets = []) {
@@ -579,13 +652,23 @@ async function runSlidevCommand(args, cwd) {
     });
 }
 
-function scheduleArtifactCleanup(jobId) {
-    setTimeout(() => {
-        void rm(getWorkDir(jobId), {recursive: true, force: true}).catch(() => {
-        });
+function scheduleArtifactCleanup(jobId, {cacheFilePath} = {}) {
+    const existingTimer = renderArtifactCleanupTimers.get(jobId);
+    if (existingTimer) {
+        clearTimeout(existingTimer);
+    }
+
+    const timer = setTimeout(() => {
+        renderArtifactCleanupTimers.delete(jobId);
         void rm(getArtifactDir(jobId), {recursive: true, force: true}).catch(() => {
         });
-    }, ARTIFACT_IDLE_TTL_MS);
+        if (cacheFilePath) {
+            void rm(cacheFilePath, {force: true}).catch(() => {
+            });
+        }
+    }, LOCAL_ARTIFACT_RETENTION_MS);
+
+    renderArtifactCleanupTimers.set(jobId, timer);
 }
 
 async function listRelativeFiles(rootDir, currentDir = rootDir) {
@@ -663,6 +746,15 @@ function normalizeSourceFilesForHash(files) {
         .sort((left, right) => left.path.localeCompare(right.path));
 }
 
+function normalizeRenderAssetsForHash(assets = []) {
+    return assets
+        .map((asset) => ({
+            path: sanitizeRelativePath(asset.path),
+            contentBase64: asset.contentBase64,
+        }))
+        .sort((left, right) => left.path.localeCompare(right.path));
+}
+
 function createPreviewSourceHash({basePath, sourceEntry, sourceFiles}) {
     return createHash("sha256")
         .update(JSON.stringify({
@@ -674,8 +766,40 @@ function createPreviewSourceHash({basePath, sourceEntry, sourceFiles}) {
         .digest("hex");
 }
 
+function buildRenderOutputMetadata(input) {
+    if (input.format === "web") {
+        return {
+            baseName: "index",
+            outputFileName: "index.html",
+        };
+    }
+
+    const extension = input.format;
+    const baseName = (input.fileName?.trim() || normalizeTitle(input.title)).replace(/[<>:"/\\|?*\x00-\x1F]/g, "_");
+    return {
+        baseName,
+        outputFileName: `${baseName}.${extension}`,
+    };
+}
+
+function createRenderArtifactSourceHash({format, markdown, assets, outputFileName}) {
+    return createHash("sha256")
+        .update(JSON.stringify({
+            version: RENDER_BUILD_CACHE_VERSION,
+            format,
+            outputFileName,
+            markdown,
+            assets: normalizeRenderAssetsForHash(assets),
+        }))
+        .digest("hex");
+}
+
 async function readPreviewBuildCache(previewId) {
     return readJsonFile(getPreviewBuildCacheFilePath(previewId));
+}
+
+async function readRenderBuildCache(cacheKey) {
+    return readJsonFile(getRenderBuildCacheFilePath(cacheKey));
 }
 
 async function writePreviewBuildCache({
@@ -700,6 +824,37 @@ async function writePreviewBuildCache({
         sourceHash,
         outputDir,
         manifestFilePath,
+        createdAt,
+        publishResult: publishResult ?? null,
+    }, null, 2)}\n`, "utf8");
+}
+
+async function writeRenderBuildCache({
+                                         cacheKey,
+                                         jobId,
+                                         format,
+                                         outputFileName,
+                                         artifactPath,
+                                         artifactDir,
+                                         artifactFilePath,
+                                         outputDir,
+                                         sourceHash,
+                                         createdAt,
+                                         publishResult,
+                                     }) {
+    const cacheFilePath = getRenderBuildCacheFilePath(cacheKey);
+    await mkdir(dirname(cacheFilePath), {recursive: true});
+    await writeFile(cacheFilePath, `${JSON.stringify({
+        version: RENDER_BUILD_CACHE_VERSION,
+        cacheKey,
+        jobId,
+        format,
+        outputFileName,
+        artifactPath,
+        artifactDir,
+        artifactFilePath: artifactFilePath ?? null,
+        outputDir: outputDir ?? null,
+        sourceHash,
         createdAt,
         publishResult: publishResult ?? null,
     }, null, 2)}\n`, "utf8");
@@ -752,6 +907,67 @@ async function resolveCachedPreviewBuild({
     };
 }
 
+async function resolveCachedRenderArtifact({
+                                               cacheKey,
+                                               sourceHash,
+                                               format,
+                                           }) {
+    const cache = await readRenderBuildCache(cacheKey);
+    if (!cache) {
+        return null;
+    }
+
+    if (
+        cache.version !== RENDER_BUILD_CACHE_VERSION
+        || cache.cacheKey !== cacheKey
+        || cache.sourceHash !== sourceHash
+        || cache.format !== format
+        || typeof cache.jobId !== "string"
+        || typeof cache.artifactPath !== "string"
+        || typeof cache.outputFileName !== "string"
+        || typeof cache.artifactDir !== "string"
+    ) {
+        return null;
+    }
+
+    if (format === "web") {
+        const outputDir = typeof cache.outputDir === "string" ? cache.outputDir : join(cache.artifactDir, "web");
+        if (!await isFile(join(outputDir, "index.html"))) {
+            return null;
+        }
+
+        return {
+            jobId: cache.jobId,
+            format,
+            artifactPath: cache.artifactPath,
+            fileName: cache.outputFileName,
+            artifactDir: cache.artifactDir,
+            artifactFilePath: null,
+            outputDir,
+            sourceHash,
+            cacheKey,
+            cacheHit: true,
+        };
+    }
+
+    if (typeof cache.artifactFilePath !== "string" || !await isFile(cache.artifactFilePath)) {
+        return null;
+    }
+
+    return {
+        jobId: cache.jobId,
+        format,
+        artifactPath: cache.artifactPath,
+        fileName: cache.outputFileName,
+        artifactDir: cache.artifactDir,
+        artifactFilePath: cache.artifactFilePath,
+        outputDir: null,
+        sourceHash,
+        cacheKey,
+        cacheHit: true,
+    };
+}
+
 export async function getCachedPreviewPublishResult({previewId, buildId}) {
     const cache = await readPreviewBuildCache(previewId);
     if (!cache || cache.buildId !== buildId || !cache.publishResult) {
@@ -780,6 +996,165 @@ export async function updateCachedPreviewPublishResult({previewId, buildId, publ
     });
 }
 
+export async function getCachedRenderPublishResult({cacheKey, jobId}) {
+    const cache = await readRenderBuildCache(cacheKey);
+    if (!cache || cache.jobId !== jobId || !cache.publishResult) {
+        return null;
+    }
+
+    return cache.publishResult;
+}
+
+export async function updateCachedRenderPublishResult({cacheKey, jobId, publishResult}) {
+    const cache = await readRenderBuildCache(cacheKey);
+    if (!cache || cache.jobId !== jobId) {
+        return;
+    }
+
+    await writeRenderBuildCache({
+        cacheKey,
+        jobId,
+        format: cache.format,
+        outputFileName: cache.outputFileName,
+        artifactPath: cache.artifactPath,
+        artifactDir: cache.artifactDir,
+        artifactFilePath: cache.artifactFilePath,
+        outputDir: cache.outputDir,
+        sourceHash: cache.sourceHash,
+        createdAt: cache.createdAt,
+        publishResult,
+    });
+}
+
+async function cleanupPreviewArtifacts({now, retainedDirs}) {
+    const previewArtifactsRootDir = getPreviewArtifactsRootDir();
+    const previewCacheRootDir = getPreviewCacheRootDir();
+
+    try {
+        const cacheEntries = await readdir(previewCacheRootDir, {withFileTypes: true});
+        for (const entry of cacheEntries) {
+            if (!entry.isFile() || !entry.name.endsWith(".json")) {
+                continue;
+            }
+
+            const cacheFilePath = join(previewCacheRootDir, entry.name);
+            const cache = await readJsonFile(cacheFilePath);
+            if (!cache || isExpired(cache.createdAt, now)) {
+                const outputDir = typeof cache?.outputDir === "string" && isPathInside(previewArtifactsRootDir, cache.outputDir)
+                    ? cache.outputDir
+                    : null;
+                if (outputDir) {
+                    await removeDirIfExists(outputDir);
+                }
+                await removeFileIfExists(cacheFilePath);
+                continue;
+            }
+
+            if (typeof cache.outputDir === "string" && isPathInside(previewArtifactsRootDir, cache.outputDir)) {
+                retainedDirs.add(resolve(cache.outputDir).toLowerCase());
+            }
+        }
+    } catch {
+    }
+
+    for (const dirPath of await listSubdirectories(previewArtifactsRootDir)) {
+        if (retainedDirs.has(resolve(dirPath).toLowerCase())) {
+            continue;
+        }
+
+        try {
+            const fileStat = await stat(dirPath);
+            if (now - fileStat.mtimeMs >= LOCAL_ARTIFACT_RETENTION_MS) {
+                await removeDirIfExists(dirPath);
+            }
+        } catch {
+        }
+    }
+}
+
+async function cleanupRenderArtifacts({now, retainedDirs}) {
+    const renderArtifactsRootDir = getRenderArtifactsRootDir();
+    const renderCacheRootDir = getRenderCacheRootDir();
+
+    try {
+        const cacheEntries = await readdir(renderCacheRootDir, {withFileTypes: true});
+        for (const entry of cacheEntries) {
+            if (!entry.isFile() || !entry.name.endsWith(".json")) {
+                continue;
+            }
+
+            const cacheFilePath = join(renderCacheRootDir, entry.name);
+            const cache = await readJsonFile(cacheFilePath);
+            if (!cache || isExpired(cache.createdAt, now)) {
+                const artifactDir = typeof cache?.artifactDir === "string" && isPathInside(renderArtifactsRootDir, cache.artifactDir)
+                    ? cache.artifactDir
+                    : null;
+                if (artifactDir && typeof cache?.jobId === "string") {
+                    const existingTimer = renderArtifactCleanupTimers.get(cache.jobId);
+                    if (existingTimer) {
+                        clearTimeout(existingTimer);
+                        renderArtifactCleanupTimers.delete(cache.jobId);
+                    }
+                }
+                if (artifactDir) {
+                    await removeDirIfExists(artifactDir);
+                }
+                await removeFileIfExists(cacheFilePath);
+                continue;
+            }
+
+            if (typeof cache.artifactDir === "string" && isPathInside(renderArtifactsRootDir, cache.artifactDir)) {
+                retainedDirs.add(resolve(cache.artifactDir).toLowerCase());
+            }
+        }
+    } catch {
+    }
+
+    for (const dirPath of await listSubdirectories(renderArtifactsRootDir)) {
+        if (retainedDirs.has(resolve(dirPath).toLowerCase())) {
+            continue;
+        }
+
+        try {
+            const fileStat = await stat(dirPath);
+            if (now - fileStat.mtimeMs >= LOCAL_ARTIFACT_RETENTION_MS) {
+                await removeDirIfExists(dirPath);
+            }
+        } catch {
+        }
+    }
+}
+
+export async function cleanupExpiredLocalArtifacts({now = Date.now()} = {}) {
+    if (artifactCleanupRun) {
+        return artifactCleanupRun;
+    }
+
+    artifactCleanupRun = (async () => {
+        const retainedPreviewDirs = new Set();
+        const retainedRenderDirs = new Set();
+
+        await cleanupPreviewArtifacts({now, retainedDirs: retainedPreviewDirs});
+        await cleanupRenderArtifacts({now, retainedDirs: retainedRenderDirs});
+    })().finally(() => {
+        artifactCleanupRun = null;
+    });
+
+    return artifactCleanupRun;
+}
+
+export function startArtifactCleanupScheduler() {
+    if (artifactCleanupTimer) {
+        return;
+    }
+
+    void cleanupExpiredLocalArtifacts();
+    artifactCleanupTimer = setInterval(() => {
+        void cleanupExpiredLocalArtifacts();
+    }, LOCAL_ARTIFACT_CLEANUP_INTERVAL_MS);
+    artifactCleanupTimer.unref?.();
+}
+
 async function writePreviewManifest({previewId, buildId, basePath, outputDir, sourceEntry}) {
     const files = await listRelativeFiles(outputDir);
     const manifest = {
@@ -804,63 +1179,137 @@ async function writePreviewManifest({previewId, buildId, basePath, outputDir, so
 }
 
 export async function renderArtifact(input) {
+    const {outputFileName} = buildRenderOutputMetadata(input);
+    const markdown = buildDeckMarkdown(input);
+    const sourceHash = createRenderArtifactSourceHash({
+        format: input.format,
+        markdown,
+        assets: input.assets ?? [],
+        outputFileName,
+    });
+    const cacheKey = sourceHash;
+
+    const cachedArtifact = await resolveCachedRenderArtifact({
+        cacheKey,
+        sourceHash,
+        format: input.format,
+    });
+    if (cachedArtifact) {
+        scheduleArtifactCleanup(cachedArtifact.jobId, {
+            cacheFilePath: getRenderBuildCacheFilePath(cacheKey),
+        });
+        return cachedArtifact;
+    }
+
     const jobId = randomUUID();
     const workDir = getWorkDir(jobId);
     const artifactDir = getArtifactDir(jobId);
     const entryFilePath = join(workDir, "slides.md");
+    const cacheFilePath = getRenderBuildCacheFilePath(cacheKey);
 
+    await rm(workDir, {recursive: true, force: true});
+    await rm(artifactDir, {recursive: true, force: true});
     await mkdir(workDir, {recursive: true});
     await mkdir(artifactDir, {recursive: true});
-    await writeFile(entryFilePath, buildDeckMarkdown(input), "utf8");
-    await writeAssets(workDir, input.assets ?? []);
 
-    if (input.format === "web") {
-        const outDir = join(artifactDir, "web");
+    try {
+        await writeFile(entryFilePath, markdown, "utf8");
+        await writeAssets(workDir, input.assets ?? []);
+
+        if (input.format === "web") {
+            const outDir = join(artifactDir, "web");
+            const artifactPath = `/artifacts/${jobId}/web/`;
+            await runSlidevCommand(
+                [
+                    "build",
+                    entryFilePath,
+                    "--out",
+                    outDir,
+                    "--base",
+                    artifactPath,
+                ],
+                workDir,
+            );
+
+            await writeRenderBuildCache({
+                cacheKey,
+                jobId,
+                format: "web",
+                outputFileName,
+                artifactPath,
+                artifactDir,
+                artifactFilePath: null,
+                outputDir: outDir,
+                sourceHash,
+                createdAt: new Date().toISOString(),
+            });
+
+            scheduleArtifactCleanup(jobId, {cacheFilePath});
+            return {
+                jobId,
+                format: "web",
+                artifactPath,
+                fileName: outputFileName,
+                artifactDir,
+                artifactFilePath: null,
+                outputDir: outDir,
+                sourceHash,
+                cacheKey,
+                cacheHit: false,
+            };
+        }
+
+        const outputFilePath = join(artifactDir, outputFileName);
+        const artifactPath = `/artifacts/${jobId}/${outputFileName}`;
+
         await runSlidevCommand(
             [
-                "build",
+                "export",
                 entryFilePath,
-                "--out",
-                outDir,
-                "--base",
-                `/artifacts/${jobId}/web/`,
+                "--format",
+                input.format,
+                "--output",
+                outputFilePath,
             ],
             workDir,
         );
 
-        scheduleArtifactCleanup(jobId);
+        await writeRenderBuildCache({
+            cacheKey,
+            jobId,
+            format: input.format,
+            outputFileName,
+            artifactPath,
+            artifactDir,
+            artifactFilePath: outputFilePath,
+            outputDir: null,
+            sourceHash,
+            createdAt: new Date().toISOString(),
+        });
+
+        scheduleArtifactCleanup(jobId, {cacheFilePath});
         return {
             jobId,
-            format: "web",
-            artifactPath: `/artifacts/${jobId}/web/`,
-            fileName: "index.html",
+            format: input.format,
+            artifactPath,
+            fileName: outputFileName,
+            artifactDir,
+            artifactFilePath: outputFilePath,
+            outputDir: null,
+            sourceHash,
+            cacheKey,
+            cacheHit: false,
         };
+    } catch (error) {
+        await rm(cacheFilePath, {force: true}).catch(() => {
+        });
+        await rm(artifactDir, {recursive: true, force: true}).catch(() => {
+        });
+        throw error;
+    } finally {
+        await rm(workDir, {recursive: true, force: true}).catch(() => {
+        });
     }
-
-    const extension = input.format;
-    const baseName = (input.fileName?.trim() || normalizeTitle(input.title)).replace(/[<>:"/\\|?*\x00-\x1F]/g, "_");
-    const outputFileName = `${baseName}.${extension}`;
-    const outputFilePath = join(artifactDir, outputFileName);
-
-    await runSlidevCommand(
-        [
-            "export",
-            entryFilePath,
-            "--format",
-            input.format,
-            "--output",
-            outputFilePath,
-        ],
-        workDir,
-    );
-
-    scheduleArtifactCleanup(jobId);
-    return {
-        jobId,
-        format: input.format,
-        artifactPath: `/artifacts/${jobId}/${outputFileName}`,
-        fileName: outputFileName,
-    };
 }
 
 export async function buildPreviewSite(input) {

@@ -1,6 +1,8 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
+const protectedEnvKeys = new Set(Object.keys(process.env));
+
 function stripMatchingQuotes(value) {
   const trimmed = value.trim();
   if (
@@ -39,17 +41,21 @@ function parseEnvFile(content) {
   return entries;
 }
 
-function loadEnvFile(filePath) {
+function loadEnvFile(filePath, { overrideFileValues = false } = {}) {
   if (!existsSync(filePath)) {
     return;
   }
 
   const content = readFileSync(filePath, "utf8");
   for (const [key, value] of parseEnvFile(content)) {
-    if (process.env[key] === undefined) {
+    if (protectedEnvKeys.has(key)) {
+      continue;
+    }
+    if (overrideFileValues || process.env[key] === undefined) {
       process.env[key] = value;
     }
   }
 }
 
 loadEnvFile(join(process.cwd(), ".env"));
+loadEnvFile(join(process.cwd(), ".env.local"), { overrideFileValues: true });
