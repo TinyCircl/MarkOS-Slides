@@ -144,8 +144,8 @@
   <div class="wrap">
     <h1>Markdown → JSON 字符串工具</h1>
     <div class="sub">
-      这个工具只做一件事：把原始 Markdown 安全放进 JSON 字符串里。<br />
-      适合直接复制到你的接口请求体里，例如 <span class="pill">{"content":"..."}</span> 这种场景。
+      这个工具只做一件事：把原始 Markdown 转成合法 JSON 字符串。<br />
+      输出结果只有字符串本身，不再包装成 <span class="pill">{"content":"..."}</span> 这种对象。
     </div>
 
     <div class="grid">
@@ -160,10 +160,9 @@
         </div>
 
         <div class="toolbar">
-          <label class="inline"><input id="wrapObject" type="checkbox" checked /> 包装成 JSON 对象</label>
           <label class="inline"><input id="pretty" type="checkbox" checked /> 格式化输出</label>
           <label class="inline"><input id="asciiEscape" type="checkbox" /> 转义非 ASCII 字符</label>
-          <input id="fieldName" class="stretch" type="text" value="content" placeholder="字段名，例如 content" />
+          <span class="stretch muted">始终输出 JSON 字符串</span>
         </div>
 
         <textarea id="markdownInput" placeholder="在这里粘贴 Markdown，例如：&#10;---&#10;theme: seriph&#10;---&#10;&#10;# Hello"></textarea>
@@ -177,7 +176,6 @@
           <button id="convertBtn">转换</button>
           <button id="copyBtn">复制结果</button>
           <button id="downloadBtn">下载 result.json</button>
-          <button id="stringOnlyBtn">仅输出 JSON 字符串</button>
           <span class="stretch"></span>
           <span id="outputCount" class="count">0 字符</span>
         </div>
@@ -185,8 +183,7 @@
         <pre id="output"></pre>
         <div id="status" class="status"></div>
         <div class="hint">
-          “包装成 JSON 对象” 勾选时输出形如 <span class="pill">{"content":"..."}</span>。<br />
-          不勾选时输出纯 JSON 字符串，形如 <span class="pill">"---\n# Hello\n"</span>。
+          输出结果始终是纯 JSON 字符串，形如 <span class="pill">"---\n# Hello\n"</span>。
         </div>
       </section>
     </div>
@@ -202,10 +199,8 @@
     const status = document.getElementById('status');
     const inputCount = document.getElementById('inputCount');
     const outputCount = document.getElementById('outputCount');
-    const wrapObject = document.getElementById('wrapObject');
     const pretty = document.getElementById('pretty');
     const asciiEscape = document.getElementById('asciiEscape');
-    const fieldName = document.getElementById('fieldName');
     const fileInput = document.getElementById('fileInput');
 
     function escapeNonAscii(str) {
@@ -215,18 +210,9 @@
       });
     }
 
-    function buildOutput(stringOnly = false) {
+    function buildOutput() {
       const md = markdownInput.value || '';
-      const key = (fieldName.value || 'content').trim() || 'content';
-
-      let result;
-      if (stringOnly || !wrapObject.checked) {
-        result = JSON.stringify(md, null, pretty.checked ? 2 : 0);
-      } else {
-        const obj = {};
-        obj[key] = md;
-        result = JSON.stringify(obj, null, pretty.checked ? 2 : 0);
-      }
+      let result = JSON.stringify(md, null, pretty.checked ? 2 : 0);
 
       if (asciiEscape.checked) {
         result = escapeNonAscii(result);
@@ -302,8 +288,7 @@ theme: seriph
       }
     });
 
-    document.getElementById('convertBtn').addEventListener('click', () => buildOutput(false));
-    document.getElementById('stringOnlyBtn').addEventListener('click', () => buildOutput(true));
+    document.getElementById('convertBtn').addEventListener('click', buildOutput);
     document.getElementById('copyBtn').addEventListener('click', copyOutput);
     document.getElementById('downloadBtn').addEventListener('click', downloadOutput);
     document.getElementById('sampleBtn').addEventListener('click', setSample);
@@ -313,10 +298,8 @@ theme: seriph
       inputCount.textContent = `${markdownInput.value.length} 字符`;
     });
 
-    wrapObject.addEventListener('change', () => buildOutput(false));
-    pretty.addEventListener('change', () => buildOutput(false));
-    asciiEscape.addEventListener('change', () => buildOutput(false));
-    fieldName.addEventListener('input', () => buildOutput(false));
+    pretty.addEventListener('change', buildOutput);
+    asciiEscape.addEventListener('change', buildOutput);
 
     setSample();
   </script>

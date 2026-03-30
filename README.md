@@ -95,6 +95,21 @@ npm run dev
 - `localPreviewUrl`
 - `publishedPreviewUrl`
 
+Apifox 发送成功后，可以到 `.slidev-artifacts/previews` 目录里找到 `previewId` 对应的文件夹。
+
+例如：
+
+- 请求里传的是 `"previewId": "16"`
+- 本地产物目录就是 `.slidev-artifacts/previews/16`
+
+本地服务启动后，可以直接访问：
+
+- `http://localhost:3210/p/16/1`
+
+这里最后的 `/1` 代表第一页；如果要看第二页，就访问：
+
+- `http://localhost:3210/p/16/2`
+
 ## Markdown 转 JSON 脚本
 
 仓库内新增了一个脚本：`scripts/md_to_request_json.py`
