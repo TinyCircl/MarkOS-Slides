@@ -3,6 +3,7 @@ dist/
 .slidev-preview/
 .slidev-artifacts/
 .slidev-workspaces/
+.npm-cache/
 .env
 .env.local
 scripts/nCine_14Years_Presentation.render.json

@@ -106,25 +106,25 @@ npm run dev
 ### 生成 `/api/render` 请求体
 
 ```bash
-python scripts/md_to_request_json.py test/fixtures/markdown/base.md > render.json
+python scripts/slidev_to_json.py test/fixtures/markdown/base.md > render.json
 ```
 
 如果要导出 PDF：
 
 ```bash
-python scripts/md_to_request_json.py test/fixtures/markdown/base.md --format pdf --file-name base > render-pdf.json
+python scripts/slidev_to_json.py test/fixtures/markdown/base.md --format pdf --file-name base > render-pdf.json
 ```
 
 ### 生成 `/api/previews/build` 请求体
 
 ```bash
-python scripts/md_to_request_json.py test/fixtures/markdown/base.md --api preview-build --preview-id demo-preview > preview-build.json
+python scripts/slidev_to_json.py test/fixtures/markdown/base.md --api preview-build --preview-id demo-preview > preview-build.json
 ```
 
 ### 生成 `/api/preview/session` 请求体
 
 ```bash
-python scripts/md_to_request_json.py test/fixtures/markdown/base.md --api preview-session --project-id demo-project > preview-session.json
+python scripts/slidev_to_json.py test/fixtures/markdown/base.md --api preview-session --project-id demo-project > preview-session.json
 ```
 
 ### 使用方式
