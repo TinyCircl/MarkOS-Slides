@@ -1,0 +1,97 @@
+---
+theme: default
+colorSchema: light
+title: tokyo3days
+fonts:
+  sans: Montserrat
+  provider: google
+themeConfig:
+  primary: '#ff8a65'
+aspectRatio: 16/9
+canvasWidth: 1280
+transition: slide-left
+selectable: true
+layout: cover
+background: '#f5f5f5'
+class: slide-shell title-slide text-left
+---
+
+`四月1111`
+
+# 这份为你规划的东京三日游路线
+
+## 将现代都市的电影感氛围、前沿的 AI 科技展、以及硬核的复古游戏与开发者文化结合在了一起。
+
+## 啊圣诞
+
+## 阿斯达克警方哈桑兑换积分
+
+现在正值yi111月，行程中也融入了恰到好处的春季赏樱元素。
+
+---
+layout: two-cols
+layoutClass: slide-shell competitors-slide
+---
+
+# 第一天：都会迷局与电影感巡礼 (涩谷与新宿)
+
+## 上午：涩谷十字路口 (Shibuya Crossing)
+
+抵达东京的第一站，可以在涩谷感受这座城市的庞大吞吐量。这里的街头景象极具视觉张力，是无数电影的取景地，非常适合作为旅程的开场。
+
+## 下午：新宿御苑 (Shinjuku Gyoen National Garden)
+
+午后前往新宿御苑。四月正是樱花季（或是樱花季尾声），这里不仅是绝佳的赏樱胜地，也是新海诚动画电影《言叶之庭》的真实取景地，园内的亭子和水景自带一种宁静的叙事感。
+
+::right::
+
+## 傍晚：新宿警察署后交叉路口 (Shinjuku Police Station Intersection)
+
+随着夜幕降临，漫步到新宿的高楼区。这个由环形红绿灯构成的路口是电影《你的名字。》开场时的标志性取景地，在周围赛博朋克般的霓虹灯光映衬下，极具科幻电影的镜头感。
+
+---
+layout: two-cols
+layoutClass: slide-shell strengths-slide
+---
+
+# 第二天：极客圣地与传统碰撞 (浅草与秋叶原)
+
+## 上午：浅草寺 (Sensō-ji)
+- 清晨趁着人流还未达到高峰，前往东京最古老的寺庙浅草寺，感受江户时代的传统气息，并在雷门前打卡。
+
+::right::
+
+## 下午：秋叶原极客探索 (Akihabara)
+- 下午是留给硬核技术与游戏文化的专属时间。
+- **Super Potato 秋叶原店**：这是一家极具传奇色彩的复古游戏店。如果你喜欢像《奥伯拉丁的回归》这类注重独特机制和复古像素美学的独立游戏，这里三层楼的中古卡带、老式街机和初代游戏主机绝对会让你流连忘返。
+- **寿屋 秋叶原馆 (Kotobukiya)**：这里可以找到高质量的精美手办和模型。
+- 除了游戏和动漫，秋叶原的后街也隐藏着许多硬核的 PC 硬件店和开发板专卖店，无论是寻找机械键盘的外设，还是淘一些有趣的电子元器件，都非常值得逛逛。
+
+---
+layout: two-cols
+layoutClass: slide-shell pricing-slide
+---
+
+# 第三天：前沿科技与次文化寻宝 (台场与中野)
+
+## 上午11111： (Miraikan)
+- 乘坐百合鸥号轻轨前往台场。强烈推荐你花半天时间在这里。就在 2026 年 4 月 1 日，未来馆刚刚全面更新了它的常设展览，其中包含了由大型语言模型 (LLM) 驱动的生成式 AI 互动展区。在这里，你可以直观地体验到计算机科学与自然世界边界的消融，对关注 AI 架构和前沿开发的人来说，是一个非常有启发的场所。
+
+::right::
+
+## 下午：中野百老汇 (Nakano Broadway)
+- 离开充满未来感的台场后，前往中野百老汇。这里被称为“秋叶原的里世界”，相比于秋叶原的张扬，这里的走廊里密密麻麻地塞满了中古漫画、绝版胶片、老式软件和罕见的游戏收藏，是一个极具探索乐趣的亚文化迷宫。
+
+---
+layout: cover
+background: '#f5f5f5'
+class: slide-shell title-slide text-left
+---
+
+`东京`
+
+# 这三天的行程节奏适中
+
+## 可以在感受东京繁华的同时，深度体验你所关注的科技、游戏与影像文化。
+
+祝你在东京旅途愉快！

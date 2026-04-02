@@ -2,12 +2,13 @@ import {readFile, readdir, stat} from "node:fs/promises";
 import http from "node:http";
 import https from "node:https";
 import path from "node:path";
+import {fileURLToPath} from "node:url";
 
-function parseArgs(argv) {
+export function parseArgs(argv) {
     const options = {
         api: "build",
         host: "http://127.0.0.1:3210",
-        file: path.join(process.cwd(), "old", "slides.md"),
+        file: path.join(process.cwd(), "slides.md"),
         previewId: "local-old-preview",
         title: "",
         json: false,
@@ -81,7 +82,7 @@ async function listFilesRecursive(rootDir, currentDir = rootDir) {
     return files;
 }
 
-async function buildSourceFiles(markdownPath) {
+export async function buildSourceFiles(markdownPath) {
     const directory = path.dirname(markdownPath);
     const markdown = await readFile(markdownPath, "utf8");
     const sourceFiles = [
@@ -117,7 +118,7 @@ async function buildSourceFiles(markdownPath) {
     };
 }
 
-async function postJson(url, body) {
+export async function postJson(url, body) {
     const target = new URL(url);
     const client = target.protocol === "https:" ? https : http;
     const payload = JSON.stringify(body);
@@ -166,7 +167,7 @@ async function postJson(url, body) {
     });
 }
 
-function printHumanSummary(api, response) {
+export function printHumanSummary(api, response) {
     if (api === "session") {
         console.log(`sessionId: ${response.sessionId}`);
         console.log(`slides:    ${response.slidesUrl}`);
@@ -183,8 +184,7 @@ function printHumanSummary(api, response) {
     }
 }
 
-async function main() {
-    const options = parseArgs(process.argv.slice(2));
+export async function runPreviewRequest(options) {
     const {markdown, sourceFiles} = await buildSourceFiles(options.file);
     const title = options.title || path.basename(options.file, path.extname(options.file));
 
@@ -198,10 +198,10 @@ async function main() {
         });
         if (options.json) {
             console.log(JSON.stringify(response, null, 2));
-            return;
+            return response;
         }
         printHumanSummary("session", response);
-        return;
+        return response;
     }
 
     if (options.api !== "build") {
@@ -220,12 +220,21 @@ async function main() {
 
     if (options.json) {
         console.log(JSON.stringify(response, null, 2));
-        return;
+        return response;
     }
     printHumanSummary("build", response);
+    return response;
 }
 
-main().catch((error) => {
-    console.error(error.message || String(error));
-    process.exitCode = 1;
-});
+async function main() {
+    const options = parseArgs(process.argv.slice(2));
+    await runPreviewRequest(options);
+}
+
+const currentFilePath = fileURLToPath(import.meta.url);
+if (process.argv[1] && path.resolve(process.argv[1]) === currentFilePath) {
+    main().catch((error) => {
+        console.error(error.message || String(error));
+        process.exitCode = 1;
+    });
+}

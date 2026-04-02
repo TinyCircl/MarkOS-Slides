@@ -9,6 +9,7 @@
     "check:fixtures": "node scripts/check-fixtures.mjs",
     "preview:local": "node scripts/preview-local-file.mjs",
     "preview:local:session": "node scripts/preview-local-file.mjs --api session",
+    "preview:local:watch": "node scripts/watch-preview-local-file.mjs",
     "test": "node --test"
   },
   "dependencies": {
