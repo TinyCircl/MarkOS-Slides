@@ -1,9 +1,11 @@
 node_modules/
 dist/
-.slidev-preview/
-.slidev-artifacts/
-.slidev-workspaces/
+.markos-preview/
+.markos-preview-work/
+.markos-artifacts/
+.markos-workspaces/
 .npm-cache/
 .env
 .env.local
+old/
 scripts/nCine_14Years_Presentation.render.json

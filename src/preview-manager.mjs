@@ -1,15 +1,11 @@
-import { spawn } from "node:child_process";
-import { createHash } from "node:crypto";
-import { mkdir, rm, writeFile } from "node:fs/promises";
-import { createServer } from "node:net";
-import { dirname, join } from "node:path";
-import { buildDeckMarkdown } from "./render-manager.mjs";
+import {createHash} from "node:crypto";
+import {mkdir, rm, writeFile} from "node:fs/promises";
+import {dirname, join} from "node:path";
+import {buildDeckMarkdown} from "./core/source-pipeline.mjs";
+import {writePreviewManifest} from "./core/artifact-store.mjs";
+import {getRenderEngine} from "./engines/index.mjs";
 
-const SESSION_IDLE_TTL_MS = Number(process.env.SLIDEV_SESSION_TTL_MS || 15 * 60 * 1000);
-const SESSION_START_TIMEOUT_MS = 60 * 1000;
-const SESSION_POLL_INTERVAL_MS = 250;
-const LOG_BUFFER_LIMIT = 40;
-const SLIDEV_RENDERER_CLI_ARGS = [];
+const SESSION_IDLE_TTL_MS = Number(process.env.MARKOS_SESSION_TTL_MS || 15 * 60 * 1000);
 
 const previewSessions = new Map();
 
@@ -31,145 +27,70 @@ function buildSessionId(input) {
   return createHash("sha1").update(source).digest("hex").slice(0, 12);
 }
 
-async function reservePort() {
-  return new Promise((resolve, reject) => {
-    const server = createServer();
-    server.unref();
-    server.on("error", reject);
-    server.listen(0, "127.0.0.1", () => {
-      const address = server.address();
-      if (!address || typeof address === "string") {
-        server.close();
-        reject(new Error("Failed to reserve Slidev preview port."));
-        return;
-      }
-
-      server.close((error) => {
-        if (error) {
-          reject(error);
-          return;
-        }
-
-        resolve(address.port);
-      });
-    });
-  });
+function buildSessionContentHash(input) {
+  return createHash("sha1")
+    .update(`${normalizeTitle(input.title)}\n${normalizeText(input.content)}`)
+    .digest("hex");
 }
 
 function getPreviewDir(sessionId) {
-  return join(process.cwd(), ".slidev-preview", sessionId);
+  return join(process.cwd(), ".markos-preview", sessionId);
 }
 
-function getSlidevCliPath() {
-  if (process.env.SLIDEV_CLI_PATH) {
-    return process.env.SLIDEV_CLI_PATH;
-  }
-  return join(process.cwd(), "node_modules", "@slidev", "cli", "bin", "slidev.mjs");
+function getPreviewWorkDir(sessionId) {
+  return join(process.cwd(), ".markos-preview-work", sessionId);
 }
 
 function getBasePath(sessionId) {
   return `/preview/${sessionId}/`;
 }
 
-function appendLogs(session, chunk) {
-  const nextLines = chunk
-    .toString()
-    .split(/\r?\n/)
-    .map((line) => line.trim())
-    .filter(Boolean);
-
-  if (!nextLines.length) return;
-
-  session.logs.push(...nextLines);
-  if (session.logs.length > LOG_BUFFER_LIMIT) {
-    session.logs.splice(0, session.logs.length - LOG_BUFFER_LIMIT);
-  }
+async function destroySessionArtifacts(session) {
+  await rm(session.outputDir, { recursive: true, force: true }).catch(() => {});
+  await rm(session.workDir, { recursive: true, force: true }).catch(() => {});
 }
 
-async function waitForPreviewReady(session, child) {
-  if (session.port == null) {
-    throw new Error("Slidev preview port is missing.");
-  }
-
-  const readyUrl = `http://localhost:${session.port}${session.basePath}overview`;
-  const startedAt = Date.now();
-
-  while (Date.now() - startedAt < SESSION_START_TIMEOUT_MS) {
-    if (child.exitCode !== null) {
-      const logTail = session.logs.length > 0 ? `\n${session.logs.join("\n")}` : "";
-      throw new Error(`Slidev exited before preview became ready.${logTail}`);
-    }
-
-    try {
-      const response = await fetch(readyUrl, { cache: "no-store" });
-      if (response.ok) {
-        return;
-      }
-    } catch {
-      // Ignore connection errors during startup.
-    }
-
-    await new Promise((resolve) => setTimeout(resolve, SESSION_POLL_INTERVAL_MS));
-  }
-
-  const logTail = session.logs.length > 0 ? `\n${session.logs.join("\n")}` : "";
-  throw new Error(`Slidev preview startup timed out after ${SESSION_START_TIMEOUT_MS}ms.${logTail}`);
-}
-
-async function startPreviewProcess(session) {
-  if (session.process && session.process.exitCode === null) {
-    if (session.readyPromise) {
-      await session.readyPromise;
-    }
+async function buildStaticPreviewSession(session, input) {
+  const renderEngine = getRenderEngine();
+  const contentHash = buildSessionContentHash(input);
+  if (session.contentHash === contentHash && session.ready) {
     return;
   }
 
-  session.logs = [];
-  session.port = await reservePort();
+  await rm(session.workDir, { recursive: true, force: true }).catch(() => {});
+  await rm(session.outputDir, { recursive: true, force: true }).catch(() => {});
+  await mkdir(dirname(session.entryFilePath), { recursive: true });
+  await writeFile(session.entryFilePath, buildDeckMarkdown(input), "utf8");
 
-  const child = spawn(
-    process.execPath,
-    [
-      getSlidevCliPath(),
-      session.entryFilePath,
-      "--port",
-      String(session.port),
-      "--base",
-      session.basePath,
-      "--log",
-      "silent",
-      ...SLIDEV_RENDERER_CLI_ARGS,
-    ],
-    {
-      cwd: process.cwd(),
-      stdio: ["pipe", "pipe", "pipe"],
-      windowsHide: true,
-    },
-  );
+  try {
+    await renderEngine.buildStaticSite({
+      entryFilePath: session.entryFilePath,
+      outputDir: session.outputDir,
+      basePath: session.basePath,
+      cwd: session.workDir,
+    });
 
-  session.process = child;
-  child.stdout.on("data", (chunk) => appendLogs(session, chunk));
-  child.stderr.on("data", (chunk) => appendLogs(session, chunk));
+    const buildId = contentHash.slice(0, 12);
+    const { manifestFilePath } = await writePreviewManifest({
+      previewId: session.id,
+      buildId,
+      basePath: session.basePath,
+      outputDir: session.outputDir,
+      sourceEntry: "slides.md",
+    });
 
-  child.once("exit", () => {
-    if (session.process === child) {
-      session.process = null;
-      session.readyPromise = null;
-      session.port = null;
-    }
-  });
-
-  session.readyPromise = waitForPreviewReady(session, child).catch((error) => {
-    if (session.process === child && child.exitCode === null) {
-      child.kill();
-    }
-    session.process = null;
-    session.readyPromise = null;
-    session.port = null;
+    session.contentHash = contentHash;
+    session.buildId = buildId;
+    session.manifestFilePath = manifestFilePath;
+    session.ready = true;
+  } catch (error) {
+    session.ready = false;
+    session.contentHash = null;
+    await destroySessionArtifacts(session);
     throw error;
-  });
-
-  await session.readyPromise;
+  } finally {
+    await rm(session.workDir, { recursive: true, force: true }).catch(() => {});
+  }
 }
 
 function scheduleSessionShutdown(session) {
@@ -184,17 +105,8 @@ function scheduleSessionShutdown(session) {
       return;
     }
 
-    try {
-      if (session.process && session.process.exitCode === null) {
-        session.process.kill();
-      }
-    } finally {
-      session.process = null;
-      session.readyPromise = null;
-      session.port = null;
-      previewSessions.delete(session.id);
-      await rm(getPreviewDir(session.id), { recursive: true, force: true }).catch(() => {});
-    }
+    previewSessions.delete(session.id);
+    await destroySessionArtifacts(session);
   }, SESSION_IDLE_TTL_MS);
 }
 
@@ -203,30 +115,29 @@ export async function ensurePreviewSession(input) {
   const existing = previewSessions.get(sessionId);
   const session = existing ?? {
     id: sessionId,
-    port: null,
     basePath: getBasePath(sessionId),
-    entryFilePath: join(getPreviewDir(sessionId), "slides.md"),
-    process: null,
-    readyPromise: null,
-    startPromise: null,
+    workDir: getPreviewWorkDir(sessionId),
+    outputDir: getPreviewDir(sessionId),
+    entryFilePath: join(getPreviewWorkDir(sessionId), "slides.md"),
+    manifestFilePath: null,
+    buildId: null,
+    contentHash: null,
+    buildPromise: null,
     shutdownTimer: null,
     lastTouchedAt: Date.now(),
-    logs: [],
+    ready: false,
   };
 
   session.lastTouchedAt = Date.now();
   previewSessions.set(sessionId, session);
 
-  await mkdir(dirname(session.entryFilePath), { recursive: true });
-  await writeFile(session.entryFilePath, buildDeckMarkdown(input), "utf8");
-
-  if (!session.startPromise) {
-    session.startPromise = startPreviewProcess(session).finally(() => {
-      session.startPromise = null;
+  if (!session.buildPromise) {
+    session.buildPromise = buildStaticPreviewSession(session, input).finally(() => {
+      session.buildPromise = null;
     });
   }
 
-  await session.startPromise;
+  await session.buildPromise;
   scheduleSessionShutdown(session);
 
   return {
@@ -247,4 +158,16 @@ export function touchPreviewSession(sessionId) {
   if (!session) return;
   session.lastTouchedAt = Date.now();
   scheduleSessionShutdown(session);
+}
+
+export async function disposePreviewSession(sessionId) {
+  const session = previewSessions.get(sessionId);
+  if (!session) {
+    return;
+  }
+  if (session.shutdownTimer) {
+    clearTimeout(session.shutdownTimer);
+  }
+  previewSessions.delete(sessionId);
+  await destroySessionArtifacts(session);
 }

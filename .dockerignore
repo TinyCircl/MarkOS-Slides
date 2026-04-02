@@ -1,8 +1,15 @@
 .git
 .idea
 .env
+.markos-artifacts
+.markos-preview
+.markos-preview-work
+.markos-workspaces
 .slidev-artifacts
+.slidev-preview
+.slidev-preview-work
 .slidev-workspaces
 node_modules
 docs
+test
 README.md

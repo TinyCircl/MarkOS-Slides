@@ -3,7 +3,7 @@ version: '3.8'
 services:
   nginx:
     image: nginx:alpine
-    container_name: slidev-nginx
+    container_name: markos-nginx
     restart: unless-stopped
     ports:
       - "80:80"
@@ -12,7 +12,7 @@ services:
       - ./nginx/conf.d:/etc/nginx/conf.d:ro
       - ./nginx/certs:/etc/nginx/certs:ro
     networks:
-      - slidev-net
+      - markos-net
     depends_on:
       - renderer
 
@@ -21,24 +21,23 @@ services:
     # CI writes that file on the server before `docker compose pull/up`.
     # Manual restarts should also use:
     #   docker compose --env-file versions.env up -d --no-deps renderer
-    image: xuao575/slidev-renderer:${SLIDEV_VERSION}
-    container_name: slidev-renderer
+    image: xuao575/markos-renderer:${MARKOS_VERSION}
+    container_name: markos-renderer
     restart: unless-stopped
     
     # 显式引入敏感环境变量文件，将其注入到容器内
     env_file:
-      - slidev.env
+      - markos.env
 
     volumes:
-      - ./slidev-artifacts:/app/.slidev-artifacts
+      - ./markos-artifacts:/app/.markos-artifacts
 
     ports:
-      # 重点新增：将 gRPC 端口映射到宿主机，以便账号 A 可以通过内网 IP 访问
       - "50051:50051"
     expose:
       - "3210"
     networks:
-      - slidev-net
+      - markos-net
     logging:
       driver: "json-file"
       options:
@@ -46,5 +45,5 @@ services:
         max-file: "3"
 
 networks:
-  slidev-net:
+  markos-net:
     driver: bridge

@@ -11,12 +11,20 @@ service SlidevService {
   rpc RenderArtifact(RenderArtifactRequest) returns (RenderArtifactResponse);
 }
 
+message SourceFile {
+  string path = 1;
+  string content = 2;
+  bytes binary_content = 3;
+}
+
 message BuildPreviewRequest {
   string preview_id = 1;
   string content = 2;
   string title = 3;
   bool publish = 4;
   string base_path = 5;
+  string entry = 6;
+  repeated SourceFile source_files = 7;
 }
 
 message BuildPreviewResponse {
@@ -47,6 +55,8 @@ message RenderArtifactRequest {
   RenderFormat format = 3;
   string file_name = 4;
   bool publish = 5;
+  string entry = 6;
+  repeated SourceFile source_files = 7;
 }
 
 message RenderArtifactResponse {

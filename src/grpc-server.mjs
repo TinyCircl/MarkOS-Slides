@@ -16,8 +16,8 @@ import { isR2Configured, publishPreviewSiteToR2, publishRenderArtifactToR2 } fro
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PROTO_PATH = join(__dirname, "slidev_service.proto");
 const GRPC_PORT = Number(process.env.GRPC_PORT || 50051);
-const PUBLIC_BASE_URL = process.env.SLIDEV_PUBLIC_BASE_URL?.replace(/\/$/, "") || null;
-const PREVIEW_SITE_BASE_URL = process.env.SLIDEV_PREVIEW_SITE_BASE_URL?.replace(/\/$/, "") || null;
+const PUBLIC_BASE_URL = process.env.MARKOS_PUBLIC_BASE_URL?.replace(/\/$/, "") || null;
+const PREVIEW_SITE_BASE_URL = process.env.MARKOS_PREVIEW_SITE_BASE_URL?.replace(/\/$/, "") || null;
 const PREVIEW_ID_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._-]*$/;
 
 const RENDER_FORMAT_MAP = {
@@ -31,11 +31,29 @@ const RENDER_FORMAT_MAP = {
 
 const grpcBuildPreviewRequestSchema = z.object({
     previewId: z.string().trim().regex(PREVIEW_ID_PATTERN),
-    content: z.string(),
+    content: z.string().optional(),
     title: z.string().trim().nullable().optional(),
     publish: z.boolean().optional(),
     basePath: z.string().trim().optional(),
+    entry: z.string().trim().optional(),
+    source: z.object({
+        files: z.array(z.object({
+            path: z.string().trim().min(1),
+            content: z.string().optional(),
+            contentBase64: z.string().min(1).optional(),
+        }).refine((value) => typeof value.content === "string" || typeof value.contentBase64 === "string", {
+            message: "Each source file must include content or contentBase64.",
+        })).min(1),
+    }).optional(),
 }).superRefine((value, ctx) => {
+    if (!value.source && typeof value.content !== "string") {
+        ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "BuildPreview requires either source.files or content.",
+            path: ["source"],
+        });
+    }
+
     if (value.basePath) {
         const normalizedBasePath = `/${value.basePath.replace(/^\/+|\/+$/g, "")}/`;
         const expectedBasePath = `/p/${value.previewId}/`;
@@ -50,12 +68,61 @@ const grpcBuildPreviewRequestSchema = z.object({
 });
 
 const grpcRenderArtifactRequestSchema = z.object({
-    content: z.string(),
+    content: z.string().optional(),
     title: z.string().trim().nullable().optional(),
     format: z.enum(["web", "pdf", "pptx"]),
     fileName: z.string().trim().nullable().optional(),
     publish: z.boolean().optional(),
+    entry: z.string().trim().optional(),
+    source: z.object({
+        files: z.array(z.object({
+            path: z.string().trim().min(1),
+            content: z.string().optional(),
+            contentBase64: z.string().min(1).optional(),
+        }).refine((value) => typeof value.content === "string" || typeof value.contentBase64 === "string", {
+            message: "Each source file must include content or contentBase64.",
+        })).min(1),
+    }).optional(),
+}).superRefine((value, ctx) => {
+    if (!value.source && typeof value.content !== "string") {
+        ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "RenderArtifact requires either source.files or content.",
+            path: ["source"],
+        });
+    }
+
+    if (value.format !== "web") {
+        ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "Only web format is currently supported.",
+            path: ["format"],
+        });
+    }
 });
+
+function parseGrpcSourceFiles(files) {
+    if (!Array.isArray(files) || files.length === 0) {
+        return undefined;
+    }
+
+    return {
+        files: files.map((file) => {
+            const parsed = {
+                path: file.path,
+            };
+
+            const contentBytes = file.binaryContent;
+            if (Buffer.isBuffer(contentBytes) && contentBytes.length > 0) {
+                parsed.contentBase64 = contentBytes.toString("base64");
+                return parsed;
+            }
+
+            parsed.content = file.content ?? "";
+            return parsed;
+        }),
+    };
+}
 
 function getServiceBaseUrl() {
     return PUBLIC_BASE_URL || `http://localhost:${process.env.PORT || 3210}`;
@@ -102,20 +169,24 @@ export function createGrpcError(error, fallbackMessage) {
 export function parseGrpcBuildPreviewRequest(request) {
     return grpcBuildPreviewRequestSchema.parse({
         previewId: request.previewId,
-        content: request.content,
+        content: typeof request.content === "string" ? request.content : undefined,
         title: request.title || undefined,
         publish: request.publish,
         basePath: request.basePath || undefined,
+        entry: request.entry || undefined,
+        source: parseGrpcSourceFiles(request.sourceFiles),
     });
 }
 
 export function parseGrpcRenderArtifactRequest(request) {
     return grpcRenderArtifactRequestSchema.parse({
-        content: request.content,
+        content: typeof request.content === "string" ? request.content : undefined,
         title: request.title || undefined,
         format: RENDER_FORMAT_MAP[request.format] ?? "",
         fileName: request.fileName || undefined,
         publish: request.publish,
+        entry: request.entry || undefined,
+        source: parseGrpcSourceFiles(request.sourceFiles),
     });
 }
 
@@ -149,6 +220,8 @@ async function buildPreviewHandler(call, callback) {
             content: payload.content,
             title: payload.title || undefined,
             basePath: payload.basePath || undefined,
+            entry: payload.entry || undefined,
+            source: payload.source,
             publish: false,
         });
         const buildDurationMs = Date.now() - buildStartedAt;
@@ -198,7 +271,7 @@ async function buildPreviewHandler(call, callback) {
             },
         });
     } catch (error) {
-        const grpcError = createGrpcError(error, "Failed to build Slidev preview.");
+        const grpcError = createGrpcError(error, "Failed to build preview.");
         console.error(`[gRPC] BuildPreview error: previewId=${req.previewId}, err=${grpcError.message}`);
         callback(grpcError);
     }
@@ -217,6 +290,8 @@ async function renderArtifactHandler(call, callback) {
             title: payload.title || undefined,
             format: payload.format,
             fileName: payload.fileName || undefined,
+            entry: payload.entry || undefined,
+            source: payload.source,
         });
         let publishResult = null;
         let publishCacheHit = false;
@@ -252,7 +327,7 @@ async function renderArtifactHandler(call, callback) {
             publishedArtifactUrl: publishResult?.publishedArtifactUrl ?? "",
         }));
     } catch (error) {
-        const grpcError = createGrpcError(error, "Failed to render Slidev artifact.");
+        const grpcError = createGrpcError(error, "Failed to render presentation artifact.");
         console.error(`[gRPC] RenderArtifact error: format=${requestedFormat}, err=${grpcError.message}`);
         callback(grpcError);
     }
@@ -285,7 +360,7 @@ export async function startGrpcServer() {
                     reject(err);
                     return;
                 }
-                console.log(`[slidev-renderer] gRPC server listening on :${port}`);
+                console.log(`[markos-renderer] gRPC server listening on :${port}`);
                 resolve(server);
             },
         );

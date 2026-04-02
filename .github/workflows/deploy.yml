@@ -15,9 +15,10 @@ permissions:
   packages: write
 
 env:
-  IMAGE_NAME: xuao575/slidev-renderer
+  IMAGE_NAME: xuao575/markos-renderer
   DOCKER_PLATFORMS: linux/amd64
-  DEPLOY_DIR: /opt/slidev-server
+  DEPLOY_DIR: /opt/markos-renderer
+  RENDERER_REF: renderer
 
 jobs:
   build:
@@ -31,14 +32,7 @@ jobs:
       - name: Checkout renderer branch
         uses: actions/checkout@v4
         with:
-          ref: renderer
-          path: slidev-renderer
-
-      - name: Checkout slidev branch (local optimization)
-        uses: actions/checkout@v4
-        with:
-          ref: slidev
-          path: slidev
+          ref: ${{ env.RENDERER_REF }}
 
       - name: Compute image tag
         id: meta
@@ -48,20 +42,16 @@ jobs:
           elif [[ "$GITHUB_REF" == refs/tags/renderer/* ]]; then
             TAG="${GITHUB_REF#refs/tags/renderer/}"
           else
-            SHA=$(git -C slidev-renderer rev-parse --short HEAD)
+            SHA=$(git rev-parse --short HEAD)
             TAG="snapshot-${SHA}"
           fi
           echo "tag=${TAG}" >> $GITHUB_OUTPUT
           echo "Image: ${{ env.IMAGE_NAME }}:${TAG}"
 
-      - name: Print source revisions
+      - name: Print source revision
         run: |
-          echo "Renderer ref:"
-          git -C slidev-renderer rev-parse HEAD
-          git -C slidev-renderer log -1 --oneline
-          echo "Slidev ref:"
-          git -C slidev rev-parse HEAD
-          git -C slidev log -1 --oneline
+          git rev-parse HEAD
+          git log -1 --oneline
 
       - name: Login to Docker Hub
         uses: docker/login-action@v3
@@ -76,7 +66,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: ${{ github.workspace }}
-          file: slidev-renderer/Dockerfile
+          file: Dockerfile
           platforms: ${{ env.DOCKER_PLATFORMS }}
           push: true
           tags: |
@@ -95,7 +85,7 @@ jobs:
       - name: Checkout renderer branch
         uses: actions/checkout@v4
         with:
-          ref: renderer
+          ref: ${{ env.RENDERER_REF }}
 
       - name: Sync docker-compose.yml to server
         uses: appleboy/scp-action@v0.1.7
@@ -124,7 +114,7 @@ jobs:
             # Persist the deployed image tag on the server so manual restarts
             # and version checks use the same source of truth as CI/CD.
             cat > versions.env <<'EOF'
-            SLIDEV_VERSION=${{ needs.build.outputs.image_tag }}
+            MARKOS_VERSION=${{ needs.build.outputs.image_tag }}
             EOF
 
             echo "Using versions.env:"

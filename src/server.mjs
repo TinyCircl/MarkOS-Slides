@@ -4,7 +4,6 @@ import express from "express";
 import { startGrpcServer } from "./grpc-server.mjs";
 import { mkdir, readFile, stat } from "node:fs/promises";
 import { join } from "node:path";
-import { Readable } from "node:stream";
 import { fileURLToPath } from "node:url";
 import { z } from "zod";
 import { ensurePreviewSession, getPreviewSession, touchPreviewSession } from "./preview-manager.mjs";
@@ -21,10 +20,10 @@ import {
 } from "./render-manager.mjs";
 
 const PORT = Number(process.env.PORT || 3210);
-const PUBLIC_BASE_URL = process.env.SLIDEV_PUBLIC_BASE_URL?.replace(/\/$/, "") || null;
-const PREVIEW_SITE_BASE_URL = process.env.SLIDEV_PREVIEW_SITE_BASE_URL?.replace(/\/$/, "") || null;
-const BODY_LIMIT = process.env.SLIDEV_BODY_LIMIT || "20mb";
-const ARTIFACT_ROOT = join(process.cwd(), ".slidev-artifacts");
+const PUBLIC_BASE_URL = process.env.MARKOS_PUBLIC_BASE_URL?.replace(/\/$/, "") || null;
+const PREVIEW_SITE_BASE_URL = process.env.MARKOS_PREVIEW_SITE_BASE_URL?.replace(/\/$/, "") || null;
+const BODY_LIMIT = process.env.MARKOS_BODY_LIMIT || "20mb";
+const ARTIFACT_ROOT = join(process.cwd(), ".markos-artifacts");
 const RENDER_ARTIFACT_ROOT = join(ARTIFACT_ROOT, "renders");
 
 const previewSessionRequestSchema = z.object({
@@ -35,24 +34,46 @@ const previewSessionRequestSchema = z.object({
   content: z.string(),
 });
 
-const renderJobRequestSchema = z.object({
-  title: z.string().trim().nullable().optional(),
-  content: z.string(),
-  format: z.enum(["web", "pdf", "pptx"]),
-  fileName: z.string().trim().nullable().optional(),
-  publish: z.boolean().optional(),
-  assets: z.array(z.object({
-    path: z.string().min(1),
-    contentBase64: z.string().min(1),
-  })).optional(),
+const assetFileSchema = z.object({
+  path: z.string().min(1),
+  contentBase64: z.string().min(1),
 });
 
-const previewBuildFileSchema = z.object({
+const sourceFileSchema = z.object({
   path: z.string().trim().min(1),
   content: z.string().optional(),
   contentBase64: z.string().min(1).optional(),
 }).refine((value) => typeof value.content === "string" || typeof value.contentBase64 === "string", {
-  message: "Each preview source file must include content or contentBase64.",
+  message: "Each source file must include content or contentBase64.",
+});
+
+const renderJobRequestSchema = z.object({
+  title: z.string().trim().nullable().optional(),
+  content: z.string().optional(),
+  entry: z.string().trim().optional(),
+  source: z.object({
+    files: z.array(sourceFileSchema).min(1),
+  }).optional(),
+  format: z.enum(["web", "pdf", "pptx"]),
+  fileName: z.string().trim().nullable().optional(),
+  publish: z.boolean().optional(),
+  assets: z.array(assetFileSchema).optional(),
+}).superRefine((value, ctx) => {
+  if (!value.source && typeof value.content !== "string") {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Render requires either source.files or content.",
+      path: ["source"],
+    });
+  }
+
+  if (value.format !== "web") {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Only web format is currently supported.",
+      path: ["format"],
+    });
+  }
 });
 
 const previewBuildRequestSchema = z.object({
@@ -62,12 +83,9 @@ const previewBuildRequestSchema = z.object({
   publish: z.boolean().optional(),
   title: z.string().trim().nullable().optional(),
   content: z.string().optional(),
-  assets: z.array(z.object({
-    path: z.string().min(1),
-    contentBase64: z.string().min(1),
-  })).optional(),
+  assets: z.array(assetFileSchema).optional(),
   source: z.object({
-    files: z.array(previewBuildFileSchema).min(1),
+    files: z.array(sourceFileSchema).min(1),
   }).optional(),
 }).superRefine((value, ctx) => {
   if (!value.source && typeof value.content !== "string") {
@@ -110,13 +128,6 @@ function getPublishedPreviewUrl(previewId) {
     return null;
   }
   return new URL(`/p/${encodeURIComponent(previewId)}/`, `${PREVIEW_SITE_BASE_URL}/`).toString();
-}
-
-function copyResponseHeaders(sourceHeaders, target) {
-  for (const [key, value] of sourceHeaders.entries()) {
-    if (key.toLowerCase() === "transfer-encoding") continue;
-    target.setHeader(key, value);
-  }
 }
 
 async function isFile(filePath) {
@@ -170,10 +181,10 @@ app.post("/api/preview/session", async (req, res) => {
     });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      res.status(400).json({ error: "Invalid Slidev preview request.", details: error.flatten() });
+      res.status(400).json({ error: "Invalid preview request.", details: error.flatten() });
       return;
     }
-    res.status(500).json({ error: error instanceof Error ? error.message : "Failed to start Slidev preview." });
+    res.status(500).json({ error: error instanceof Error ? error.message : "Failed to start preview." });
   }
 });
 
@@ -227,10 +238,10 @@ app.post("/api/render", async (req, res) => {
     });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      res.status(400).json({ error: "Invalid Slidev render request.", details: error.flatten() });
+      res.status(400).json({ error: "Invalid render request.", details: error.flatten() });
       return;
     }
-    res.status(500).json({ error: error instanceof Error ? error.message : "Failed to render slides." });
+    res.status(500).json({ error: error instanceof Error ? error.message : "Failed to render presentation." });
   }
 });
 
@@ -296,115 +307,45 @@ app.post("/api/previews/build", async (req, res) => {
     });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      res.status(400).json({ error: "Invalid Slidev preview build request.", details: error.flatten() });
+      res.status(400).json({ error: "Invalid preview build request.", details: error.flatten() });
       return;
     }
-    res.status(500).json({ error: error instanceof Error ? error.message : "Failed to build Slidev preview." });
+    res.status(500).json({ error: error instanceof Error ? error.message : "Failed to build preview site." });
   }
 });
 
 app.use("/preview/:sessionId", async (req, res) => {
   const session = getPreviewSession(req.params.sessionId);
-  if (!session?.port) {
-    res.status(404).json({ error: "Slidev preview session not found." });
+  if (!session?.ready || !session.outputDir) {
+    res.status(404).json({ error: "Preview session not found." });
     return;
   }
 
   touchPreviewSession(session.id);
 
   try {
-    const upstreamUrl = new URL(req.originalUrl, `http://localhost:${session.port}`);
-    const upstream = await fetch(upstreamUrl, {
-      method: req.method,
-      headers: req.headers,
-      redirect: "manual",
+    await serveManifestSite({
+      req,
+      res,
+      rootDir: session.outputDir,
+      basePrefix: `/preview/${session.id}/`,
+      notFoundMessage: "Preview session not found.",
     });
-
-    res.status(upstream.status);
-    copyResponseHeaders(upstream.headers, res);
-
-    if (!upstream.body || req.method === "HEAD") {
-      res.end();
-      return;
-    }
-
-    Readable.fromWeb(upstream.body).pipe(res);
   } catch (error) {
-    res.status(502).json({ error: error instanceof Error ? error.message : "Failed to proxy Slidev preview." });
+    res.status(500).json({ error: error instanceof Error ? error.message : "Failed to serve preview." });
   }
 });
 
 app.use("/p/:previewId", async (req, res) => {
   try {
     const previewId = req.params.previewId;
-    const pathname = decodeURIComponent(new URL(req.originalUrl, `${getOrigin(req)}/`).pathname);
-
-    if (pathname === `/p/${previewId}`) {
-      res.redirect(301, `${getOrigin(req)}/p/${previewId}/`);
-      return;
-    }
-
-    const basePrefix = `/p/${previewId}/`;
-    const subPath = pathname.startsWith(basePrefix) ? pathname.slice(basePrefix.length) : "";
-    const previewRoot = join(ARTIFACT_ROOT, "previews", previewId);
-    const manifestFilePath = join(previewRoot, "manifest.json");
-
-    let manifest;
-    try {
-      manifest = JSON.parse(await readFile(manifestFilePath, "utf8"));
-    } catch {
-      res.status(404).json({ error: "Preview site not found." });
-      return;
-    }
-
-    const entry = typeof manifest.entry === "string" && manifest.entry ? manifest.entry : "index.html";
-    const spaFallback = manifest.spaFallback === true;
-    const assetPrefixes = Array.isArray(manifest.assetPrefixes) ? manifest.assetPrefixes : [];
-    const privateFiles = Array.isArray(manifest.privateFiles) ? manifest.privateFiles : [];
-    const objectPath = subPath || entry;
-
-    if (privateFiles.includes(objectPath)) {
-      res.status(403).send("Forbidden");
-      return;
-    }
-
-    const safeObjectPath = sanitizePreviewObjectPath(objectPath);
-    if (!safeObjectPath) {
-      res.status(400).send("Invalid path");
-      return;
-    }
-
-    const objectFilePath = join(previewRoot, safeObjectPath);
-    if (await isFile(objectFilePath)) {
-      await sendPreviewFile(res, previewRoot, safeObjectPath);
-      return;
-    }
-
-    const isAssetPath = assetPrefixes.some((prefix) => objectPath.startsWith(prefix));
-    if (isAssetPath) {
-      res.status(404).send("Asset Not Found");
-      return;
-    }
-
-    if (!spaFallback) {
-      res.status(404).send("Not Found");
-      return;
-    }
-
-    const fallbackRelativePath = sanitizePreviewObjectPath(entry);
-    if (!fallbackRelativePath) {
-      res.status(500).send("Invalid entry file");
-      return;
-    }
-
-    const fallbackFilePath = join(previewRoot, fallbackRelativePath);
-    if (!await isFile(fallbackFilePath)) {
-      res.status(404).send("Entry file not found");
-      return;
-    }
-
-    res.type("html");
-    await sendPreviewFile(res, previewRoot, fallbackRelativePath);
+    await serveManifestSite({
+      req,
+      res,
+      rootDir: join(ARTIFACT_ROOT, "previews", previewId),
+      basePrefix: `/p/${previewId}/`,
+      notFoundMessage: "Preview site not found.",
+    });
   } catch (error) {
     if (!res.headersSent) {
       res.status(500).json({ error: error instanceof Error ? error.message : "Failed to serve preview site." });
@@ -422,8 +363,77 @@ export async function startServer() {
   startArtifactCleanupScheduler();
   await startGrpcServer();
   return app.listen(PORT, () => {
-    console.log(`[slidev-renderer] listening on :${PORT}`);
+    console.log(`[markos-renderer] listening on :${PORT}`);
   });
+}
+
+async function serveManifestSite({ req, res, rootDir, basePrefix, notFoundMessage }) {
+  const pathname = decodeURIComponent(new URL(req.originalUrl, `${getOrigin(req)}/`).pathname);
+
+  if (pathname === basePrefix.slice(0, -1)) {
+    res.redirect(301, `${getOrigin(req)}${basePrefix}`);
+    return;
+  }
+
+  const subPath = pathname.startsWith(basePrefix) ? pathname.slice(basePrefix.length) : "";
+  const manifestFilePath = join(rootDir, "manifest.json");
+
+  let manifest;
+  try {
+    manifest = JSON.parse(await readFile(manifestFilePath, "utf8"));
+  } catch {
+    res.status(404).json({ error: notFoundMessage });
+    return;
+  }
+
+  const entry = typeof manifest.entry === "string" && manifest.entry ? manifest.entry : "index.html";
+  const spaFallback = manifest.spaFallback === true;
+  const assetPrefixes = Array.isArray(manifest.assetPrefixes) ? manifest.assetPrefixes : [];
+  const privateFiles = Array.isArray(manifest.privateFiles) ? manifest.privateFiles : [];
+  const objectPath = subPath || entry;
+
+  if (privateFiles.includes(objectPath)) {
+    res.status(403).send("Forbidden");
+    return;
+  }
+
+  const safeObjectPath = sanitizePreviewObjectPath(objectPath);
+  if (!safeObjectPath) {
+    res.status(400).send("Invalid path");
+    return;
+  }
+
+  const objectFilePath = join(rootDir, safeObjectPath);
+  if (await isFile(objectFilePath)) {
+    await sendPreviewFile(res, rootDir, safeObjectPath);
+    return;
+  }
+
+  const isAssetPath = assetPrefixes.some((prefix) => objectPath.startsWith(prefix));
+  if (isAssetPath) {
+    res.status(404).send("Asset Not Found");
+    return;
+  }
+
+  if (!spaFallback) {
+    res.status(404).send("Not Found");
+    return;
+  }
+
+  const fallbackRelativePath = sanitizePreviewObjectPath(entry);
+  if (!fallbackRelativePath) {
+    res.status(500).send("Invalid entry file");
+    return;
+  }
+
+  const fallbackFilePath = join(rootDir, fallbackRelativePath);
+  if (!await isFile(fallbackFilePath)) {
+    res.status(404).send("Entry file not found");
+    return;
+  }
+
+  res.type("html");
+  await sendPreviewFile(res, rootDir, fallbackRelativePath);
 }
 
 const currentFile = fileURLToPath(import.meta.url);

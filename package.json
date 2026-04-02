@@ -1,5 +1,5 @@
 {
-  "name": "@pebble/slidev-renderer",
+  "name": "@pebble/markos-renderer",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -13,18 +13,11 @@
     "@aws-sdk/client-s3": "^3.1006.0",
     "@grpc/grpc-js": "^1.13.4",
     "@grpc/proto-loader": "^0.7.15",
-    "@slidev/cli": "^52.14.1",
-    "@slidev/theme-apple-basic": "^0.25.0",
-    "@slidev/theme-bricks": "^0.25.0",
-    "@slidev/theme-default": "^0.25.0",
-    "@slidev/theme-seriph": "^0.25.0",
-    "@slidev/theme-shibainu": "^0.25.0",
     "cors": "^2.8.5",
     "express": "^5.1.0",
+    "marked": "^16.4.2",
+    "yaml": "^2.8.3",
     "zod": "^4.3.6"
-  },
-  "optionalDependencies": {
-    "playwright-chromium": "^1.55.0"
   },
   "engines": {
     "node": ">=20.0.0"

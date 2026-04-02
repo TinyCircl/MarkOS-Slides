@@ -9,7 +9,7 @@ import {
     parseGrpcRenderArtifactRequest,
 } from "../src/grpc-server.mjs";
 
-function loadSlidevService() {
+function loadRendererService() {
     const packageDefinition = protoLoader.loadSync(join(process.cwd(), "src", "slidev_service.proto"), {
         keepCase: false,
         longs: String,
@@ -23,7 +23,7 @@ function loadSlidevService() {
 }
 
 test("RenderArtifact gRPC responses survive proto serialization", () => {
-    const service = loadSlidevService();
+    const service = loadRendererService();
     const response = buildRenderArtifactGrpcResponse({
         jobId: "job-123",
         format: "pdf",
@@ -83,4 +83,44 @@ test("RenderArtifact gRPC request validation rejects unknown formats", () => {
         }),
         /Invalid option/,
     );
+});
+
+test("RenderArtifact gRPC request rejects pdf while markos renderer is web-only", () => {
+    assert.throws(
+        () => parseGrpcRenderArtifactRequest({
+            content: "# demo",
+            format: "RENDER_FORMAT_PDF",
+            fileName: "",
+            title: "",
+        }),
+        /Only web format is currently supported/,
+    );
+});
+
+test("BuildPreview gRPC request accepts folder-style source files", () => {
+    const parsed = parseGrpcBuildPreviewRequest({
+        previewId: "demo-preview",
+        content: "",
+        title: "demo",
+        publish: false,
+        basePath: "/p/demo-preview/",
+        entry: "slides.md",
+        sourceFiles: [
+            {
+                path: "slides.md",
+                content: "---\ncss: ./styles.css\n---\n\n# demo\n",
+            },
+            {
+                path: "styles.css",
+                binaryContent: Buffer.from(".accent { color: red; }", "utf8"),
+            },
+        ],
+    });
+
+    assert.equal(parsed.entry, "slides.md");
+    assert.equal(parsed.source.files.length, 2);
+    assert.equal(parsed.source.files[0].path, "slides.md");
+    assert.equal(parsed.source.files[0].content.includes("css: ./styles.css"), true);
+    assert.equal(parsed.source.files[1].path, "styles.css");
+    assert.equal(typeof parsed.source.files[1].contentBase64, "string");
 });
