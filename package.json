@@ -7,6 +7,8 @@
     "dev": "node --watch src/server.mjs",
     "start": "node src/server.mjs",
     "check:fixtures": "node scripts/check-fixtures.mjs",
+    "preview:local": "node scripts/preview-local-file.mjs",
+    "preview:local:session": "node scripts/preview-local-file.mjs --api session",
     "test": "node --test"
   },
   "dependencies": {
