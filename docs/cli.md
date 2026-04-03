@@ -11,7 +11,7 @@ deck/
 
 For normal authoring, a deck only needs `slides.md` plus a file-level `theme`.
 
-When a deck file declares `theme: Clay` in its top-level frontmatter, MarkOS loads the built-in theme entry at `packages/core/themes/Clay/theme.css`. The `theme` value is the theme folder name, not a file name. A sibling `slides.css` file is optional and acts as the primary local override layer, and an optional `agent-overrides.css` file can add a final incremental override layer after that.
+When a deck file declares `theme: Clay` in its top-level frontmatter, MarkOS loads the built-in theme entry at `packages/core/themes/Clay/theme.css`. The `theme` value is the theme folder name, not a file name. A sibling `slides.css` file is optional and acts as the primary local override layer, and an optional `overrides.css` file can add a final incremental override layer after that.
 
 For deck authoring rules, see [Syntax Guide](./syntax.md).
 
@@ -47,7 +47,7 @@ Default styling path:
 - write Markdown in `slides.md`
 - set `theme` in file-level frontmatter using the theme folder name such as `Clay`
 - do not create `slides.css` unless you explicitly need local overrides
-- use `agent-overrides.css` only when an automated or advanced workflow needs a separate final override layer
+- use `overrides.css` only when you need a separate final override layer beyond `slides.css`
 
 Important output note:
 - the final CSS is currently bundled into `dist/index.html`
@@ -91,7 +91,7 @@ Behavior:
 - loads `packages/core/themes/<theme>/theme.css` when `theme` is declared in file-level frontmatter
 - requires the `theme` value to be the theme folder name without a `.css` suffix
 - loads the sibling `slides.css` file as an optional local override layer when it exists
-- loads `agent-overrides.css` after `slides.css` when it exists, so it can apply final incremental overrides
+- loads `overrides.css` after `slides.css` when it exists, so it can apply final incremental overrides
 - ignores other files in the deck directory during build input collection
 - removes the temporary work directory after the build completes
 
@@ -139,7 +139,7 @@ Behavior:
 - requires the requested theme name to be the folder name without a `.css` suffix
 - writes `theme: <theme>` into the top-level frontmatter of `slides.md`
 - creates `slides.css` only when the deck does not already have one
-- keeps the runtime contract explicit: shared theme first, `slides.css` second, optional `agent-overrides.css` last
+- keeps the runtime contract explicit: shared theme first, `slides.css` second, optional `overrides.css` last
 
 ## Validation
 
@@ -153,4 +153,4 @@ npm run check
 
 ## Scope Notes
 
-The CLI is currently for local authoring and web output only. The recommended local convention is one Markdown file with `slides.css` as the main local override layer and optional `agent-overrides.css` as a final incremental override layer. For repository boundaries and non-goals, see [Project Scope](./scope.md).
+The CLI is currently for local authoring and web output only. The recommended local convention is one Markdown file with `slides.css` as the main local override layer and optional `overrides.css` as a final incremental override layer. For repository boundaries and non-goals, see [Project Scope](./scope.md).

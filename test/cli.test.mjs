@@ -179,7 +179,7 @@ test("CLI build resolves bundled themes even when the caller cwd is the deck dir
     }
 });
 
-test("CLI build auto-loads agent-overrides.css after slides.css without an explicit import", async () => {
+test("CLI build auto-loads overrides.css after slides.css without an explicit import", async () => {
     const tempRoot = await mkdtemp(join(os.tmpdir(), "markos-cli-agent-css-"));
     const deckRoot = join(tempRoot, "deck");
     const outDir = join(tempRoot, "dist");
@@ -198,7 +198,7 @@ test("CLI build auto-loads agent-overrides.css after slides.css without an expli
             "utf8",
         );
         await writeFile(join(deckRoot, "slides.css"), ".cascade-target { color: #f06b1f; }\n", "utf8");
-        await writeFile(join(deckRoot, "agent-overrides.css"), ".cascade-target { color: green; }\n", "utf8");
+        await writeFile(join(deckRoot, "overrides.css"), ".cascade-target { color: green; }\n", "utf8");
 
         const result = await runCli([
             "build",
@@ -215,13 +215,14 @@ test("CLI build auto-loads agent-overrides.css after slides.css without an expli
         assert.match(html, /\.cascade-target \{ color: green; \}/);
         assert.ok(html.indexOf(".cascade-target { color: #f06b1f; }") < html.indexOf(".cascade-target { color: green; }"));
         await assert.rejects(
-            () => readFile(join(outDir, "agent-overrides.css"), "utf8"),
+            () => readFile(join(outDir, "overrides.css"), "utf8"),
             /ENOENT/,
         );
     } finally {
         await rm(tempRoot, {recursive: true, force: true});
     }
 });
+
 
 test("CLI dev command serves the generated static site locally", async () => {
     const tempRoot = await mkdtemp(join(os.tmpdir(), "markos-cli-dev-"));

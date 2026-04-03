@@ -5,7 +5,7 @@ import {mkdir, mkdtemp, readFile, rm, writeFile} from "node:fs/promises";
 import {join} from "node:path";
 import {markosWebRenderEngine} from "../src/engines/markos-web/index.mjs";
 
-test("markos-web builds a static deck with theme css, deck css, and agent override css in order", async () => {
+test("markos-web builds a static deck with theme css, deck css, and overrides css in order", async () => {
     const tempRoot = await mkdtemp(join(os.tmpdir(), "markos-engine-"));
     const workDir = join(tempRoot, "work");
     const outDir = join(tempRoot, "out");
@@ -36,7 +36,7 @@ test("markos-web builds a static deck with theme css, deck css, and agent overri
         );
         await writeFile(join(workDir, ".markos-theme", "Clay.css"), ".slide h2 { color: blue; }\n", "utf8");
         await writeFile(join(workDir, "slides.css"), ".slide h2 { color: #f06b1f; }\n", "utf8");
-        await writeFile(join(workDir, "agent-overrides.css"), ".slide h2 { color: green; }\n", "utf8");
+        await writeFile(join(workDir, "overrides.css"), ".slide h2 { color: green; }\n", "utf8");
 
         await markosWebRenderEngine.buildStaticSite({
             entryFilePath: join(workDir, "slides.md"),
@@ -67,7 +67,7 @@ test("markos-web builds a static deck with theme css, deck css, and agent overri
             /ENOENT/,
         );
         await assert.rejects(
-            () => readFile(join(outDir, "agent-overrides.css"), "utf8"),
+            () => readFile(join(outDir, "overrides.css"), "utf8"),
             /ENOENT/,
         );
     } finally {

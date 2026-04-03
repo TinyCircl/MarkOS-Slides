@@ -14,6 +14,7 @@ deck/
 - Most decks should not need a hand-written CSS file
 - Add `slides.css` only when the shared theme is not enough
 - Treat `slides.css` as the override layer that comes after the shared theme CSS
+- Use `overrides.css` only when you need a separate final override layer after `slides.css`
 - Do not split the main authoring path across `styles/` directories or preset CSS
 
 ## Shared Themes
@@ -32,6 +33,7 @@ That flow keeps the architecture explicit:
 - `themes/<Theme>/theme.css` files are the standard reusable theme sources
 - `themes/<Theme>/README.md` is the theme manifest and usage surface for authors and AI
 - `deck/slides.css` is the local override layer for that deck
+- `deck/overrides.css` is an optional final incremental override layer
 - the runtime loads the shared theme first and the deck-local overrides second
 
 If you are creating a reusable shared theme, use [Theme Authoring](./theme-authoring.md) as the normative guide for page-template structure, naming, selector rules, and review criteria.
