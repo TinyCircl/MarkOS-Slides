@@ -21,6 +21,7 @@
     ".": "./index.mjs",
     "./artifact-store": "./src/core/artifact-store.mjs",
     "./config": "./src/config/index.mjs",
+    "./deck-utils": "./src/core/deck-utils.mjs",
     "./dev-server": "./src/core/dev-server.mjs",
     "./engines": "./src/engines/index.mjs",
     "./engines/markos-web": "./src/engines/markos-web/index.mjs",

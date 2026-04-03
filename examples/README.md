@@ -16,7 +16,15 @@ Each subdirectory in `examples/` that contains `slides.md` and `slides.css` is t
 
 ## `tokyo3days/`
 
-The current example deck demonstrates the flat `slides.md` + `slides.css` convention.
+The current example deck demonstrates the file-frontmatter-plus-overrides convention.
+
+Its shared source theme lives at [Clay.css](C:/Users/xuao5/Desktop/MarkOS-Slides/themes/Clay.css). The deck references it through file-level frontmatter and keeps [slides.css](C:/Users/xuao5/Desktop/MarkOS-Slides/examples/tokyo3days/slides.css) as local overrides.
+
+You can still set the theme field with:
+
+```bash
+npm run markos:theme -- apply Clay examples/tokyo3days
+```
 
 Build it from the repository root:
 

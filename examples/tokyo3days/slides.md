@@ -1,4 +1,9 @@
 ---
+theme: Clay
+title: tokyo3days
+---
+
+---
 layout: cover
 background: '#f5f5f5'
 class: slide-shell title-slide text-left

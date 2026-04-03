@@ -7,17 +7,57 @@ MarkOS recommends a flat local deck layout:
 ```text
 deck/
   slides.md
-  slides.css
 ```
 
-When the entry file is `slides.md`, MarkOS will automatically bundle a sibling `slides.css` file if it exists. It does not auto-load `styles/index.css` or theme preset CSS.
+For normal authoring, a deck only needs `slides.md` plus a file-level `theme`.
+
+When a deck file declares `theme: Clay` in its top-level frontmatter, MarkOS loads `themes/Clay.css` as the shared theme. A sibling `slides.css` file is optional and acts as an advanced local override layer.
 
 For deck authoring rules, see [Syntax Guide](./syntax.md).
+
+## TL;DR
+
+PowerShell on Windows:
+
+The recommended local scratch area is `playground/`, which is ignored by Git in this repository.
+
+```powershell
+npm install
+New-Item -ItemType Directory -Path playground\my-deck -Force | Out-Null
+@'
+---
+theme: Clay
+title: My first deck
+---
+
+---
+layout: cover
+class: slide-shell title-slide
+---
+
+# Hello MarkOS
+
+## My first deck
+'@ | Set-Content -LiteralPath playground\my-deck\slides.md -Encoding utf8
+npm run markos:dev -- playground\my-deck --port 3030
+npm run markos:build -- playground\my-deck
+```
+
+Default styling path:
+- write Markdown in `slides.md`
+- set `theme` in file-level frontmatter
+- do not create `slides.css` unless you explicitly need local overrides
+
+Important output note:
+- the final CSS is currently bundled into `dist/index.html`
+- MarkOS does not emit a separate CSS file inside `dist/`
+- if an AI or advanced workflow edits the built styling today, it edits the generated `dist/index.html`, not a standalone `dist/*.css`
 
 ## Command Summary
 
 - `markos build [deck] [--out-dir dir] [--work-dir dir] [--base /] [--project-root dir] [--title name]`
 - `markos dev [deck] [--out-dir dir] [--work-dir dir] [--base /] [--host 127.0.0.1] [--port 3030] [--project-root dir] [--title name]`
+- `markos theme apply <theme> [deck]`
 - `markos export [deck]`
 
 `markos export` is reserved for future non-web artifacts and currently exits with an error.
@@ -31,8 +71,8 @@ Build a local slide deck into a static site.
 Examples:
 
 ```bash
-markos build examples/basic
-markos build examples/project --out-dir build/site
+markos build examples/tokyo3days
+markos build examples/tokyo3days --out-dir build/site
 markos build talks/intro --project-root talks --title "Intro Talk"
 ```
 
@@ -46,7 +86,9 @@ Options:
 
 Behavior:
 - resolves `slides.md` from the given deck directory
-- reads only `slides.md` and the sibling `slides.css` file when it exists
+- reads deck-level frontmatter from `slides.md`
+- loads `themes/<theme>.css` when `theme` is declared in file-level frontmatter
+- loads the sibling `slides.css` file as an optional local override layer when it exists
 - ignores other files in the deck directory during build input collection
 - removes the temporary work directory after the build completes
 
@@ -57,9 +99,9 @@ Build once, serve locally, and rebuild when deck files change.
 Examples:
 
 ```bash
-markos dev examples/project
-markos dev examples/project --port 4000
-markos dev examples/project --base /deck/
+markos dev examples/tokyo3days
+markos dev examples/tokyo3days --port 4000
+markos dev examples/tokyo3days --base /deck/
 ```
 
 Options:
@@ -77,6 +119,23 @@ Behavior:
 - serves the generated output through the local manifest site server
 - watches the project root recursively and rebuilds on file changes
 - ignores the output and work directories while watching
+
+## `markos theme apply`
+
+Set a deck's file-level `theme` and keep `slides.css` as the local override layer.
+
+Examples:
+
+```bash
+markos theme apply Clay examples/tokyo3days
+markos theme apply Clay .
+```
+
+Behavior:
+- verifies that `themes/<theme>.css` exists
+- writes `theme: <theme>` into the top-level frontmatter of `slides.md`
+- creates `slides.css` only when the deck does not already have one
+- keeps the runtime contract explicit: shared theme first, local deck overrides second
 
 ## Validation
 

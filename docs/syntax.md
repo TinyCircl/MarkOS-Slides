@@ -5,7 +5,6 @@ MarkOS recommends a flat local deck layout:
 ```text
 deck/
   slides.md
-  slides.css
 ```
 
 Use these two documents together:
@@ -14,7 +13,8 @@ Use these two documents together:
 - [CSS Rules](./syntax-css.md): single-entry CSS rules, class wiring, and the recommended slide styling architecture
 
 The rule of thumb is simple:
-- `slides.md` is the only content entry
-- `slides.css` is the only custom style entry
+- `slides.md` contains the deck content plus file-level and page-level frontmatter
+- `theme` in file-level frontmatter selects a shared CSS source from `themes/`
+- `slides.css` is an optional local override layer for that deck
 - other files in the deck directory are ignored by local build input collection
-- the two files should stay side by side and share the same basename
+- for most decks, `slides.md` plus `theme` is enough

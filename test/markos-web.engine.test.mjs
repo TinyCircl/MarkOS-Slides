@@ -5,18 +5,19 @@ import {mkdir, mkdtemp, readFile, rm, writeFile} from "node:fs/promises";
 import {join} from "node:path";
 import {markosWebRenderEngine} from "../src/engines/markos-web/index.mjs";
 
-test("markos-web builds a static deck with sibling css inlined into the HTML", async () => {
+test("markos-web builds a static deck with file-level theme css plus sibling override css", async () => {
     const tempRoot = await mkdtemp(join(os.tmpdir(), "markos-engine-"));
     const workDir = join(tempRoot, "work");
     const outDir = join(tempRoot, "out");
 
     try {
-        await mkdir(workDir, {recursive: true});
+        await mkdir(join(workDir, ".markos-theme"), {recursive: true});
         await writeFile(
             join(workDir, "slides.md"),
             [
                 "---",
                 "title: Demo Deck",
+                "theme: Clay",
                 "---",
                 "",
                 "# Hello Engine",
@@ -33,6 +34,7 @@ test("markos-web builds a static deck with sibling css inlined into the HTML", a
             ].join("\n"),
             "utf8",
         );
+        await writeFile(join(workDir, ".markos-theme", "Clay.css"), ".slide h2 { color: blue; }\n", "utf8");
         await writeFile(join(workDir, "slides.css"), ".slide h2 { color: #f06b1f; }\n", "utf8");
 
         await markosWebRenderEngine.buildStaticSite({
@@ -52,6 +54,7 @@ test("markos-web builds a static deck with sibling css inlined into the HTML", a
         assert.doesNotMatch(html, /"title":"layout: two-cols"/);
         assert.match(html, /"basePath":"\/p\/demo-preview\/"/);
         assert.match(html, /assets\/markdos-icon\.svg/);
+        assert.match(html, /\.slide h2 \{ color: blue; \}/);
         assert.match(html, /\.slide h2 \{ color: #f06b1f; \}/);
         assert.match(html, /Overview/);
         assert.match(logo, /Markdos logo/);
@@ -64,19 +67,21 @@ test("markos-web builds a static deck with sibling css inlined into the HTML", a
     }
 });
 
-test("markos-web no longer auto-loads theme preset css without a sibling css file", async () => {
+test("markos-web does not load a shared theme when no file-level theme is declared", async () => {
     const tempRoot = await mkdtemp(join(os.tmpdir(), "markos-preset-"));
     const workDir = join(tempRoot, "work");
     const outDir = join(tempRoot, "out");
 
     try {
-        await mkdir(workDir, {recursive: true});
+        await mkdir(join(workDir, ".markos-theme"), {recursive: true});
         await writeFile(
             join(workDir, "slides.md"),
             [
                 "---",
                 "title: Preset Deck",
-                "theme: default",
+                "---",
+                "",
+                "---",
                 "layout: cover",
                 "class: slide-shell title-slide text-left",
                 "---",
@@ -85,6 +90,7 @@ test("markos-web no longer auto-loads theme preset css without a sibling css fil
             ].join("\n"),
             "utf8",
         );
+        await writeFile(join(workDir, ".markos-theme", "Clay.css"), ".slide-shell { color: blue; }\n", "utf8");
 
         await markosWebRenderEngine.buildStaticSite({
             entryFilePath: join(workDir, "slides.md"),
@@ -96,14 +102,13 @@ test("markos-web no longer auto-loads theme preset css without a sibling css fil
         const html = await readFile(join(outDir, "index.html"), "utf8");
         assert.match(html, /Preset Deck/);
         assert.match(html, /Preset Slide/);
-        assert.doesNotMatch(html, /\.slide-shell \{/);
-        assert.doesNotMatch(html, /\.title-slide \{/);
+        assert.doesNotMatch(html, /\.slide-shell \{ color: blue; \}/);
     } finally {
         await rm(tempRoot, {recursive: true, force: true});
     }
 });
 
-test("markos-web treats the opening frontmatter block as first-slide metadata, not deck-global config", async () => {
+test("markos-web treats the opening frontmatter block as deck-level metadata", async () => {
     const tempRoot = await mkdtemp(join(os.tmpdir(), "markos-first-slide-"));
     const workDir = join(tempRoot, "work");
     const outDir = join(tempRoot, "out");
@@ -114,10 +119,13 @@ test("markos-web treats the opening frontmatter block as first-slide metadata, n
             join(workDir, "slides.md"),
             [
                 "---",
-                "title: First Slide Name",
+                "title: Deck Name",
+                "aspectRatio: 4/3",
+                "---",
+                "",
+                "---",
                 "layout: cover",
                 "class: slide-shell title-slide",
-                "aspectRatio: 4/3",
                 "---",
                 "",
                 "# Visible Cover Heading",
@@ -133,10 +141,44 @@ test("markos-web treats the opening frontmatter block as first-slide metadata, n
         });
 
         const html = await readFile(join(outDir, "index.html"), "utf8");
-        assert.match(html, /First Slide Name/);
+        assert.match(html, /Deck Name/);
         assert.match(html, /Visible Cover Heading/);
-        assert.match(html, /slidev:aspect-ratio" content="16\/9"/);
-        assert.match(html, /"title":"First Slide Name"/);
+        assert.match(html, /slidev:aspect-ratio" content="4\/3"/);
+        assert.match(html, /"title":"Visible Cover Heading"/);
+    } finally {
+        await rm(tempRoot, {recursive: true, force: true});
+    }
+});
+
+test("markos-web rejects the old single leading page-frontmatter form", async () => {
+    const tempRoot = await mkdtemp(join(os.tmpdir(), "markos-invalid-frontmatter-"));
+    const workDir = join(tempRoot, "work");
+    const outDir = join(tempRoot, "out");
+
+    try {
+        await mkdir(workDir, {recursive: true});
+        await writeFile(
+            join(workDir, "slides.md"),
+            [
+                "---",
+                "layout: cover",
+                "class: slide-shell title-slide",
+                "---",
+                "",
+                "# Invalid Legacy Cover",
+            ].join("\n"),
+            "utf8",
+        );
+
+        await assert.rejects(
+            () => markosWebRenderEngine.buildStaticSite({
+                entryFilePath: join(workDir, "slides.md"),
+                outputDir: outDir,
+                basePath: "/",
+                cwd: workDir,
+            }),
+            /Invalid file frontmatter key\(s\): layout, class/,
+        );
     } finally {
         await rm(tempRoot, {recursive: true, force: true});
     }

@@ -1,4 +1,4 @@
-import {parseDocument} from "yaml";
+import {FILE_FRONTMATTER_KEYS, normalizeText, parseYamlObject} from "../../core/deck-utils.mjs";
 
 const DEFAULT_ASPECT_RATIO = {
     numeric: 16 / 9,
@@ -6,21 +6,59 @@ const DEFAULT_ASPECT_RATIO = {
 };
 const DEFAULT_CANVAS_WIDTH = 1280;
 
-function normalizeText(value) {
-    return value.replace(/\r\n?/g, "\n");
+function parseAspectRatio(value) {
+    if (typeof value === "number" && value > 0) {
+        return {numeric: value, text: String(value)};
+    }
+
+    if (typeof value === "string") {
+        const trimmed = value.trim();
+        const slashMatch = trimmed.match(/^(\d+(?:\.\d+)?)\s*\/\s*(\d+(?:\.\d+)?)$/);
+        if (slashMatch) {
+            const width = Number.parseFloat(slashMatch[1]);
+            const height = Number.parseFloat(slashMatch[2]);
+            if (width > 0 && height > 0) {
+                return {numeric: width / height, text: `${width}/${height}`};
+            }
+        }
+
+        const direct = Number.parseFloat(trimmed);
+        if (!Number.isNaN(direct) && direct > 0) {
+            return {numeric: direct, text: trimmed};
+        }
+    }
+
+    return DEFAULT_ASPECT_RATIO;
 }
 
-function parseYamlBlock(raw) {
-    if (!raw.trim()) {
-        return {};
+function scanTopFrontmatter(lines) {
+    if (lines[0] !== "---") {
+        return {headmatter: {}, nextIndex: 0};
     }
 
-    try {
-        const parsed = parseDocument(raw).toJS({});
-        return parsed && typeof parsed === "object" ? parsed : {};
-    } catch {
-        return {};
+    let cursor = 1;
+    while (cursor < lines.length && lines[cursor] !== "---") {
+        cursor += 1;
     }
+
+    if (cursor >= lines.length) {
+        return {headmatter: {}, nextIndex: 0};
+    }
+
+    const headmatter = parseYamlObject(lines.slice(1, cursor).join("\n"));
+    const invalidKeys = Object.keys(headmatter).filter((key) => !FILE_FRONTMATTER_KEYS.has(key));
+    if (invalidKeys.length > 0) {
+        throw new Error(
+            `Invalid file frontmatter key(s): ${invalidKeys.join(", ")}. `
+            + "Use the first frontmatter block only for deck-level fields "
+            + "(theme, title, aspectRatio, canvasWidth), and put first-slide settings in a second frontmatter block.",
+        );
+    }
+
+    return {
+        headmatter,
+        nextIndex: cursor + 1,
+    };
 }
 
 function looksLikeFrontmatter(lines) {
@@ -31,7 +69,7 @@ function looksLikeFrontmatter(lines) {
     if (!block.includes(":")) {
         return false;
     }
-    const parsed = parseYamlBlock(block);
+    const parsed = parseYamlObject(block, {fallback: null});
     return parsed && typeof parsed === "object" && Object.keys(parsed).length > 0;
 }
 
@@ -66,11 +104,11 @@ function extractSlideTitle(slide) {
     return firstMeaningfulLine ? stripMarkdown(firstMeaningfulLine).slice(0, 48) : "";
 }
 
-function parseSlides(lines) {
+function parseSlides(lines, startIndex = 0) {
     const slides = [];
     let currentFrontmatter = {};
     let contentBuffer = [];
-    let cursor = 0;
+    let cursor = startIndex;
     let activeFence = null;
 
     function flushCurrentSlide() {
@@ -100,7 +138,7 @@ function parseSlides(lines) {
             }
 
             if (cursor < lines.length && cursor > frontmatterStart && looksLikeFrontmatter(lines.slice(frontmatterStart, cursor))) {
-                currentFrontmatter = parseYamlBlock(lines.slice(frontmatterStart, cursor).join("\n"));
+                currentFrontmatter = parseYamlObject(lines.slice(frontmatterStart, cursor).join("\n"));
                 cursor += 1;
             } else {
                 currentFrontmatter = {};
@@ -127,8 +165,10 @@ function parseSlides(lines) {
 
 export function parseDeck(source) {
     const lines = normalizeText(source).split("\n");
+    const {headmatter, nextIndex} = scanTopFrontmatter(lines);
     return {
-        slides: parseSlides(lines),
+        headmatter,
+        slides: parseSlides(lines, nextIndex),
     };
 }
 
@@ -137,14 +177,23 @@ export function getSlideTitle(slide, fallbackTitle = "Untitled Slide") {
 }
 
 export function getDeckViewport(deck) {
+    const ratio = parseAspectRatio(deck.headmatter?.aspectRatio);
+    const canvasWidth = typeof deck.headmatter?.canvasWidth === "number" && deck.headmatter.canvasWidth > 0
+        ? deck.headmatter.canvasWidth
+        : DEFAULT_CANVAS_WIDTH;
+
     return {
-        aspectRatio: DEFAULT_ASPECT_RATIO.numeric,
-        aspectRatioText: DEFAULT_ASPECT_RATIO.text,
-        canvasWidth: DEFAULT_CANVAS_WIDTH,
-        canvasHeight: Math.round(DEFAULT_CANVAS_WIDTH / DEFAULT_ASPECT_RATIO.numeric),
+        aspectRatio: ratio.numeric,
+        aspectRatioText: ratio.text,
+        canvasWidth,
+        canvasHeight: Math.round(canvasWidth / ratio.numeric),
     };
 }
 
 export function getDeckTitle(deck, fallbackTitle = "Untitled Slides") {
+    if (typeof deck.headmatter?.title === "string" && deck.headmatter.title.trim()) {
+        return deck.headmatter.title.trim();
+    }
+
     return getSlideTitle(deck.slides[0], fallbackTitle);
 }

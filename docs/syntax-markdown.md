@@ -5,7 +5,6 @@ MarkOS recommends a flat local deck layout:
 ```text
 deck/
   slides.md
-  slides.css
 ```
 
 `slides.md` is the only content entry for a deck.
@@ -13,19 +12,38 @@ deck/
 ## File Contract
 
 - Keep one deck in one Markdown file such as `slides.md`
-- Keep custom styling in one sibling CSS file such as `slides.css`
+- Use file-level frontmatter for deck-wide settings such as `theme`
+- Add `slides.css` only when you need deck-local style overrides
 - Keep local authoring focused on that source pair; other files in the deck directory are ignored
 - Do not rely on `styles/index.css` or theme preset CSS
-- There is no deck-wide frontmatter block
-- The first slide follows the same page-frontmatter rules as every other slide
 
-## Page Frontmatter
+## File Frontmatter
 
-Put a frontmatter block at the start of a slide only when that slide needs configuration:
+Use the opening frontmatter block for deck-wide settings:
 
 ```md
 ---
+theme: Clay
 title: Team Update
+aspectRatio: 16/9
+canvasWidth: 1280
+---
+```
+
+Supported file-level fields that matter to the current renderer:
+- `theme`: shared theme name, resolved from `themes/<theme>.css`
+- `title`: document title
+- `aspectRatio`: for example `16/9` or `4/3`
+- `canvasWidth`: viewport width in pixels
+
+This means the old single-block form is not supported anymore. Do not put page-only fields such as `layout`, `class`, `layoutClass`, or `background` in the first frontmatter block.
+
+## Page Frontmatter
+
+After file frontmatter, put a page frontmatter block before a slide only when that slide needs configuration:
+
+```md
+---
 layout: cover
 class: slide-shell title-slide
 ---
@@ -101,4 +119,4 @@ Practical recommendation:
 
 ## Example
 
-See [slides.md](C:/Users/xuao5/Desktop/MarkOS-Slides/examples/project/slides.md) for a working example.
+See [slides.md](C:/Users/xuao5/Desktop/MarkOS-Slides/examples/tokyo3days/slides.md) for a working example.

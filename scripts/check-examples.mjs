@@ -1,19 +1,11 @@
-import {mkdtemp, readFile, readdir, rm, stat} from "node:fs/promises";
+import {mkdtemp, readFile, readdir, rm} from "node:fs/promises";
 import os from "node:os";
 import {join} from "node:path";
+import {pathExists} from "../packages/core/src/core/deck-utils.mjs";
 import {runCli} from "../src/cli/index.mjs";
 
 const repoRoot = process.cwd();
 const examplesRoot = join(repoRoot, "examples");
-
-async function pathExists(targetPath) {
-  try {
-    await stat(targetPath);
-    return true;
-  } catch {
-    return false;
-  }
-}
 
 async function discoverExamples() {
   const entries = await readdir(examplesRoot, {withFileTypes: true});

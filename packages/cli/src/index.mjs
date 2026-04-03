@@ -8,16 +8,19 @@ import {
 import {startManifestSiteServer} from "@tinycircl/markos-slides-core/dev-server";
 import {
     MARKOS_DEFAULT_BUILD_OUT_DIRNAME,
+    MARKOS_DEFAULT_DECK_DIR,
     MARKOS_DEFAULT_WORK_ROOT_DIRNAME,
     getCliRuntimeOptions,
     resolveCliPaths,
 } from "@tinycircl/markos-slides-core/config";
+import {isPathWithin} from "@tinycircl/markos-slides-core/deck-utils";
+import {MARKOS_THEMES_DIRNAME, applyThemeToDeck, injectDeckThemeSource} from "./theme.mjs";
 
 export function parseCliArgs(argv) {
     const [command = "help", ...rest] = argv;
     const options = {
         command,
-        entry: ".",
+        entry: MARKOS_DEFAULT_DECK_DIR,
         outDir: null,
         workDir: null,
         base: null,
@@ -66,20 +69,12 @@ export function parseCliArgs(argv) {
             index += 1;
             continue;
         }
-        if (!arg.startsWith("-") && options.entry === ".") {
+        if (!arg.startsWith("-") && options.entry === MARKOS_DEFAULT_DECK_DIR) {
             options.entry = arg;
         }
     }
 
     return options;
-}
-
-function isSamePathOrInside(parentPath, targetPath) {
-    const normalizedParent = resolve(parentPath);
-    const normalizedTarget = resolve(targetPath);
-    return normalizedTarget === normalizedParent
-        || normalizedTarget.startsWith(`${normalizedParent}\\`)
-        || normalizedTarget.startsWith(`${normalizedParent}/`);
 }
 
 async function cleanupWorkDir(workDir) {
@@ -104,18 +99,51 @@ function printHelp() {
         "Usage:",
         "  markos build [deck] [--out-dir dist] [--base /] [--project-root dir] [--title name]",
         "  markos dev [deck] [--out-dir .markos-dev] [--base /] [--host 127.0.0.1] [--port 3030]",
+        "  markos theme apply <theme> [deck]",
         "  markos export [deck]",
         "",
         "Notes:",
         "  deck must be a directory containing slides.md.",
+        `  theme apply writes theme: <theme> into slides.md and keeps slides.css for local overrides.`,
         "  export is reserved for future non-web artifacts and is not available yet.",
         "",
         "Examples:",
         "  markos build .",
-        "  markos build examples/project",
+        "  markos build examples/tokyo3days",
         "  markos build talks/intro --out-dir dist",
-        "  markos dev examples/project --port 4000",
+        "  markos dev examples/tokyo3days --port 4000",
+        "  markos theme apply Clay examples/tokyo3days",
     ].join("\n"));
+}
+
+async function runThemeCommand(argv) {
+    const [action = "", themeName = "", deckPath = MARKOS_DEFAULT_DECK_DIR] = argv;
+
+    if (action === "help" || action === "--help" || action === "-h" || !action) {
+        printHelp();
+        return {ok: true, command: "theme", action: "help"};
+    }
+
+    if (action === "apply") {
+        const result = await applyThemeToDeck({
+            themeName,
+            deckPath,
+        });
+
+        console.log(`theme:   ${result.themeName}`);
+        console.log(`source:  ${result.themeFilePath}`);
+        console.log(`deck:    ${result.deckRoot}`);
+        console.log(`target:  ${result.targetFilePath}`);
+
+        return {
+            ok: true,
+            command: "theme",
+            action: "apply",
+            ...result,
+        };
+    }
+
+    throw new Error(`Unsupported theme command: ${action}`);
 }
 
 async function buildLocalAuthoringSite({
@@ -134,6 +162,7 @@ async function buildLocalAuthoringSite({
         title,
         ignoredPaths: [outDir, workDir],
     });
+    await injectDeckThemeSource(input);
 
     await buildStaticSiteFromInput({
         input,
@@ -262,7 +291,7 @@ async function runDevCommand(rawOptions) {
         }
         if (filename) {
             const changedPath = resolve(projectRoot, String(filename));
-            if (ignoredWatchRoots.some((rootPath) => isSamePathOrInside(rootPath, changedPath))) {
+            if (ignoredWatchRoots.some((rootPath) => isPathWithin(rootPath, changedPath))) {
                 return;
             }
         }
@@ -305,6 +334,11 @@ async function runDevCommand(rawOptions) {
 }
 
 export async function runCli(argv) {
+    const [command = "help"] = argv;
+    if (command === "theme") {
+        return runThemeCommand(argv.slice(1));
+    }
+
     const parsed = parseCliArgs(argv);
     const options = getCliRuntimeOptions(parsed);
 

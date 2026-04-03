@@ -1,5 +1,6 @@
-import {readFile, stat} from "node:fs/promises";
-import {basename, dirname, extname, join, relative, resolve} from "node:path";
+import {readFile} from "node:fs/promises";
+import {basename, dirname, extname, relative, resolve} from "node:path";
+import {getSiblingCssPath, isPathWithin, pathExists} from "./deck-utils.mjs";
 
 function toPosixPath(filePath) {
     return filePath.replace(/\\/g, "/");
@@ -11,28 +12,8 @@ function normalizeIgnoredPaths(paths = []) {
         .map((targetPath) => resolve(targetPath));
 }
 
-function isPathWithin(parentPath, targetPath) {
-    return targetPath === parentPath || targetPath.startsWith(`${parentPath}/`) || targetPath.startsWith(`${parentPath}\\`);
-}
-
 function shouldIgnorePath(targetPath, ignoredPaths) {
     return ignoredPaths.some((ignoredPath) => isPathWithin(ignoredPath, targetPath));
-}
-
-async function pathExists(targetPath) {
-    try {
-        await stat(targetPath);
-        return true;
-    } catch {
-        return false;
-    }
-}
-
-function getSiblingCssPath(entryFilePath) {
-    return join(
-        dirname(entryFilePath),
-        `${basename(entryFilePath, extname(entryFilePath))}.css`,
-    );
 }
 
 export async function createLocalProjectInput({

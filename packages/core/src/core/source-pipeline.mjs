@@ -1,5 +1,6 @@
 import {createHash} from "node:crypto";
 import {relative} from "node:path";
+import {escapeRegExp, normalizeText, upsertTopLevelKey} from "./deck-utils.mjs";
 import {sanitizeRelativePath} from "./path-utils.mjs";
 
 const RE_MONACO_CODE_FENCE = /^(```[^\n]*?)\s*\{monaco(?:-run|-diff)?\}([^\n]*)$/gm;
@@ -23,10 +24,6 @@ export const MARKOS_SOURCE_MODES = Object.freeze({
     AUTHORING: "authoring",
 });
 
-function normalizeText(value) {
-    return value.replace(/\r\n?/g, "\n");
-}
-
 function normalizeTitle(title) {
     const trimmed = title?.trim();
     return trimmed && trimmed.length > 0 ? trimmed : "Untitled Slides";
@@ -36,18 +33,6 @@ function normalizeSourceMode(mode) {
     return mode === MARKOS_SOURCE_MODES.AUTHORING
         ? MARKOS_SOURCE_MODES.AUTHORING
         : MARKOS_SOURCE_MODES.HOSTED;
-}
-
-function escapeRegExp(value) {
-    return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-}
-
-function upsertTopLevelKey(frontmatter, key, value) {
-    const lines = frontmatter.split("\n");
-    const keyPattern = new RegExp(`^${escapeRegExp(key)}\\s*:`);
-    const filtered = lines.filter((line) => !keyPattern.test(line));
-    filtered.push(`${key}: ${JSON.stringify(value)}`);
-    return filtered.join("\n").trim();
 }
 
 function joinMarkdownLine(prefix, suffix = "") {

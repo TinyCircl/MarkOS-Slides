@@ -5,16 +5,40 @@ MarkOS recommends a flat local deck layout:
 ```text
 deck/
   slides.md
-  slides.css
 ```
 
-`slides.css` is the only custom style entry for a deck. MarkOS bundles the sibling CSS file into the generated HTML when the two files share the same basename.
+`slides.css` is an optional deck-local override layer. MarkOS loads the shared theme CSS first and then bundles the sibling `slides.css` file after it when the file exists.
 
-## Single CSS Entry
+## Optional Override Layer
 
-- Put all custom styling in `slides.css`
-- Treat `slides.css` as the single place that defines your deck's visual system
+- Most decks should not need a hand-written CSS file
+- Add `slides.css` only when the shared theme is not enough
+- Treat `slides.css` as the override layer that comes after the shared theme CSS
 - Do not split the main authoring path across `styles/` directories or preset CSS
+
+## Shared Themes
+
+If you want a centrally managed theme library, keep the source CSS files in `themes/` and reference one from file-level frontmatter:
+
+```md
+---
+theme: Clay
+---
+```
+
+That flow keeps the architecture explicit:
+- `themes/*.css` are reusable theme sources
+- `deck/slides.css` is the local override layer for that deck
+- the runtime loads the shared theme first and the deck-local overrides second
+
+## Build Output Note
+
+Today, MarkOS bundles the final CSS into `dist/index.html`.
+
+That means:
+- there is no standalone CSS file in `dist/`
+- if an AI or advanced workflow modifies built styling, it currently edits the generated HTML output
+- `slides.css` remains the source-side override file, not a required user-facing syntax step
 
 ## Recommended CSS Architecture
 
@@ -142,4 +166,4 @@ class: content-pane
 
 ## Example
 
-See [slides.css](C:/Users/xuao5/Desktop/MarkOS-Slides/examples/project/slides.css) for a working example.
+See [slides.css](C:/Users/xuao5/Desktop/MarkOS-Slides/examples/tokyo3days/slides.css) for a working example.

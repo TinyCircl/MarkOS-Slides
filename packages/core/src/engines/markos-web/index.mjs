@@ -1,6 +1,7 @@
-import {copyFile, mkdir, readFile, readdir, stat, writeFile} from "node:fs/promises";
+import {copyFile, mkdir, readFile, readdir, writeFile} from "node:fs/promises";
 import {basename, dirname, extname, join, relative, resolve} from "node:path";
 import {fileURLToPath} from "node:url";
+import {getSiblingCssPath, MARKOS_THEME_WORK_DIRNAME, pathExists} from "../../core/deck-utils.mjs";
 import {parseDeck, getDeckTitle, getDeckViewport} from "./parser.mjs";
 import {getRenderedSlides, renderMarkosDocument} from "./render.mjs";
 
@@ -42,21 +43,32 @@ async function bundleCssFile(filePath, seen = new Set()) {
     return output;
 }
 
-async function pathExists(targetPath) {
-    try {
-        await stat(targetPath);
-        return true;
-    } catch {
-        return false;
-    }
+async function resolveBundledCssSource(entryFilePath) {
+    const siblingCssPath = getSiblingCssPath(entryFilePath);
+    return await pathExists(siblingCssPath) ? siblingCssPath : null;
 }
 
-async function resolveBundledCssSource(entryFilePath) {
-    const siblingCssPath = join(
-        dirname(entryFilePath),
-        `${basename(entryFilePath, extname(entryFilePath))}.css`,
-    );
-    return await pathExists(siblingCssPath) ? siblingCssPath : null;
+function normalizeThemeName(value) {
+    if (typeof value !== "string") {
+        return null;
+    }
+
+    const trimmed = value.trim();
+    if (!trimmed) {
+        return null;
+    }
+
+    return trimmed.endsWith(".css") ? trimmed.slice(0, -4) : trimmed;
+}
+
+async function resolveThemeCssSource(workDir, deck) {
+    const themeName = normalizeThemeName(deck.headmatter?.theme);
+    if (!themeName) {
+        return null;
+    }
+
+    const themeCssPath = join(workDir, MARKOS_THEME_WORK_DIRNAME, `${themeName}.css`);
+    return await pathExists(themeCssPath) ? themeCssPath : null;
 }
 
 async function copyRenderableAssets(sourceDir, outputDir, rootDir = sourceDir) {
@@ -95,8 +107,19 @@ async function buildStaticSite({entryFilePath, outputDir, basePath, cwd}) {
     const viewport = getDeckViewport(deck);
     const title = getDeckTitle(deck, basename(entryFilePath, extname(entryFilePath)));
     const renderedSlides = getRenderedSlides(deck);
+    const themeCssSource = await resolveThemeCssSource(cwd, deck);
     const bundledCssSource = await resolveBundledCssSource(entryFilePath);
-    const bundledCss = bundledCssSource ? await bundleCssFile(bundledCssSource) : "";
+    const cssSources = [themeCssSource, bundledCssSource].filter(Boolean);
+    let bundledCss = "";
+    for (const sourcePath of cssSources) {
+        const nextCss = await bundleCssFile(sourcePath);
+        if (!nextCss) {
+            continue;
+        }
+        bundledCss = bundledCss
+            ? `${bundledCss}\n\n${nextCss}`
+            : nextCss;
+    }
 
     await mkdir(outputDir, {recursive: true});
     await copyBuiltInAssets(outputDir);

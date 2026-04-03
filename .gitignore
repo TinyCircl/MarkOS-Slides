@@ -35,5 +35,6 @@ pnpm-debug.log*
 # Temporary local files
 /.tmp-*
 /tmp-*
+/playground/
 old/
 scripts/nCine_14Years_Presentation.render.json

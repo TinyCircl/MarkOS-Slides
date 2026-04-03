@@ -46,11 +46,19 @@ Run the example deck in dev mode:
 npm run markos:dev -- examples/tokyo3days --port 3030
 ```
 
+Apply the shared Clay theme into the example deck:
+
+```bash
+npm run markos:theme -- apply Clay examples/tokyo3days
+```
+
 Run the full check suite:
 
 ```bash
 npm run check
 ```
+
+For local scratch decks, use `playground/`. It is ignored by Git in this repository.
 
 ## Examples
 
@@ -62,6 +70,7 @@ npm run check
 - `packages/cli`: local authoring CLI
 - `src/`: compatibility entry points that re-export the workspace packages
 - `examples/`: runnable example slide projects
+- `themes/`: shared theme source files that can be applied into a deck
 - `test/`: automated coverage for CLI, config, and render flows
 
 ## Documentation
