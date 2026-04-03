@@ -38,12 +38,13 @@ npm run markos:build -- examples/basic/slides.md
 npm run markos:dev -- examples/project/slides.md --port 3030
 ```
 
+The recommended local convention is a flat pair of sibling files such as `slides.md` and `slides.css`.
+
 ## Code Layout
 
 Put changes in the narrowest layer that owns the behavior:
 - `packages/core/src`: build pipeline, input normalization, engines, manifest site integration, and shared config
 - `packages/core/assets`: built-in static assets
-- `packages/core/styles/presets`: built-in preset styles
 - `packages/cli/src`: local authoring CLI behavior
 - `src/`: compatibility entry points that re-export workspace packages
 

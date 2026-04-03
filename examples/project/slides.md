@@ -1,26 +1,48 @@
 ---
 title: MarkOS Project Example
 layout: cover
+class: slide-shell title-slide
 ---
 
-# Local Authoring
+# Flat Pair Authoring
 
-![Logo](./assets/logo.svg)
+## One markdown file. One sibling css file.
 
 ---
 layout: two-cols
+layoutClass: slide-shell syntax-slide
 ---
 
-# Project Layout
+## Markdown Rules
 
 - `slides.md`
-- `styles/index.css`
-- `assets/logo.svg`
+- `slides.css`
+- every page can have its own frontmatter
 
 ::right::
 
-## Notes
+## CSS Rules
 
-- local CSS is bundled
-- local assets are copied
-- authoring mode keeps local refs
+- tokens live in `:root`
+- base shell lives in `.slide-shell`
+- page types live in layout classes
+
+---
+layout: two-cols
+layoutClass: slide-shell pricing-slide
+---
+
+## CSS Layering
+
+- design tokens
+- base shell
+- page types
+- contextual element styling
+
+::right::
+
+## Selector Hooks
+
+- `.title-slide h1`
+- `.pricing-slide .col-left h2`
+- `.pricing-slide .col-right ul`

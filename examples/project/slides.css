@@ -1,0 +1,71 @@
+:root {
+  --ab-accent: #f06b1f;
+  --ab-accent-soft: rgba(240, 107, 31, 0.12);
+  --ab-bg: #f3f1ec;
+  --ab-card: #ffffff;
+  --ab-card-warm: #fff8ef;
+  --ab-text: #1b1b1b;
+  --ab-muted: #555555;
+  --ab-subtle: #7a746c;
+  --ab-border: rgba(0, 0, 0, 0.08);
+  --ab-shadow: 0 24px 60px rgba(0, 0, 0, 0.14);
+}
+
+.slidev-layout {
+  font-family: Montserrat, Helvetica, Arial, sans-serif;
+  color: var(--ab-text);
+}
+
+.slide-shell {
+  padding: 24px;
+  background: var(--ab-card);
+  border: 1px solid var(--ab-border);
+  border-radius: 28px;
+  box-shadow: var(--ab-shadow);
+}
+
+.title-slide {
+  background: linear-gradient(180deg, var(--ab-card) 0%, var(--ab-card-warm) 100%);
+}
+
+.title-slide h1 {
+  margin-bottom: 0.4em;
+  letter-spacing: 0.04em;
+  border-bottom: 4px solid var(--ab-accent);
+}
+
+.title-slide h2 {
+  color: var(--ab-muted);
+  font-weight: 500;
+}
+
+.syntax-slide .col-left h2,
+.syntax-slide .col-right h2,
+.pricing-slide .col-left h2,
+.pricing-slide .col-right h2 {
+  color: var(--ab-accent);
+  letter-spacing: 0.03em;
+}
+
+.syntax-slide ul,
+.pricing-slide ul {
+  margin: 0;
+  padding-left: 1.2rem;
+}
+
+.syntax-slide li,
+.pricing-slide li {
+  color: var(--ab-muted);
+}
+
+.syntax-slide li::marker,
+.pricing-slide li::marker {
+  color: var(--ab-accent);
+}
+
+.pricing-slide .col-left,
+.pricing-slide .col-right {
+  background: var(--ab-card-warm);
+  border-radius: 20px;
+  padding: 18px 20px;
+}

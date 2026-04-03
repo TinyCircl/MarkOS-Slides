@@ -2,9 +2,17 @@
 
 This directory contains small runnable examples for the local-authoring workflow.
 
+The recommended MarkOS layout is a flat pair of sibling files:
+
+```text
+deck/
+  slides.md
+  slides.css
+```
+
 ## `basic/`
 
-A minimal single-file deck with `slides.md` as the only source file.
+A minimal flat pair with `slides.md` and `slides.css`.
 
 Build it from the repository root:
 
@@ -14,7 +22,7 @@ npm run markos:build -- examples/basic/slides.md
 
 ## `project/`
 
-A project-style deck that includes local `styles/` and `assets/` folders.
+A slightly richer flat pair that keeps the same `slides.md` + `slides.css` shape.
 
 Build it:
 
@@ -29,3 +37,5 @@ npm run markos:dev -- examples/project/slides.md --port 3030
 ```
 
 For general setup and repository-wide docs, start from the [root README](../README.md).
+
+For deck syntax and the recommended CSS architecture, see the [Syntax Guide](../docs/syntax.md).

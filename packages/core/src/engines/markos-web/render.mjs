@@ -80,6 +80,10 @@ function renderSlideHtml(slide) {
 }
 
 function extractSlideTitle(slide, index) {
+    if (typeof slide.frontmatter?.title === "string" && slide.frontmatter.title.trim()) {
+        return slide.frontmatter.title.trim();
+    }
+
     const headingMatch = slide.content.match(/^#{1,6}\s+(.+)$/m);
     if (headingMatch) {
         return stripMarkdown(headingMatch[1]).trim();

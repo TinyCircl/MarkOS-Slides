@@ -29,7 +29,7 @@ test("legacy single-file decks still strip local resource references", () => {
     assert.doesNotMatch(markdown, /\{monaco\}/);
 });
 
-test("folder-style source keeps entry-local CSS and component references", () => {
+test("source-file mode keeps sibling CSS files and entry-local references", () => {
     const files = createInlineSourceFiles({
         title: "demo",
         entry: "slides.md",
@@ -38,17 +38,13 @@ test("folder-style source keeps entry-local CSS and component references", () =>
                 {
                     path: "slides.md",
                     content: [
-                        "---",
-                        "css: ./styles.css",
-                        "---",
-                        "",
                         "![Alt](./image.png)",
                         "",
                         "<MyWidget />",
                     ].join("\n"),
                 },
                 {
-                    path: "styles.css",
+                    path: "slides.css",
                     content: ".slidev-layout { color: red; }",
                 },
                 {
@@ -60,25 +56,20 @@ test("folder-style source keeps entry-local CSS and component references", () =>
     });
 
     const entry = files.find((file) => file.path === "slides.md");
-    const stylesIndex = files.find((file) => file.path === "styles/index.css");
+    const siblingCss = files.find((file) => file.path === "slides.css");
     assert.ok(entry);
     assert.equal(typeof entry.content, "string");
-    assert.ok(stylesIndex);
-    assert.equal(typeof stylesIndex.content, "string");
-    assert.match(stylesIndex.content, /@import "\.\.\/styles\.css";/);
+    assert.ok(siblingCss);
+    assert.equal(typeof siblingCss.content, "string");
     assert.match(entry.content, /!\[Alt]\(\.\/image\.png\)/);
     assert.match(entry.content, /<MyWidget \/>/);
-    assert.doesNotMatch(entry.content, /css: \.\/styles\.css/);
+    assert.equal(files.find((file) => file.path === "styles/index.css"), undefined);
 });
 
 test("authoring mode keeps local resource references for single-file decks", () => {
     const files = createInlineSourceFiles({
         title: "demo",
         content: [
-            "---",
-            "css: ./styles.css",
-            "---",
-            "",
             "![Alt](./image.png)",
             "",
             "<MyWidget />",
@@ -92,13 +83,12 @@ test("authoring mode keeps local resource references for single-file decks", () 
     const entry = files.find((file) => file.path === "slides.md");
     assert.ok(entry);
     assert.equal(typeof entry.content, "string");
-    assert.match(entry.content, /css: \.\/styles\.css/);
     assert.match(entry.content, /!\[Alt]\(\.\/image\.png\)/);
     assert.match(entry.content, /<MyWidget \/>/);
     assert.match(entry.content, /<video src="\.\/*demo\.mp4"><\/video>/);
 });
 
-test("legacy css frontmatter paths are rewritten to auto-loaded styles index", () => {
+test("css frontmatter no longer creates generated compatibility files", () => {
     const files = createInlineSourceFiles({
         title: "demo",
         entry: "slides.md",
@@ -127,9 +117,6 @@ test("legacy css frontmatter paths are rewritten to auto-loaded styles index", (
 
     assert.ok(entry);
     assert.equal(typeof entry.content, "string");
-    assert.doesNotMatch(entry.content, /css:\s*\[styles\/theme\.css\]/);
-
-    assert.ok(stylesIndex);
-    assert.equal(typeof stylesIndex.content, "string");
-    assert.match(stylesIndex.content, /@import "\.\/theme\.css";/);
+    assert.match(entry.content, /css:\s*\[styles\/theme\.css\]/);
+    assert.equal(stylesIndex, undefined);
 });

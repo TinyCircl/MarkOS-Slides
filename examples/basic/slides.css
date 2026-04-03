@@ -1,0 +1,7 @@
+.slide h1 {
+  letter-spacing: 0.04em;
+}
+
+.slide ul li::marker {
+  color: #f06b1f;
+}

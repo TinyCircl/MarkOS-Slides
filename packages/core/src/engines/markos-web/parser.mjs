@@ -1,5 +1,11 @@
 import {parseDocument} from "yaml";
 
+const DEFAULT_ASPECT_RATIO = {
+    numeric: 16 / 9,
+    text: "16/9",
+};
+const DEFAULT_CANVAS_WIDTH = 1280;
+
 function normalizeText(value) {
     return value.replace(/\r\n?/g, "\n");
 }
@@ -17,51 +23,6 @@ function parseYamlBlock(raw) {
     }
 }
 
-function parseAspectRatio(value) {
-    if (typeof value === "number" && value > 0) {
-        return {numeric: value, text: String(value)};
-    }
-
-    if (typeof value === "string") {
-        const trimmed = value.trim();
-        const slashMatch = trimmed.match(/^(\d+(?:\.\d+)?)\s*\/\s*(\d+(?:\.\d+)?)$/);
-        if (slashMatch) {
-            const width = Number.parseFloat(slashMatch[1]);
-            const height = Number.parseFloat(slashMatch[2]);
-            if (width > 0 && height > 0) {
-                return {numeric: width / height, text: `${width}/${height}`};
-            }
-        }
-
-        const direct = Number.parseFloat(trimmed);
-        if (!Number.isNaN(direct) && direct > 0) {
-            return {numeric: direct, text: trimmed};
-        }
-    }
-
-    return {numeric: 16 / 9, text: "16/9"};
-}
-
-function scanTopFrontmatter(lines) {
-    if (lines[0] !== "---") {
-        return {headmatter: {}, nextIndex: 0};
-    }
-
-    let cursor = 1;
-    while (cursor < lines.length && lines[cursor] !== "---") {
-        cursor += 1;
-    }
-
-    if (cursor >= lines.length) {
-        return {headmatter: {}, nextIndex: 0};
-    }
-
-    return {
-        headmatter: parseYamlBlock(lines.slice(1, cursor).join("\n")),
-        nextIndex: cursor + 1,
-    };
-}
-
 function looksLikeFrontmatter(lines) {
     const block = lines.join("\n").trim();
     if (!block) {
@@ -74,11 +35,42 @@ function looksLikeFrontmatter(lines) {
     return parsed && typeof parsed === "object" && Object.keys(parsed).length > 0;
 }
 
-function parseSlides(lines, startIndex, headmatter, defaults) {
+function stripMarkdown(value) {
+    return value
+        .replace(/`([^`]+)`/g, "$1")
+        .replace(/\*\*([^*]+)\*\*/g, "$1")
+        .replace(/\*([^*]+)\*/g, "$1")
+        .replace(/!\[[^\]]*]\([^)]+\)/g, "")
+        .replace(/\[([^\]]+)]\([^)]+\)/g, "$1")
+        .replace(/^#{1,6}\s+/gm, "")
+        .replace(/^\s*[-*+]\s+/gm, "")
+        .replace(/^\s*\d+\.\s+/gm, "")
+        .trim();
+}
+
+function extractSlideTitle(slide) {
+    if (typeof slide?.frontmatter?.title === "string" && slide.frontmatter.title.trim()) {
+        return slide.frontmatter.title.trim();
+    }
+
+    const headingMatch = slide?.content?.match(/^#{1,6}\s+(.+)$/m);
+    if (headingMatch) {
+        return stripMarkdown(headingMatch[1]).trim();
+    }
+
+    const firstMeaningfulLine = String(slide?.content ?? "")
+        .split("\n")
+        .map((line) => line.trim())
+        .find((line) => line.length > 0 && line !== "::right::");
+
+    return firstMeaningfulLine ? stripMarkdown(firstMeaningfulLine).slice(0, 48) : "";
+}
+
+function parseSlides(lines) {
     const slides = [];
-    let currentFrontmatter = {...headmatter};
+    let currentFrontmatter = {};
     let contentBuffer = [];
-    let cursor = startIndex;
+    let cursor = 0;
     let activeFence = null;
 
     function flushCurrentSlide() {
@@ -108,13 +100,10 @@ function parseSlides(lines, startIndex, headmatter, defaults) {
             }
 
             if (cursor < lines.length && cursor > frontmatterStart && looksLikeFrontmatter(lines.slice(frontmatterStart, cursor))) {
-                currentFrontmatter = {
-                    ...defaults,
-                    ...parseYamlBlock(lines.slice(frontmatterStart, cursor).join("\n")),
-                };
+                currentFrontmatter = parseYamlBlock(lines.slice(frontmatterStart, cursor).join("\n"));
                 cursor += 1;
             } else {
-                currentFrontmatter = {...defaults};
+                currentFrontmatter = {};
                 cursor = frontmatterStart;
             }
             continue;
@@ -138,34 +127,24 @@ function parseSlides(lines, startIndex, headmatter, defaults) {
 
 export function parseDeck(source) {
     const lines = normalizeText(source).split("\n");
-    const {headmatter, nextIndex} = scanTopFrontmatter(lines);
-    const defaults = headmatter.defaults && typeof headmatter.defaults === "object"
-        ? headmatter.defaults
-        : {};
-
     return {
-        headmatter,
-        defaults,
-        slides: parseSlides(lines, nextIndex, headmatter, defaults),
+        slides: parseSlides(lines),
     };
 }
 
-export function getDeckViewport(deck) {
-    const ratio = parseAspectRatio(deck.headmatter.aspectRatio);
-    const canvasWidth = typeof deck.headmatter.canvasWidth === "number" && deck.headmatter.canvasWidth > 0
-        ? deck.headmatter.canvasWidth
-        : 1280;
+export function getSlideTitle(slide, fallbackTitle = "Untitled Slide") {
+    return extractSlideTitle(slide) || fallbackTitle;
+}
 
+export function getDeckViewport(deck) {
     return {
-        aspectRatio: ratio.numeric,
-        aspectRatioText: ratio.text,
-        canvasWidth,
-        canvasHeight: Math.round(canvasWidth / ratio.numeric),
+        aspectRatio: DEFAULT_ASPECT_RATIO.numeric,
+        aspectRatioText: DEFAULT_ASPECT_RATIO.text,
+        canvasWidth: DEFAULT_CANVAS_WIDTH,
+        canvasHeight: Math.round(DEFAULT_CANVAS_WIDTH / DEFAULT_ASPECT_RATIO.numeric),
     };
 }
 
 export function getDeckTitle(deck, fallbackTitle = "Untitled Slides") {
-    return typeof deck.headmatter.title === "string" && deck.headmatter.title.trim()
-        ? deck.headmatter.title
-        : fallbackTitle;
+    return getSlideTitle(deck.slides[0], fallbackTitle);
 }

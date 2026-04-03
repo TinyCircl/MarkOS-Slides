@@ -3,7 +3,7 @@
 `@tinycircl/markos-slides-core` is the reusable build core behind MarkOS.
 
 It is responsible for:
-- normalizing Markdown or multi-file slide sources
+- normalizing slide sources
 - building static web slide sites
 - exposing the built-in `markos-web` render engine
 - powering both local authoring and server-side rendering flows
@@ -33,6 +33,8 @@ await buildStaticSiteFromInput({
   basePath: "/",
 });
 ```
+
+For CLI-style local authoring, the recommended repository layout is a flat pair such as `slides.md` and `slides.css`.
 
 ## Public Exports
 

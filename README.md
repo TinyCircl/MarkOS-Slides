@@ -14,7 +14,7 @@ MarkOS currently supports:
 - `markos build`
 - `markos dev`
 - web output
-- single-file decks and multi-file local projects
+- a flat local deck layout with one Markdown file and one sibling CSS file
 
 MarkOS does not currently support:
 - `pdf`
@@ -54,8 +54,8 @@ npm run check
 
 ## Examples
 
-- [examples/basic](examples/basic): the smallest single-file deck
-- [examples/project](examples/project): a project-style deck with local `styles/` and `assets/`
+- [examples/basic](examples/basic): the smallest `slides.md` + `slides.css` deck
+- [examples/project](examples/project): a slightly richer flat pair using the same two-file convention
 
 ## Repository Layout
 
@@ -69,6 +69,7 @@ npm run check
 
 Start here:
 - [CLI Reference](docs/cli.md)
+- [Syntax Guide](docs/syntax.md)
 - [Architecture Overview](docs/architecture.md)
 - [Project Scope](docs/scope.md)
 

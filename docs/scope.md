@@ -7,7 +7,7 @@ This repository is the open-source toolchain for building web slide sites from M
 - reusable slide build logic in `packages/core`
 - the local authoring CLI in `packages/cli`
 - examples, tests, and docs needed to use and validate the OSS toolchain
-- built-in assets, presets, and render-engine code required for web output
+- built-in assets and render-engine code required for web output
 
 ## Current Product Boundary
 

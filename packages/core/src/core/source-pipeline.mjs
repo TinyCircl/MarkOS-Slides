@@ -1,6 +1,5 @@
 import {createHash} from "node:crypto";
-import {dirname, join, relative} from "node:path";
-import {parseDocument} from "yaml";
+import {relative} from "node:path";
 import {sanitizeRelativePath} from "./path-utils.mjs";
 
 const RE_MONACO_CODE_FENCE = /^(```[^\n]*?)\s*\{monaco(?:-run|-diff)?\}([^\n]*)$/gm;
@@ -19,10 +18,6 @@ const RE_OBJECT_CLOSE_TAG = /<\/object>/gi;
 const RE_SELF_CLOSING_CUSTOM_TAG = /<([A-Z][\w]*|[a-z][\w]*(?:-[\w-]+)+)\b[^>]*\/>/g;
 const RE_CUSTOM_OPEN_CLOSE_TAG = /<\/?([A-Z][\w]*|[a-z][\w]*(?:-[\w-]+)+)\b[^>]*>/g;
 const RE_CODE_FENCE_MARKER = /^(\s*)(`{3,}|~{3,})/;
-const LEGACY_CSS_COMPAT_PATH = "styles/index.css";
-const LEGACY_CSS_COMPAT_START = "/* markos legacy css frontmatter compatibility:start */";
-const LEGACY_CSS_COMPAT_END = "/* markos legacy css frontmatter compatibility:end */";
-
 export const MARKOS_SOURCE_MODES = Object.freeze({
     HOSTED: "hosted",
     AUTHORING: "authoring",
@@ -222,143 +217,8 @@ function enforceServiceFrontmatterOnMarkdown(markdown, {
         : withFrontmatter;
 }
 
-function toPosixPath(filePath) {
-    return filePath.replace(/\\/g, "/");
-}
-
-function toCssImportPath(fromPath, targetPath) {
-    let importPath = toPosixPath(relative(dirname(fromPath), targetPath));
-    if (!importPath || importPath === ".") {
-        importPath = "./";
-    } else if (!importPath.startsWith(".")) {
-        importPath = `./${importPath}`;
-    }
-    return importPath;
-}
-
 function hasInlineSourceFiles(input) {
     return Array.isArray(input?.source?.files) && input.source.files.length > 0;
-}
-
-function splitFrontmatter(markdown) {
-    const normalized = normalizeText(markdown);
-    const match = normalized.match(/^---\n([\s\S]*?)\n---\n?/);
-    if (!match) {
-        return null;
-    }
-    return {
-        raw: match[1],
-        body: normalized.slice(match[0].length),
-    };
-}
-
-function collectLegacyCssPaths(cssValue) {
-    if (typeof cssValue === "string") {
-        const trimmed = cssValue.trim();
-        if (!trimmed || trimmed === "unocss" || !isPathReference(trimmed)) {
-            return [];
-        }
-        return [trimmed];
-    }
-
-    if (Array.isArray(cssValue)) {
-        return cssValue
-            .filter((value) => typeof value === "string")
-            .map((value) => value.trim())
-            .filter((value) => value && value !== "unocss" && isPathReference(value));
-    }
-
-    return [];
-}
-
-function buildLegacyCssCompatBlock(importPaths) {
-    if (!Array.isArray(importPaths) || importPaths.length === 0) {
-        return "";
-    }
-
-    const lines = [
-        LEGACY_CSS_COMPAT_START,
-        ...importPaths.map((path) => `@import "${path}";`),
-        LEGACY_CSS_COMPAT_END,
-    ];
-    return `${lines.join("\n")}\n`;
-}
-
-function mergeLegacyCssCompatIntoStylesIndex(existingContent, compatBlock) {
-    if (!compatBlock) {
-        return existingContent;
-    }
-
-    const normalized = typeof existingContent === "string" ? existingContent : "";
-    const compatPattern = new RegExp(
-        `${escapeRegExp(LEGACY_CSS_COMPAT_START)}[\\s\\S]*?${escapeRegExp(LEGACY_CSS_COMPAT_END)}\\n?`,
-        "g",
-    );
-    const stripped = normalized.replace(compatPattern, "").replace(/^\n+/, "");
-    return stripped
-        ? `${compatBlock}\n${stripped}`
-        : compatBlock;
-}
-
-function applyLegacyCssFrontmatterCompatibility(files, sourceEntry) {
-    const normalizedEntry = sanitizeRelativePath(sourceEntry);
-    const entryFile = files.find((file) => file.path === normalizedEntry && typeof file.content === "string");
-    if (!entryFile) {
-        return files;
-    }
-
-    const frontmatter = splitFrontmatter(entryFile.content);
-    if (!frontmatter) {
-        return files;
-    }
-
-    let yamlDocument;
-    try {
-        yamlDocument = parseDocument(frontmatter.raw);
-    } catch {
-        return files;
-    }
-
-    const yamlData = yamlDocument.toJS({});
-    const legacyCssPaths = collectLegacyCssPaths(yamlData?.css);
-    if (legacyCssPaths.length === 0) {
-        return files;
-    }
-
-    const fileMap = new Map(files.map((file) => [file.path, file]));
-    const compatibilityImports = [];
-
-    for (const cssPath of legacyCssPaths) {
-        const resolvedTarget = sanitizeRelativePath(join(dirname(normalizedEntry), cssPath));
-        if (resolvedTarget === LEGACY_CSS_COMPAT_PATH) {
-            continue;
-        }
-        if (!fileMap.has(resolvedTarget)) {
-            continue;
-        }
-        compatibilityImports.push(toCssImportPath(LEGACY_CSS_COMPAT_PATH, resolvedTarget));
-    }
-
-    if (compatibilityImports.length === 0) {
-        return files;
-    }
-
-    yamlDocument.delete("css");
-    const nextFrontmatter = yamlDocument.toString({lineWidth: 0}).trimEnd();
-    entryFile.content = `---\n${nextFrontmatter}\n---\n${frontmatter.body.replace(/^\n?/, "\n")}`;
-
-    const compatBlock = buildLegacyCssCompatBlock([...new Set(compatibilityImports)]);
-    const existingStylesIndex = fileMap.get(LEGACY_CSS_COMPAT_PATH);
-    if (existingStylesIndex && typeof existingStylesIndex.content === "string") {
-        existingStylesIndex.content = mergeLegacyCssCompatIntoStylesIndex(existingStylesIndex.content, compatBlock);
-    } else if (!existingStylesIndex) {
-        files.push({
-            path: LEGACY_CSS_COMPAT_PATH,
-            content: compatBlock,
-        });
-    }
-
-    return files;
 }
 
 function normalizeSourceFilesForHash(files) {
@@ -438,7 +298,7 @@ export function createInlineSourceFiles(input, {
         });
     }
 
-    return applyLegacyCssFrontmatterCompatibility(files, sourceEntry);
+    return files;
 }
 
 export function ensureSourceEntryExists(files, sourceEntry) {

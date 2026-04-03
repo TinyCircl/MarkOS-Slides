@@ -5,6 +5,7 @@ Use this index when you already know you want a specific document.
 ## Start Here
 
 - [CLI Reference](./cli.md): commands, flags, defaults, and examples
+- [Syntax Guide](./syntax.md): entry point for the separate Markdown and CSS deck rules
 - [Architecture Overview](./architecture.md): repo layout and build flow
 - [Project Scope](./scope.md): what belongs in this OSS repo and what does not
 

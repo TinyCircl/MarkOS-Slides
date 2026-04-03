@@ -2,6 +2,18 @@
 
 MarkOS currently supports two local-authoring commands: `build` and `dev`.
 
+MarkOS recommends a flat local deck layout:
+
+```text
+deck/
+  slides.md
+  slides.css
+```
+
+When the entry file is `slides.md`, MarkOS will automatically bundle a sibling `slides.css` file if it exists. It does not auto-load `styles/index.css` or theme preset CSS.
+
+For deck authoring rules, see [Syntax Guide](./syntax.md).
+
 ## Command Summary
 
 - `markos build [entry] [--out-dir dir] [--work-dir dir] [--base /] [--project-root dir] [--title name]`
@@ -12,7 +24,7 @@ MarkOS currently supports two local-authoring commands: `build` and `dev`.
 
 ## `markos build`
 
-Build a local slide project into a static site.
+Build a local slide deck into a static site.
 
 Examples:
 
@@ -27,17 +39,16 @@ Options:
 - `--out-dir`: output directory. Default: `dist/` next to the entry file
 - `--work-dir`: work directory used during the build. Default: `.markos-work/<out-dir-name>/` next to the entry file
 - `--base`: site base path. Default: `/`
-- `--project-root`: project root used to discover local assets and related files. Default: the entry file directory
+- `--project-root`: directory containing the deck files. Default: the entry file directory
 - `--title`: fallback document title when the source does not provide one
 
 Behavior:
-- reads a local single-file deck or multi-file project
-- copies local assets and bundles local styles into the generated site
+- reads the entry Markdown file and bundles a sibling CSS file with the same basename when present
 - removes the temporary work directory after the build completes
 
 ## `markos dev`
 
-Build once, serve locally, and rebuild when project files change.
+Build once, serve locally, and rebuild when deck files change.
 
 Examples:
 
@@ -54,7 +65,7 @@ Options:
 - `--base`: local site base path. Default: `/`
 - `--host`: dev server host. Default: `127.0.0.1`
 - `--port`: dev server port. Default: `3030`. Use `0` to let the OS choose an available port
-- `--project-root`: project root used to watch source files. Default: the entry file directory
+- `--project-root`: directory used to watch deck files. Default: the entry file directory
 - `--title`: fallback document title when the source does not provide one
 
 Behavior:
@@ -75,4 +86,4 @@ npm run check
 
 ## Scope Notes
 
-The CLI is currently for local authoring and web output only. For repository boundaries and non-goals, see [Project Scope](./scope.md).
+The CLI is currently for local authoring and web output only. The recommended local convention is one Markdown file paired with one sibling CSS file. For repository boundaries and non-goals, see [Project Scope](./scope.md).

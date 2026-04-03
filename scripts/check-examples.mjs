@@ -19,8 +19,6 @@ const EXAMPLES = [
     entry: join(repoRoot, "examples", "project", "slides.md"),
     expectedFiles: [
       "index.html",
-      "styles/index.css",
-      "assets/logo.svg",
       "assets/markdos-icon.svg",
     ],
   },

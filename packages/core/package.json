@@ -8,8 +8,7 @@
     "assets/",
     "README.md",
     "index.mjs",
-    "src/",
-    "styles/"
+    "src/"
   ],
   "keywords": [
     "markdown",
