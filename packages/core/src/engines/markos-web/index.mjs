@@ -1,7 +1,7 @@
 import {copyFile, mkdir, readFile, readdir, writeFile} from "node:fs/promises";
 import {basename, dirname, extname, join, relative, resolve} from "node:path";
 import {fileURLToPath} from "node:url";
-import {getSiblingCssPath, MARKOS_THEME_WORK_DIRNAME, pathExists} from "../../core/deck-utils.mjs";
+import {getDeckCssFilePaths, MARKOS_THEME_WORK_DIRNAME, pathExists} from "../../core/deck-utils.mjs";
 import {parseDeck, getDeckTitle, getDeckViewport} from "./parser.mjs";
 import {getRenderedSlides, renderMarkosDocument} from "./render.mjs";
 
@@ -43,9 +43,16 @@ async function bundleCssFile(filePath, seen = new Set()) {
     return output;
 }
 
-async function resolveBundledCssSource(entryFilePath) {
-    const siblingCssPath = getSiblingCssPath(entryFilePath);
-    return await pathExists(siblingCssPath) ? siblingCssPath : null;
+async function resolveDeckCssSources(entryFilePath) {
+    const cssSources = [];
+
+    for (const cssPath of getDeckCssFilePaths(entryFilePath)) {
+        if (await pathExists(cssPath)) {
+            cssSources.push(cssPath);
+        }
+    }
+
+    return cssSources;
 }
 
 function normalizeThemeName(value) {
@@ -108,8 +115,8 @@ async function buildStaticSite({entryFilePath, outputDir, basePath, cwd}) {
     const title = getDeckTitle(deck, basename(entryFilePath, extname(entryFilePath)));
     const renderedSlides = getRenderedSlides(deck);
     const themeCssSource = await resolveThemeCssSource(cwd, deck);
-    const bundledCssSource = await resolveBundledCssSource(entryFilePath);
-    const cssSources = [themeCssSource, bundledCssSource].filter(Boolean);
+    const deckCssSources = await resolveDeckCssSources(entryFilePath);
+    const cssSources = [themeCssSource, ...deckCssSources].filter(Boolean);
     let bundledCss = "";
     for (const sourcePath of cssSources) {
         const nextCss = await bundleCssFile(sourcePath);

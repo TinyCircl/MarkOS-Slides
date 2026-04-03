@@ -31,7 +31,7 @@ canvasWidth: 1280
 ```
 
 Supported file-level fields that matter to the current renderer:
-- `theme`: shared theme name, resolved from `themes/<theme>.css`
+- `theme`: shared theme name, resolved from the built-in core theme library
 - `title`: document title
 - `aspectRatio`: for example `16/9` or `4/3`
 - `canvasWidth`: viewport width in pixels
@@ -119,4 +119,4 @@ Practical recommendation:
 
 ## Example
 
-See [slides.md](C:/Users/xuao5/Desktop/MarkOS-Slides/examples/tokyo3days/slides.md) for a working example.
+See [slides.md](../examples/tokyo3days/slides.md) for a working example.

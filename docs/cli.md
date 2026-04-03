@@ -11,7 +11,7 @@ deck/
 
 For normal authoring, a deck only needs `slides.md` plus a file-level `theme`.
 
-When a deck file declares `theme: Clay` in its top-level frontmatter, MarkOS loads `themes/Clay.css` as the shared theme. A sibling `slides.css` file is optional and acts as an advanced local override layer.
+When a deck file declares `theme: Clay` in its top-level frontmatter, MarkOS loads the built-in `Clay` theme from the core package theme library. A sibling `slides.css` file is optional and acts as the primary local override layer, and an optional `agent-overrides.css` file can add a final incremental override layer after that.
 
 For deck authoring rules, see [Syntax Guide](./syntax.md).
 
@@ -47,6 +47,7 @@ Default styling path:
 - write Markdown in `slides.md`
 - set `theme` in file-level frontmatter
 - do not create `slides.css` unless you explicitly need local overrides
+- use `agent-overrides.css` only when an automated or advanced workflow needs a separate final override layer
 
 Important output note:
 - the final CSS is currently bundled into `dist/index.html`
@@ -87,8 +88,9 @@ Options:
 Behavior:
 - resolves `slides.md` from the given deck directory
 - reads deck-level frontmatter from `slides.md`
-- loads `themes/<theme>.css` when `theme` is declared in file-level frontmatter
+- loads the built-in `<theme>` source from the core package theme library when `theme` is declared in file-level frontmatter
 - loads the sibling `slides.css` file as an optional local override layer when it exists
+- loads `agent-overrides.css` after `slides.css` when it exists, so it can apply final incremental overrides
 - ignores other files in the deck directory during build input collection
 - removes the temporary work directory after the build completes
 
@@ -122,7 +124,7 @@ Behavior:
 
 ## `markos theme apply`
 
-Set a deck's file-level `theme` and keep `slides.css` as the local override layer.
+Set a deck's file-level `theme` and keep `slides.css` as the main local override layer.
 
 Examples:
 
@@ -132,10 +134,10 @@ markos theme apply Clay .
 ```
 
 Behavior:
-- verifies that `themes/<theme>.css` exists
+- verifies that the built-in `<theme>` source exists in the core package theme library
 - writes `theme: <theme>` into the top-level frontmatter of `slides.md`
 - creates `slides.css` only when the deck does not already have one
-- keeps the runtime contract explicit: shared theme first, local deck overrides second
+- keeps the runtime contract explicit: shared theme first, `slides.css` second, optional `agent-overrides.css` last
 
 ## Validation
 
@@ -149,4 +151,4 @@ npm run check
 
 ## Scope Notes
 
-The CLI is currently for local authoring and web output only. The recommended local convention is one Markdown file paired with one sibling CSS file. For repository boundaries and non-goals, see [Project Scope](./scope.md).
+The CLI is currently for local authoring and web output only. The recommended local convention is one Markdown file with `slides.css` as the main local override layer and optional `agent-overrides.css` as a final incremental override layer. For repository boundaries and non-goals, see [Project Scope](./scope.md).

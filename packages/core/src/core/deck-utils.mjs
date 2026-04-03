@@ -10,6 +10,7 @@ export const FILE_FRONTMATTER_KEYS = new Set([
 ]);
 
 export const MARKOS_THEME_WORK_DIRNAME = ".markos-theme";
+export const MARKOS_AGENT_OVERRIDE_CSS_NAME = "agent-overrides.css";
 
 export function normalizeText(value) {
     return String(value).replace(/^\uFEFF/, "").replace(/\r\n?/g, "\n");
@@ -32,6 +33,17 @@ export function getSiblingCssPath(entryFilePath) {
         dirname(entryFilePath),
         `${basename(entryFilePath, extname(entryFilePath))}.css`,
     );
+}
+
+export function getAgentOverrideCssPath(entryFilePath) {
+    return join(dirname(entryFilePath), MARKOS_AGENT_OVERRIDE_CSS_NAME);
+}
+
+export function getDeckCssFilePaths(entryFilePath) {
+    return [
+        getSiblingCssPath(entryFilePath),
+        getAgentOverrideCssPath(entryFilePath),
+    ];
 }
 
 export function isPathWithin(parentPath, targetPath) {

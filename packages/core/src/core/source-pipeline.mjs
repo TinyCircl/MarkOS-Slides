@@ -1,6 +1,5 @@
 import {createHash} from "node:crypto";
-import {relative} from "node:path";
-import {escapeRegExp, normalizeText, upsertTopLevelKey} from "./deck-utils.mjs";
+import {normalizeText, upsertTopLevelKey} from "./deck-utils.mjs";
 import {sanitizeRelativePath} from "./path-utils.mjs";
 
 const RE_MONACO_CODE_FENCE = /^(```[^\n]*?)\s*\{monaco(?:-run|-diff)?\}([^\n]*)$/gm;

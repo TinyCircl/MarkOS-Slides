@@ -5,7 +5,7 @@ import {mkdir, mkdtemp, readFile, rm, writeFile} from "node:fs/promises";
 import {join} from "node:path";
 import {markosWebRenderEngine} from "../src/engines/markos-web/index.mjs";
 
-test("markos-web builds a static deck with file-level theme css plus sibling override css", async () => {
+test("markos-web builds a static deck with theme css, deck css, and agent override css in order", async () => {
     const tempRoot = await mkdtemp(join(os.tmpdir(), "markos-engine-"));
     const workDir = join(tempRoot, "work");
     const outDir = join(tempRoot, "out");
@@ -36,6 +36,7 @@ test("markos-web builds a static deck with file-level theme css plus sibling ove
         );
         await writeFile(join(workDir, ".markos-theme", "Clay.css"), ".slide h2 { color: blue; }\n", "utf8");
         await writeFile(join(workDir, "slides.css"), ".slide h2 { color: #f06b1f; }\n", "utf8");
+        await writeFile(join(workDir, "agent-overrides.css"), ".slide h2 { color: green; }\n", "utf8");
 
         await markosWebRenderEngine.buildStaticSite({
             entryFilePath: join(workDir, "slides.md"),
@@ -56,10 +57,17 @@ test("markos-web builds a static deck with file-level theme css plus sibling ove
         assert.match(html, /assets\/markdos-icon\.svg/);
         assert.match(html, /\.slide h2 \{ color: blue; \}/);
         assert.match(html, /\.slide h2 \{ color: #f06b1f; \}/);
+        assert.match(html, /\.slide h2 \{ color: green; \}/);
+        assert.ok(html.indexOf(".slide h2 { color: blue; }") < html.indexOf(".slide h2 { color: #f06b1f; }"));
+        assert.ok(html.indexOf(".slide h2 { color: #f06b1f; }") < html.indexOf(".slide h2 { color: green; }"));
         assert.match(html, /Overview/);
         assert.match(logo, /Markdos logo/);
         await assert.rejects(
             () => readFile(join(outDir, "slides.css"), "utf8"),
+            /ENOENT/,
+        );
+        await assert.rejects(
+            () => readFile(join(outDir, "agent-overrides.css"), "utf8"),
             /ENOENT/,
         );
     } finally {

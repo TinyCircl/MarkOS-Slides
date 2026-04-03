@@ -1,10 +1,12 @@
 import {statSync} from "node:fs";
-import {basename, dirname, resolve} from "node:path";
+import {basename, dirname, join, resolve} from "node:path";
+import {fileURLToPath} from "node:url";
 import {normalizeBasePath} from "../core/path-utils.mjs";
 import {MARKOS_SOURCE_MODES} from "../core/source-pipeline.mjs";
 
 export const MARKOS_DEFAULT_ENTRY = "slides.md";
 export const MARKOS_DEFAULT_DECK_DIR = ".";
+export const MARKOS_THEMES_DIRNAME = "themes";
 export const MARKOS_DEFAULT_BASE_PATH = "/";
 export const MARKOS_DEFAULT_BUILD_OUT_DIRNAME = "dist";
 export const MARKOS_DEFAULT_DEV_OUT_DIRNAME = ".markos-dev";
@@ -24,6 +26,8 @@ export const MARKOS_DEFAULT_REQUEST_TIMEOUT_MS = 60 * 1000;
 export const MARKOS_DEFAULT_MAX_PREVIEW_SESSIONS = 1000;
 export const MARKOS_DEFAULT_AUTHORING_MODE = MARKOS_SOURCE_MODES.AUTHORING;
 export const MARKOS_DEFAULT_HOSTED_MODE = MARKOS_SOURCE_MODES.HOSTED;
+const CORE_CONFIG_DIR = dirname(fileURLToPath(import.meta.url));
+const CORE_PACKAGE_ROOT = resolve(CORE_CONFIG_DIR, "../..");
 
 function parseNumber(value, fallback, {min = 0} = {}) {
     const parsed = Number(value);
@@ -106,6 +110,10 @@ export function getCliRuntimeOptions(overrides = {}) {
         title: overrides.title || "",
         sourceMode: MARKOS_DEFAULT_AUTHORING_MODE,
     };
+}
+
+export function getBundledThemesRoot() {
+    return join(CORE_PACKAGE_ROOT, MARKOS_THEMES_DIRNAME);
 }
 
 function isDirectoryPath(targetPath) {

@@ -34,7 +34,7 @@ await buildStaticSiteFromInput({
 });
 ```
 
-For CLI-style local authoring, the recommended repository layout is a flat pair such as `slides.md` and `slides.css`.
+For CLI-style local authoring, the recommended repository layout is `slides.md` plus `slides.css` as the main override layer, with optional `agent-overrides.css` for a final incremental override layer.
 
 ## Public Exports
 

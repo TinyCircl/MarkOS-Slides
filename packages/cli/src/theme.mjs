@@ -1,18 +1,21 @@
 import {mkdir, readFile, writeFile} from "node:fs/promises";
-import {dirname, join, resolve} from "node:path";
-import {MARKOS_DEFAULT_DECK_DIR, MARKOS_DEFAULT_ENTRY} from "@tinycircl/markos-slides-core/config";
+import {basename, dirname, join, resolve} from "node:path";
+import {
+    MARKOS_DEFAULT_DECK_DIR,
+    MARKOS_DEFAULT_ENTRY,
+    MARKOS_THEMES_DIRNAME,
+    getBundledThemesRoot,
+} from "@tinycircl/markos-slides-core/config";
 import {
     FILE_FRONTMATTER_KEYS,
     MARKOS_THEME_WORK_DIRNAME,
-    escapeRegExp,
     getPathKind,
     getSiblingCssPath,
     normalizeText,
     parseYamlObject,
     upsertTopLevelKey,
 } from "@tinycircl/markos-slides-core/deck-utils";
-
-export const MARKOS_THEMES_DIRNAME = "themes";
+export {MARKOS_THEMES_DIRNAME} from "@tinycircl/markos-slides-core/config";
 
 const THEME_NAME_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._-]*$/;
 
@@ -24,8 +27,15 @@ function sanitizeThemeName(themeName) {
     return normalizedThemeName;
 }
 
-export function getThemesRoot(rootDir = process.cwd()) {
-    return resolve(rootDir, MARKOS_THEMES_DIRNAME);
+export function getThemesRoot(rootDir = null) {
+    if (!rootDir) {
+        return getBundledThemesRoot();
+    }
+
+    const resolvedRoot = resolve(rootDir);
+    return basename(resolvedRoot) === MARKOS_THEMES_DIRNAME
+        ? resolvedRoot
+        : join(resolvedRoot, MARKOS_THEMES_DIRNAME);
 }
 
 function withDeckThemeFrontmatter(markdown, themeName) {

@@ -1,6 +1,6 @@
 import {readFile} from "node:fs/promises";
 import {basename, dirname, extname, relative, resolve} from "node:path";
-import {getSiblingCssPath, isPathWithin, pathExists} from "./deck-utils.mjs";
+import {getDeckCssFilePaths, isPathWithin, pathExists} from "./deck-utils.mjs";
 
 function toPosixPath(filePath) {
     return filePath.replace(/\\/g, "/");
@@ -51,15 +51,18 @@ export async function createLocalProjectInput({
         },
     ];
 
-    const siblingCssPath = getSiblingCssPath(resolvedEntryFilePath);
-    if (
-        await pathExists(siblingCssPath)
-        && isPathWithin(resolvedProjectRoot, siblingCssPath)
-        && !shouldIgnorePath(siblingCssPath, normalizedIgnoredPaths)
-    ) {
+    for (const cssPath of getDeckCssFilePaths(resolvedEntryFilePath)) {
+        if (
+            !await pathExists(cssPath)
+            || !isPathWithin(resolvedProjectRoot, cssPath)
+            || shouldIgnorePath(cssPath, normalizedIgnoredPaths)
+        ) {
+            continue;
+        }
+
         sourceFiles.push({
-            path: toPosixPath(relative(resolvedProjectRoot, siblingCssPath)),
-            content: await readFile(siblingCssPath, "utf8"),
+            path: toPosixPath(relative(resolvedProjectRoot, cssPath)),
+            content: await readFile(cssPath, "utf8"),
         });
     }
 

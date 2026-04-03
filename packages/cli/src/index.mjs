@@ -13,8 +13,8 @@ import {
     getCliRuntimeOptions,
     resolveCliPaths,
 } from "@tinycircl/markos-slides-core/config";
-import {isPathWithin} from "@tinycircl/markos-slides-core/deck-utils";
-import {MARKOS_THEMES_DIRNAME, applyThemeToDeck, injectDeckThemeSource} from "./theme.mjs";
+import {getPathKind, isPathWithin} from "@tinycircl/markos-slides-core/deck-utils";
+import {applyThemeToDeck, getThemesRoot, injectDeckThemeSource} from "./theme.mjs";
 
 export function parseCliArgs(argv) {
     const [command = "help", ...rest] = argv;
@@ -155,6 +155,7 @@ async function buildLocalAuthoringSite({
     title,
     sourceMode,
     manifest = null,
+    themesRoot = getThemesRoot(null),
 }) {
     const input = await createLocalProjectInput({
         entryFilePath,
@@ -162,7 +163,7 @@ async function buildLocalAuthoringSite({
         title,
         ignoredPaths: [outDir, workDir],
     });
-    await injectDeckThemeSource(input);
+    await injectDeckThemeSource(input, {themesRoot});
 
     await buildStaticSiteFromInput({
         input,
@@ -184,6 +185,7 @@ async function runBuildCommand(rawOptions) {
         title,
         sourceMode,
     } = resolveCliPaths(rawOptions);
+    const themesRoot = getThemesRoot(null);
 
     try {
         await buildLocalAuthoringSite({
@@ -194,6 +196,7 @@ async function runBuildCommand(rawOptions) {
             basePath,
             title,
             sourceMode,
+            themesRoot,
         });
     } finally {
         await cleanupWorkDir(workDir);
@@ -226,6 +229,7 @@ async function runDevCommand(rawOptions) {
         title,
         sourceMode,
     } = resolveCliPaths(rawOptions);
+    const themesRoot = getThemesRoot(null);
     const defaultBuildOutDir = resolve(projectRoot, MARKOS_DEFAULT_BUILD_OUT_DIRNAME);
     const ignoredWatchRoots = [
         outDir,
@@ -258,6 +262,7 @@ async function runDevCommand(rawOptions) {
                 basePath,
                 title,
                 sourceMode,
+                themesRoot,
                 manifest: {
                     previewId: "local-dev",
                     buildId: `${Date.now()}`,
@@ -285,12 +290,20 @@ async function runDevCommand(rawOptions) {
         port,
     });
 
-    const watcher = watch(projectRoot, {recursive: true, persistent: true}, (_eventType, filename) => {
+    const watchRoots = [projectRoot];
+    if (
+        await getPathKind(themesRoot) === "directory"
+        && !watchRoots.some((rootPath) => isPathWithin(rootPath, themesRoot) || isPathWithin(themesRoot, rootPath))
+    ) {
+        watchRoots.push(themesRoot);
+    }
+
+    const handleWatchEvent = (watchRoot, _eventType, filename) => {
         if (stopping) {
             return;
         }
         if (filename) {
-            const changedPath = resolve(projectRoot, String(filename));
+            const changedPath = resolve(watchRoot, String(filename));
             if (ignoredWatchRoots.some((rootPath) => isPathWithin(rootPath, changedPath))) {
                 return;
             }
@@ -302,7 +315,12 @@ async function runDevCommand(rawOptions) {
             rebuildTimer = null;
             void rebuild("file change");
         }, 200);
-    });
+    };
+    const watchers = watchRoots.map((watchRoot) => watch(
+        watchRoot,
+        {recursive: true, persistent: true},
+        (eventType, filename) => handleWatchEvent(watchRoot, eventType, filename),
+    ));
 
     console.log(`entry:   ${entryFilePath}`);
     console.log(`root:    ${projectRoot}`);
@@ -316,7 +334,9 @@ async function runDevCommand(rawOptions) {
             clearTimeout(rebuildTimer);
             rebuildTimer = null;
         }
-        watcher.close();
+        for (const watcher of watchers) {
+            watcher.close();
+        }
         await devServer.stop();
         await cleanupWorkDir(workDir);
     };

@@ -14,7 +14,7 @@ MarkOS currently supports:
 - `markos build`
 - `markos dev`
 - web output
-- a flat local deck layout with one Markdown file and one sibling CSS file
+- a flat local deck layout with one Markdown file plus optional local CSS override layers
 
 MarkOS does not currently support:
 - `pdf`
@@ -70,7 +70,7 @@ For local scratch decks, use `playground/`. It is ignored by Git in this reposit
 - `packages/cli`: local authoring CLI
 - `src/`: compatibility entry points that re-export the workspace packages
 - `examples/`: runnable example slide projects
-- `themes/`: shared theme source files that can be applied into a deck
+- `packages/core/themes/`: built-in shared theme source files bundled with the core package
 - `test/`: automated coverage for CLI, config, and render flows
 
 ## Documentation
