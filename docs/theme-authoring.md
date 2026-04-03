@@ -102,6 +102,7 @@ theme: Clay
 ```
 
 - `themes/<Theme>/theme.css` is the shared theme entry point
+- the `theme` value is the theme folder name only, for example `Clay`
 - Shared themes are for reusable styling; `slides.css` is the local override layer
 - Supported slide layouts are `default`, `cover`, and `two-cols`
 - For `default` and `cover`, page classes are attached with `class`

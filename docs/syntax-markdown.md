@@ -32,6 +32,7 @@ canvasWidth: 1280
 
 Supported file-level fields that matter to the current renderer:
 - `theme`: shared theme name, resolved from the standard `themes/<theme>/theme.css` entry
+  Use the theme folder name only, for example `Clay`, not `Clay.css`
 - `title`: document title
 - `aspectRatio`: for example `16/9` or `4/3`
 - `canvasWidth`: viewport width in pixels

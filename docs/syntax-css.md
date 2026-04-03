@@ -26,6 +26,8 @@ theme: Clay
 ---
 ```
 
+Use the theme folder name only. Do not write `theme: Clay.css`.
+
 That flow keeps the architecture explicit:
 - `themes/<Theme>/theme.css` files are the standard reusable theme sources
 - `themes/<Theme>/README.md` is the theme manifest and usage surface for authors and AI

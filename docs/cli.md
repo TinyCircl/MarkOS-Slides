@@ -11,7 +11,7 @@ deck/
 
 For normal authoring, a deck only needs `slides.md` plus a file-level `theme`.
 
-When a deck file declares `theme: Clay` in its top-level frontmatter, MarkOS loads `themes/Clay/theme.css` as the shared theme entry. A sibling `slides.css` file is optional and acts as an advanced local override layer.
+When a deck file declares `theme: Clay` in its top-level frontmatter, MarkOS loads `themes/Clay/theme.css` as the shared theme entry. The `theme` value is the theme folder name, not a file name. A sibling `slides.css` file is optional and acts as an advanced local override layer.
 
 For deck authoring rules, see [Syntax Guide](./syntax.md).
 
@@ -45,7 +45,7 @@ npm run markos:build -- playground\my-deck
 
 Default styling path:
 - write Markdown in `slides.md`
-- set `theme` in file-level frontmatter
+- set `theme` in file-level frontmatter using the theme folder name such as `Clay`
 - do not create `slides.css` unless you explicitly need local overrides
 
 Important output note:
@@ -88,6 +88,7 @@ Behavior:
 - resolves `slides.md` from the given deck directory
 - reads deck-level frontmatter from `slides.md`
 - loads `themes/<theme>/theme.css` when `theme` is declared in file-level frontmatter
+- requires the `theme` value to be the theme folder name without a `.css` suffix
 - loads the sibling `slides.css` file as an optional local override layer when it exists
 - ignores other files in the deck directory during build input collection
 - removes the temporary work directory after the build completes
@@ -133,6 +134,7 @@ markos theme apply Clay .
 
 Behavior:
 - verifies that `themes/<theme>/theme.css` exists
+- requires the requested theme name to be the folder name without a `.css` suffix
 - writes `theme: <theme>` into the top-level frontmatter of `slides.md`
 - creates `slides.css` only when the deck does not already have one
 - keeps the runtime contract explicit: shared theme first, local deck overrides second

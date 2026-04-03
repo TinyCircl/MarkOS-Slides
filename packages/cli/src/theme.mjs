@@ -4,7 +4,6 @@ import {MARKOS_DEFAULT_DECK_DIR, MARKOS_DEFAULT_ENTRY} from "@tinycircl/markos-s
 import {
     FILE_FRONTMATTER_KEYS,
     MARKOS_THEME_WORK_DIRNAME,
-    escapeRegExp,
     getPathKind,
     getSiblingCssPath,
     normalizeText,
@@ -18,8 +17,14 @@ export const MARKOS_THEME_ENTRY_FILENAME = "theme.css";
 const THEME_NAME_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._-]*$/;
 
 function sanitizeThemeName(themeName) {
-    const normalizedThemeName = themeName?.trim()?.replace(/\.css$/i, "");
-    if (!normalizedThemeName || !THEME_NAME_PATTERN.test(normalizedThemeName)) {
+    const normalizedThemeName = themeName?.trim();
+    if (!normalizedThemeName) {
+        throw new Error("Theme name is required and may contain only letters, numbers, dot, underscore, and dash.");
+    }
+    if (/\.css$/i.test(normalizedThemeName)) {
+        throw new Error("Theme name must not include the .css suffix. Use the theme folder name, for example \"Clay\".");
+    }
+    if (!THEME_NAME_PATTERN.test(normalizedThemeName)) {
         throw new Error("Theme name is required and may contain only letters, numbers, dot, underscore, and dash.");
     }
     return normalizedThemeName;
@@ -101,7 +106,7 @@ function readThemeNameFromMarkdown(markdown) {
     }
 
     const rawValue = match[1].trim().replace(/^['"]|['"]$/g, "");
-    return rawValue ? sanitizeThemeName(rawValue.endsWith(".css") ? rawValue.slice(0, -4) : rawValue) : null;
+    return rawValue ? sanitizeThemeName(rawValue) : null;
 }
 
 export async function injectDeckThemeSource(input, {

@@ -4,11 +4,12 @@ import os from "node:os";
 import {mkdir, mkdtemp, readFile, rm, stat, writeFile} from "node:fs/promises";
 import {join} from "node:path";
 import {runCli} from "../src/cli.mjs";
+import {MARKOS_THEME_ENTRY_FILENAME} from "../packages/cli/src/theme.mjs";
 
 async function writeDirectoryTheme(themesRoot, themeName, css = "") {
     const themeDir = join(themesRoot, themeName);
     await mkdir(themeDir, {recursive: true});
-    await writeFile(join(themeDir, "theme.css"), css, "utf8");
+    await writeFile(join(themeDir, MARKOS_THEME_ENTRY_FILENAME), css, "utf8");
     await writeFile(
         join(themeDir, "README.md"),
         `# ${themeName}\n\n- Shell: slide-shell\n`,
@@ -320,6 +321,69 @@ test("CLI build rejects legacy single-file themes outside a theme folder", async
     } finally {
         await rm(themeFilePath, {force: true}).catch(() => {
         });
+        await rm(tempRoot, {recursive: true, force: true});
+    }
+});
+
+test("CLI build rejects file-level theme names that include a .css suffix", async () => {
+    const tempRoot = await mkdtemp(join(os.tmpdir(), "markos-cli-theme-suffix-"));
+    const projectRoot = join(tempRoot, "project");
+    const outDir = join(projectRoot, "dist");
+    const themesRoot = join(process.cwd(), "themes");
+    const themeName = `suffix-theme-${Date.now()}`;
+    const themeDirPath = join(themesRoot, themeName);
+
+    try {
+        await mkdir(projectRoot, {recursive: true});
+        await mkdir(themesRoot, {recursive: true});
+        await writeDirectoryTheme(themesRoot, themeName, ".theme-suffix { color: blue; }\n");
+        await writeFile(
+            join(projectRoot, "slides.md"),
+            [
+                "---",
+                `theme: ${themeName}.css`,
+                "title: Invalid Theme Name",
+                "---",
+                "",
+                "# Invalid Theme Name",
+            ].join("\n"),
+            "utf8",
+        );
+
+        await assert.rejects(
+            () => runCli([
+                "build",
+                projectRoot,
+                "--out-dir",
+                outDir,
+            ]),
+            /Theme name must not include the \.css suffix/,
+        );
+    } finally {
+        await rm(themeDirPath, {recursive: true, force: true}).catch(() => {
+        });
+        await rm(tempRoot, {recursive: true, force: true});
+    }
+});
+
+test("CLI theme apply rejects theme arguments that include a .css suffix", async () => {
+    const tempRoot = await mkdtemp(join(os.tmpdir(), "markos-theme-apply-suffix-"));
+    const deckRoot = join(tempRoot, "deck");
+
+    try {
+        await mkdir(deckRoot, {recursive: true});
+        await writeFile(join(deckRoot, "slides.md"), "# Deck\n", "utf8");
+
+        await assert.rejects(
+            () => runCli([
+                "theme",
+                "apply",
+                "Clay.css",
+                deckRoot,
+            ]),
+            /Theme name must not include the \.css suffix/,
+        );
+    } finally {
         await rm(tempRoot, {recursive: true, force: true});
     }
 });
