@@ -1,0 +1,485 @@
+/*
+ * Theme: Cobalt
+ * Shell: slide-shell
+ * Implemented templates:
+ * - title-slide
+ * - closing-slide
+ * - summary-slide
+ * - overview-slide
+ * - comparison-slide
+ * - metrics-slide
+ * - process-slide
+ */
+
+/* Section: Design Tokens */
+:root {
+  --cb-bg: #f8f9fa;
+  --cb-surface: #ffffff;
+  --cb-surface-soft: #f2f6fb;
+  --cb-surface-tint: rgba(31, 71, 136, 0.05);
+  --cb-primary: #1f4788;
+  --cb-accent: #4a90e2;
+  --cb-text: #333333;
+  --cb-muted: #666666;
+  --cb-subtle: #7c8798;
+  --cb-border: rgba(31, 71, 136, 0.12);
+  --cb-border-strong: rgba(31, 71, 136, 0.18);
+  --cb-shadow-soft: 0 2px 10px rgba(0, 0, 0, 0.03);
+  --cb-shadow-card: 0 4px 20px rgba(0, 0, 0, 0.05);
+}
+
+/* Section: Base Typography */
+.slidev-layout {
+  font-family: "Inter", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  color: var(--cb-text);
+}
+
+.slide-shell {
+  position: relative;
+  isolation: isolate;
+  background:
+    radial-gradient(circle at top right, rgba(74, 144, 226, 0.12), transparent 32%),
+    linear-gradient(180deg, #fbfcfe 0%, var(--cb-bg) 100%);
+}
+
+.slide-shell::before {
+  content: "";
+  position: absolute;
+  inset: 28px;
+  border: 1px solid rgba(31, 71, 136, 0.08);
+  border-radius: 16px;
+  pointer-events: none;
+  z-index: -1;
+}
+
+.slide-shell a {
+  color: var(--cb-primary);
+  text-decoration: none;
+  border-bottom: 1px solid rgba(31, 71, 136, 0.18);
+}
+
+.slide-shell p,
+.slide-shell blockquote p {
+  margin: 0;
+}
+
+/* Section: Cover Templates */
+.title-slide,
+.closing-slide {
+  padding: 40px;
+  text-align: center !important;
+}
+
+.title-slide::after,
+.closing-slide::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 20%;
+  width: 60%;
+  opacity: 0.08;
+  background:
+    repeating-linear-gradient(
+      60deg,
+      rgba(31, 71, 136, 0.9) 0 2px,
+      transparent 2px 34px
+    ),
+    repeating-linear-gradient(
+      -60deg,
+      rgba(31, 71, 136, 0.9) 0 2px,
+      transparent 2px 34px
+    );
+  pointer-events: none;
+  z-index: -1;
+}
+
+.title-slide > .my-auto,
+.closing-slide > .my-auto {
+  width: min(920px, calc(100% - 80px));
+  margin: auto;
+  padding: 60px 72px;
+  background: var(--cb-surface);
+  border-radius: 12px;
+  box-shadow: var(--cb-shadow-card);
+}
+
+.title-slide > .my-auto > p:first-child,
+.closing-slide > .my-auto > p:first-child {
+  margin: 0 0 1rem;
+  color: var(--cb-muted);
+  font-size: 1.35rem;
+  line-height: 1.4;
+}
+
+.title-slide h1,
+.closing-slide h1 {
+  margin: 0 0 1.3rem;
+  color: var(--cb-primary);
+  font-size: 3rem;
+  line-height: 1.12;
+  font-weight: 700;
+}
+
+.title-slide h2,
+.title-slide h1 + p,
+.closing-slide h2 {
+  margin: 0;
+  color: var(--cb-muted);
+  font-size: 1.3rem;
+  line-height: 1.55;
+  font-weight: 400;
+}
+
+.title-slide h2 + p,
+.title-slide > .my-auto > p:last-of-type {
+  margin-top: 1.5rem;
+  color: var(--cb-text);
+  font-size: 1rem;
+  line-height: 1.75;
+}
+
+.closing-slide h1 ~ p {
+  margin-top: 0.7rem;
+  color: var(--cb-text);
+  font-size: 1rem;
+  line-height: 1.75;
+}
+
+.title-slide ul,
+.closing-slide ul {
+  margin: 2rem 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0.65rem;
+}
+
+.title-slide li,
+.closing-slide li {
+  margin: 0;
+  padding-left: 0;
+  color: var(--cb-text);
+  line-height: 1.7;
+}
+
+.closing-slide strong {
+  color: var(--cb-primary);
+}
+
+/* Section: Shared Two-Column Shell */
+.slidev-layout.two-columns.slide-shell {
+  gap: 32px;
+  padding: 40px;
+}
+
+.slidev-layout.two-columns.slide-shell .col-left,
+.slidev-layout.two-columns.slide-shell .col-right {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.slidev-layout.two-columns.slide-shell .col-right {
+  gap: 16px;
+  padding-top: 5.9rem;
+}
+
+.slidev-layout.two-columns.slide-shell h1 {
+  margin: 0;
+  color: var(--cb-primary);
+  font-size: 2.25rem;
+  line-height: 1.15;
+  font-weight: 700;
+}
+
+.slidev-layout.two-columns.slide-shell .col-left > h1 + p {
+  margin: 0.85rem 0 1.6rem;
+  color: var(--cb-muted);
+  font-size: 1.12rem;
+  line-height: 1.55;
+}
+
+.slidev-layout.two-columns.slide-shell h2 {
+  margin: 0;
+  color: var(--cb-primary);
+  font-size: 1.08rem;
+  line-height: 1.35;
+  font-weight: 600;
+}
+
+.slidev-layout.two-columns.slide-shell h3 {
+  margin: 0;
+  color: var(--cb-primary);
+  font-size: 2rem;
+  line-height: 1;
+  font-weight: 700;
+}
+
+.slidev-layout.two-columns.slide-shell ul,
+.slidev-layout.two-columns.slide-shell ol {
+  margin: 0;
+}
+
+.slidev-layout.two-columns.slide-shell li {
+  color: var(--cb-text);
+}
+
+.slidev-layout.two-columns.slide-shell table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  overflow: hidden;
+  background: var(--cb-surface);
+  border-radius: 12px;
+  box-shadow: var(--cb-shadow-soft);
+}
+
+.slidev-layout.two-columns.slide-shell th,
+.slidev-layout.two-columns.slide-shell td {
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid rgba(31, 71, 136, 0.08);
+  font-size: 0.92rem;
+}
+
+.slidev-layout.two-columns.slide-shell th {
+  color: var(--cb-primary);
+  font-weight: 600;
+}
+
+.slidev-layout.two-columns.slide-shell tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+/* Section: Shared Card Helpers */
+.summary-slide .col-right h2,
+.overview-slide .col-right h2,
+.comparison-slide .col-right h2,
+.metrics-slide .col-right h2,
+.process-slide .col-right h2 {
+  position: relative;
+  padding: 1rem 1.1rem 0 1.1rem;
+  background: var(--cb-surface);
+  border-radius: 12px 12px 0 0;
+}
+
+.summary-slide .col-right h2::before,
+.comparison-slide .col-right h2::before,
+.metrics-slide .col-right h2::before {
+  content: "";
+  position: absolute;
+  top: 1rem;
+  left: 1.1rem;
+  width: 0.9rem;
+  height: 0.9rem;
+  background: var(--cb-primary);
+  border-radius: 0.25rem;
+}
+
+.summary-slide .col-right h2,
+.comparison-slide .col-right h2,
+.metrics-slide .col-right h2 {
+  padding-left: 3rem;
+}
+
+.summary-slide .col-right h2 + p,
+.overview-slide .col-right h2 + p,
+.comparison-slide .col-right h2 + p,
+.metrics-slide .col-right h2 + p,
+.process-slide .col-right h2 + p {
+  margin: 0 0 2px;
+  padding: 0.45rem 1.1rem 1rem;
+  background: var(--cb-surface);
+  border-radius: 0 0 12px 12px;
+  box-shadow: var(--cb-shadow-soft);
+  color: var(--cb-text);
+  font-size: 0.92rem;
+  line-height: 1.65;
+}
+
+.summary-slide .col-left blockquote,
+.overview-slide .col-right blockquote,
+.comparison-slide .col-left blockquote {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 340px;
+  padding: 24px;
+  background: linear-gradient(180deg, rgba(74, 144, 226, 0.05), rgba(31, 71, 136, 0.02));
+  border: 2px dashed rgba(31, 71, 136, 0.18);
+  border-radius: 12px;
+  color: var(--cb-subtle);
+  text-align: center;
+  font-size: 1rem;
+  line-height: 1.7;
+}
+
+.overview-slide .col-right > p:last-child,
+.comparison-slide .col-left > p:last-child,
+.metrics-slide .col-right > p:last-child,
+.process-slide .col-right > p:last-child {
+  margin-top: 0.4rem;
+  color: var(--cb-muted);
+  font-size: 0.78rem;
+  font-style: italic;
+  line-height: 1.5;
+}
+
+/* Section: Summary */
+.summary-slide {
+  grid-template-columns: 1.02fr 0.98fr;
+}
+
+/* Section: Overview */
+.overview-slide {
+  grid-template-columns: 1fr 1fr;
+}
+
+.overview-slide .col-left {
+  gap: 14px;
+}
+
+.overview-slide .col-left h2 {
+  padding: 0.95rem 1rem 0;
+  background: var(--cb-surface);
+  border-radius: 12px 12px 0 0;
+}
+
+.overview-slide .col-left h3 {
+  padding: 0.15rem 1rem 0;
+  background: var(--cb-surface);
+  font-size: 2.1rem;
+}
+
+.overview-slide .col-left h3 + p {
+  margin: 0;
+  padding: 0.45rem 1rem 1rem;
+  background: var(--cb-surface);
+  border-radius: 0 0 12px 12px;
+  box-shadow: var(--cb-shadow-soft);
+  color: var(--cb-text);
+  font-size: 0.92rem;
+  line-height: 1.65;
+}
+
+/* Section: Comparison */
+.comparison-slide {
+  grid-template-columns: 1.08fr 0.92fr;
+}
+
+.comparison-slide .col-left table + p {
+  margin-top: 0.7rem;
+  color: var(--cb-muted);
+  font-size: 0.78rem;
+  font-style: italic;
+}
+
+/* Section: Metrics */
+.metrics-slide {
+  grid-template-columns: 1fr 1fr;
+}
+
+.metrics-slide .col-left ul {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+  margin-top: 1rem;
+  padding: 0;
+  list-style: none;
+}
+
+.metrics-slide .col-left li {
+  margin: 0;
+  padding: 1rem;
+  background: var(--cb-surface);
+  border-radius: 12px;
+  box-shadow: var(--cb-shadow-soft);
+  min-height: 152px;
+  line-height: 1.55;
+}
+
+.metrics-slide .col-left li strong {
+  display: block;
+  color: var(--cb-primary);
+  font-size: 0.98rem;
+  font-weight: 600;
+  line-height: 1.45;
+}
+
+.metrics-slide .col-left li code {
+  display: block;
+  margin: 0.55rem 0 0.65rem;
+  padding: 0;
+  background: transparent;
+  color: var(--cb-primary);
+  font-family: inherit;
+  font-size: 1.95rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.metrics-slide .col-left table {
+  margin-top: 1rem;
+}
+
+/* Section: Process */
+.process-slide {
+  grid-template-columns: 1fr 1fr;
+}
+
+.process-slide .col-left ol {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+  margin-top: 1rem;
+  padding: 0;
+  list-style: none;
+  counter-reset: cobalt-step;
+}
+
+.process-slide .col-left li {
+  counter-increment: cobalt-step;
+  margin: 0;
+  padding: 1.1rem 1rem 1rem;
+  background: var(--cb-surface);
+  border-radius: 12px;
+  box-shadow: var(--cb-shadow-soft);
+  text-align: center;
+  line-height: 1.55;
+}
+
+.process-slide .col-left li::before {
+  content: counter(cobalt-step, decimal-leading-zero);
+  display: grid;
+  place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  margin: 0 auto 0.9rem;
+  border-radius: 999px;
+  background: var(--cb-primary);
+  color: #ffffff;
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.process-slide .col-left li strong {
+  display: block;
+  margin-bottom: 0.45rem;
+  color: var(--cb-primary);
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.process-slide .col-right h2,
+.process-slide .col-right h2 + p {
+  background: var(--cb-surface-tint);
+}
+
+/* Section: Responsive Export Safety */
+.summary-slide .col-right,
+.overview-slide .col-right,
+.comparison-slide .col-right,
+.metrics-slide .col-right,
+.process-slide .col-right {
+  min-width: 0;
+}

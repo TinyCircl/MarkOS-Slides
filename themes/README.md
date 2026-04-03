@@ -5,6 +5,8 @@ This directory stores shared theme folders.
 Each theme should live in its own directory such as:
 - `Clay/theme.css`
 - `Clay/README.md`
+- `Cobalt/theme.css`
+- `Cobalt/README.md`
 
 For the repo-wide standard on making reusable themes and page templates, see [docs/theme-authoring.md](../docs/theme-authoring.md).
 
