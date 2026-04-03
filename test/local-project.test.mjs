@@ -5,7 +5,7 @@ import {mkdir, mkdtemp, rm, writeFile} from "node:fs/promises";
 import {join} from "node:path";
 import {createLocalProjectInput} from "../src/core/index.mjs";
 
-test("createLocalProjectInput reads a local slide project and ignores build output paths", async () => {
+test("createLocalProjectInput only reads slides.md and sibling slides.css", async () => {
     const tempRoot = await mkdtemp(join(os.tmpdir(), "markos-local-project-"));
     const projectRoot = join(tempRoot, "project");
     const outDir = join(projectRoot, "dist");
@@ -15,6 +15,8 @@ test("createLocalProjectInput reads a local slide project and ignores build outp
 
         await writeFile(join(projectRoot, "slides.md"), "# Hello Local Project\n", "utf8");
         await writeFile(join(projectRoot, "slides.css"), ".accent { color: red; }\n", "utf8");
+        await writeFile(join(projectRoot, "notes.txt"), "ignore me\n", "utf8");
+        await writeFile(join(projectRoot, "logo.svg"), "<svg></svg>\n", "utf8");
         await writeFile(join(outDir, "stale.txt"), "should be ignored\n", "utf8");
 
         const input = await createLocalProjectInput({
@@ -28,12 +30,17 @@ test("createLocalProjectInput reads a local slide project and ignores build outp
         const slideEntry = input.source.files.find((file) => file.path === "slides.md");
         const styleEntry = input.source.files.find((file) => file.path === "slides.css");
         const staleOutput = input.source.files.find((file) => file.path === "dist/stale.txt");
+        const notesEntry = input.source.files.find((file) => file.path === "notes.txt");
+        const logoEntry = input.source.files.find((file) => file.path === "logo.svg");
 
         assert.ok(slideEntry);
         assert.equal(typeof slideEntry.content, "string");
         assert.ok(styleEntry);
         assert.equal(typeof styleEntry.content, "string");
         assert.equal(staleOutput, undefined);
+        assert.equal(notesEntry, undefined);
+        assert.equal(logoEntry, undefined);
+        assert.equal(input.source.files.length, 2);
     } finally {
         await rm(tempRoot, {recursive: true, force: true});
     }

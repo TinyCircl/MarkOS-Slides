@@ -16,11 +16,13 @@ For deck authoring rules, see [Syntax Guide](./syntax.md).
 
 ## Command Summary
 
-- `markos build [entry] [--out-dir dir] [--work-dir dir] [--base /] [--project-root dir] [--title name]`
-- `markos dev [entry] [--out-dir dir] [--work-dir dir] [--base /] [--host 127.0.0.1] [--port 3030] [--project-root dir] [--title name]`
-- `markos export [entry]`
+- `markos build [deck] [--out-dir dir] [--work-dir dir] [--base /] [--project-root dir] [--title name]`
+- `markos dev [deck] [--out-dir dir] [--work-dir dir] [--base /] [--host 127.0.0.1] [--port 3030] [--project-root dir] [--title name]`
+- `markos export [deck]`
 
 `markos export` is reserved for future non-web artifacts and currently exits with an error.
+
+`deck` must be a directory that contains `slides.md`.
 
 ## `markos build`
 
@@ -29,13 +31,13 @@ Build a local slide deck into a static site.
 Examples:
 
 ```bash
-markos build examples/basic/slides.md
-markos build examples/project/slides.md --out-dir build/site
-markos build talks/intro.md --project-root talks --title "Intro Talk"
+markos build examples/basic
+markos build examples/project --out-dir build/site
+markos build talks/intro --project-root talks --title "Intro Talk"
 ```
 
 Options:
-- `entry`: entry Markdown file. Default: `slides.md`
+- `deck`: deck directory. Default: the current directory
 - `--out-dir`: output directory. Default: `dist/` next to the entry file
 - `--work-dir`: work directory used during the build. Default: `.markos-work/<out-dir-name>/` next to the entry file
 - `--base`: site base path. Default: `/`
@@ -43,7 +45,9 @@ Options:
 - `--title`: fallback document title when the source does not provide one
 
 Behavior:
-- reads the entry Markdown file and bundles a sibling CSS file with the same basename when present
+- resolves `slides.md` from the given deck directory
+- reads only `slides.md` and the sibling `slides.css` file when it exists
+- ignores other files in the deck directory during build input collection
 - removes the temporary work directory after the build completes
 
 ## `markos dev`
@@ -53,13 +57,13 @@ Build once, serve locally, and rebuild when deck files change.
 Examples:
 
 ```bash
-markos dev examples/project/slides.md
-markos dev examples/project/slides.md --port 4000
-markos dev examples/project/slides.md --base /deck/
+markos dev examples/project
+markos dev examples/project --port 4000
+markos dev examples/project --base /deck/
 ```
 
 Options:
-- `entry`: entry Markdown file. Default: `slides.md`
+- `deck`: deck directory. Default: the current directory
 - `--out-dir`: dev output directory. Default: `.markos-dev/` next to the entry file
 - `--work-dir`: work directory used during rebuilds. Default: `.markos-work/<out-dir-name>/` next to the entry file
 - `--base`: local site base path. Default: `/`

@@ -1,18 +1,23 @@
 import {watch} from "node:fs";
 import {rm} from "node:fs/promises";
-import {dirname, resolve} from "node:path";
+import {basename, dirname, resolve} from "node:path";
 import {
     buildStaticSiteFromInput,
     createLocalProjectInput,
 } from "@tinycircl/markos-slides-core";
 import {startManifestSiteServer} from "@tinycircl/markos-slides-core/dev-server";
-import {getCliRuntimeOptions, resolveCliPaths} from "@tinycircl/markos-slides-core/config";
+import {
+    MARKOS_DEFAULT_BUILD_OUT_DIRNAME,
+    MARKOS_DEFAULT_WORK_ROOT_DIRNAME,
+    getCliRuntimeOptions,
+    resolveCliPaths,
+} from "@tinycircl/markos-slides-core/config";
 
 export function parseCliArgs(argv) {
     const [command = "help", ...rest] = argv;
     const options = {
         command,
-        entry: "slides.md",
+        entry: ".",
         outDir: null,
         workDir: null,
         base: null,
@@ -61,7 +66,7 @@ export function parseCliArgs(argv) {
             index += 1;
             continue;
         }
-        if (!arg.startsWith("-") && options.entry === "slides.md") {
+        if (!arg.startsWith("-") && options.entry === ".") {
             options.entry = arg;
         }
     }
@@ -77,23 +82,39 @@ function isSamePathOrInside(parentPath, targetPath) {
         || normalizedTarget.startsWith(`${normalizedParent}/`);
 }
 
+async function cleanupWorkDir(workDir) {
+    await rm(workDir, {recursive: true, force: true}).catch((err) => {
+        if (err?.code !== "ENOENT") console.warn("[markos] cleanup workdir failed:", workDir, err.message);
+    });
+
+    const workRootDir = dirname(workDir);
+    if (basename(workRootDir) !== MARKOS_DEFAULT_WORK_ROOT_DIRNAME) {
+        return;
+    }
+
+    await rm(workRootDir, {recursive: true, force: true}).catch((err) => {
+        if (err?.code !== "ENOENT") console.warn("[markos] cleanup work root failed:", workRootDir, err.message);
+    });
+}
+
 function printHelp() {
     console.log([
         "MarkOS CLI",
         "",
         "Usage:",
-        "  markos build [entry] [--out-dir dist] [--base /] [--project-root dir] [--title name]",
-        "  markos dev [entry] [--out-dir .markos-dev] [--base /] [--host 127.0.0.1] [--port 3030]",
-        "  markos export [entry]",
+        "  markos build [deck] [--out-dir dist] [--base /] [--project-root dir] [--title name]",
+        "  markos dev [deck] [--out-dir .markos-dev] [--base /] [--host 127.0.0.1] [--port 3030]",
+        "  markos export [deck]",
         "",
         "Notes:",
+        "  deck must be a directory containing slides.md.",
         "  export is reserved for future non-web artifacts and is not available yet.",
         "",
         "Examples:",
-        "  markos build slides.md",
-        "  markos build slides.md --out-dir dist",
-        "  markos build talks/intro.md --project-root talks",
-        "  markos dev slides.md --port 4000",
+        "  markos build .",
+        "  markos build examples/project",
+        "  markos build talks/intro --out-dir dist",
+        "  markos dev examples/project --port 4000",
     ].join("\n"));
 }
 
@@ -146,9 +167,7 @@ async function runBuildCommand(rawOptions) {
             sourceMode,
         });
     } finally {
-        await rm(workDir, {recursive: true, force: true}).catch((err) => {
-            if (err?.code !== "ENOENT") console.warn("[markos] cleanup workdir failed:", workDir, err.message);
-        });
+        await cleanupWorkDir(workDir);
     }
 
     console.log(`entry:   ${entryFilePath}`);
@@ -178,10 +197,12 @@ async function runDevCommand(rawOptions) {
         title,
         sourceMode,
     } = resolveCliPaths(rawOptions);
+    const defaultBuildOutDir = resolve(projectRoot, MARKOS_DEFAULT_BUILD_OUT_DIRNAME);
     const ignoredWatchRoots = [
         outDir,
         workDir,
         dirname(workDir),
+        defaultBuildOutDir,
     ];
 
     let rebuildTimer = null;
@@ -219,8 +240,7 @@ async function runDevCommand(rawOptions) {
             console.error(error.message || String(error));
         } finally {
             rebuilding = false;
-            await rm(workDir, {recursive: true, force: true}).catch(() => {
-            });
+            await cleanupWorkDir(workDir);
             if (rebuildQueued && !stopping) {
                 rebuildQueued = false;
                 void rebuild("queued change");
@@ -269,9 +289,7 @@ async function runDevCommand(rawOptions) {
         }
         watcher.close();
         await devServer.stop();
-        await rm(workDir, {recursive: true, force: true}).catch((err) => {
-            if (err?.code !== "ENOENT") console.warn("[markos] cleanup workdir failed:", workDir, err.message);
-        });
+        await cleanupWorkDir(workDir);
     };
 
     return {

@@ -10,30 +10,24 @@ deck/
   slides.css
 ```
 
-## `basic/`
+## Example Decks
 
-A minimal flat pair with `slides.md` and `slides.css`.
+Each subdirectory in `examples/` that contains `slides.md` and `slides.css` is treated as a runnable deck and is picked up automatically by `npm run check:examples`.
+
+## `tokyo3days/`
+
+The current example deck demonstrates the flat `slides.md` + `slides.css` convention.
 
 Build it from the repository root:
 
 ```bash
-npm run markos:build -- examples/basic/slides.md
-```
-
-## `project/`
-
-A slightly richer flat pair that keeps the same `slides.md` + `slides.css` shape.
-
-Build it:
-
-```bash
-npm run markos:build -- examples/project/slides.md
+npm run markos:build -- examples/tokyo3days
 ```
 
 Preview it locally:
 
 ```bash
-npm run markos:dev -- examples/project/slides.md --port 3030
+npm run markos:dev -- examples/tokyo3days --port 3030
 ```
 
 For general setup and repository-wide docs, start from the [root README](../README.md).

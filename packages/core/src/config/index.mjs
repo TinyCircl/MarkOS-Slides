@@ -1,8 +1,10 @@
+import {statSync} from "node:fs";
 import {basename, dirname, resolve} from "node:path";
 import {normalizeBasePath} from "../core/path-utils.mjs";
 import {MARKOS_SOURCE_MODES} from "../core/source-pipeline.mjs";
 
 export const MARKOS_DEFAULT_ENTRY = "slides.md";
+export const MARKOS_DEFAULT_DECK_DIR = ".";
 export const MARKOS_DEFAULT_BASE_PATH = "/";
 export const MARKOS_DEFAULT_BUILD_OUT_DIRNAME = "dist";
 export const MARKOS_DEFAULT_DEV_OUT_DIRNAME = ".markos-dev";
@@ -92,7 +94,7 @@ export function getArtifactStoreConfig(env = process.env) {
 export function getCliRuntimeOptions(overrides = {}) {
     return {
         command: overrides.command || "help",
-        entry: overrides.entry || MARKOS_DEFAULT_ENTRY,
+        entry: overrides.entry || MARKOS_DEFAULT_DECK_DIR,
         outDir: overrides.outDir || null,
         workDir: overrides.workDir || null,
         basePath: normalizeBasePath(overrides.base ?? MARKOS_DEFAULT_BASE_PATH, {
@@ -106,10 +108,23 @@ export function getCliRuntimeOptions(overrides = {}) {
     };
 }
 
+function isDirectoryPath(targetPath) {
+    try {
+        return statSync(targetPath).isDirectory();
+    } catch {
+        return false;
+    }
+}
+
 export function resolveCliPaths(overrides = {}) {
     const options = getCliRuntimeOptions(overrides);
-    const entryFilePath = resolve(options.entry);
-    const projectRoot = resolve(options.projectRoot || dirname(entryFilePath));
+    const deckRoot = resolve(options.entry);
+    if (!isDirectoryPath(deckRoot)) {
+        throw new Error(`Deck path must be a directory containing ${MARKOS_DEFAULT_ENTRY}: ${deckRoot}`);
+    }
+
+    const entryFilePath = resolve(deckRoot, MARKOS_DEFAULT_ENTRY);
+    const projectRoot = resolve(options.projectRoot || deckRoot);
     const defaultOutDirName = options.command === "dev"
         ? MARKOS_DEFAULT_DEV_OUT_DIRNAME
         : MARKOS_DEFAULT_BUILD_OUT_DIRNAME;

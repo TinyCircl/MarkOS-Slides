@@ -32,18 +32,18 @@ Install dependencies:
 npm install
 ```
 
-Build the basic example:
+Build the example deck:
 
 ```bash
-npm run markos:build -- examples/basic/slides.md
+npm run markos:build -- examples/tokyo3days
 ```
 
-This writes a static site to `examples/basic/dist`.
+This writes a static site to `examples/tokyo3days/dist`.
 
-Run the project example in dev mode:
+Run the example deck in dev mode:
 
 ```bash
-npm run markos:dev -- examples/project/slides.md --port 3030
+npm run markos:dev -- examples/tokyo3days --port 3030
 ```
 
 Run the full check suite:
@@ -54,8 +54,7 @@ npm run check
 
 ## Examples
 
-- [examples/basic](examples/basic): the smallest `slides.md` + `slides.css` deck
-- [examples/project](examples/project): a slightly richer flat pair using the same two-file convention
+- [examples/tokyo3days](examples/tokyo3days): the current runnable deck example
 
 ## Repository Layout
 

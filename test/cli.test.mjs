@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import os from "node:os";
-import {mkdir, mkdtemp, readFile, rm, writeFile} from "node:fs/promises";
+import {mkdir, mkdtemp, readFile, rm, stat, writeFile} from "node:fs/promises";
 import {join} from "node:path";
 import {runCli} from "../src/cli.mjs";
 
@@ -25,10 +25,11 @@ test("CLI build command generates a static site from a local project", async () 
             "utf8",
         );
         await writeFile(join(projectRoot, "slides.css"), ".slide h1 { color: #f06b1f; }\n", "utf8");
+        await writeFile(join(projectRoot, "notes.txt"), "ignore me\n", "utf8");
 
         const result = await runCli([
             "build",
-            join(projectRoot, "slides.md"),
+            projectRoot,
             "--out-dir",
             outDir,
             "--base",
@@ -44,6 +45,14 @@ test("CLI build command generates a static site from a local project", async () 
         assert.match(html, /Hello CLI/);
         assert.match(html, /"basePath":"\/deck\/"/);
         assert.match(html, /\.slide h1 \{ color: #f06b1f; \}/);
+        await assert.rejects(
+            () => readFile(join(outDir, "notes.txt"), "utf8"),
+            /ENOENT/,
+        );
+        await assert.rejects(
+            () => stat(join(projectRoot, ".markos-work")),
+            /ENOENT/,
+        );
     } finally {
         await rm(tempRoot, {recursive: true, force: true});
     }
@@ -57,6 +66,7 @@ test("CLI dev command serves the generated static site locally", async () => {
 
     try {
         await mkdir(projectRoot, {recursive: true});
+        await mkdir(join(projectRoot, "dist"), {recursive: true});
 
         await writeFile(
             join(projectRoot, "slides.md"),
@@ -70,10 +80,12 @@ test("CLI dev command serves the generated static site locally", async () => {
             "utf8",
         );
         await writeFile(join(projectRoot, "slides.css"), ".slide h1 { color: #f06b1f; }\n", "utf8");
+        await writeFile(join(projectRoot, "dist", "stale.txt"), "old build output\n", "utf8");
+        await writeFile(join(projectRoot, "notes.txt"), "ignore me\n", "utf8");
 
         result = await runCli([
             "dev",
-            join(projectRoot, "slides.md"),
+            projectRoot,
             "--out-dir",
             outDir,
             "--base",
@@ -91,6 +103,18 @@ test("CLI dev command serves the generated static site locally", async () => {
         assert.match(slidesHtml, /Hello Dev/);
         assert.match(slidesHtml, /\.slide h1 \{ color: #f06b1f; \}/);
         assert.match(presenterHtml, /Presenter Mode/);
+        await assert.rejects(
+            () => readFile(join(outDir, "dist", "stale.txt"), "utf8"),
+            /ENOENT/,
+        );
+        await assert.rejects(
+            () => readFile(join(outDir, "notes.txt"), "utf8"),
+            /ENOENT/,
+        );
+        await assert.rejects(
+            () => stat(join(projectRoot, ".markos-work")),
+            /ENOENT/,
+        );
     } finally {
         await result?.stop?.().catch(() => {
         });
@@ -100,7 +124,7 @@ test("CLI dev command serves the generated static site locally", async () => {
 
 test("CLI export command fails with a clear unsupported message", async () => {
     await assert.rejects(
-        () => runCli(["export", "slides.md"]),
+        () => runCli(["export", "."]),
         /not available yet/,
     );
 });

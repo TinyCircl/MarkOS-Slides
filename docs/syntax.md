@@ -16,4 +16,5 @@ Use these two documents together:
 The rule of thumb is simple:
 - `slides.md` is the only content entry
 - `slides.css` is the only custom style entry
+- other files in the deck directory are ignored by local build input collection
 - the two files should stay side by side and share the same basename

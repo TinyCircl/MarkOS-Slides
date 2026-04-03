@@ -1,37 +1,5 @@
-import {readFile, readdir, stat} from "node:fs/promises";
-import {basename, dirname, extname, relative, resolve} from "node:path";
-
-const DEFAULT_IGNORED_DIRS = new Set([
-    ".git",
-    ".markos",
-    ".markos-artifacts",
-    ".markos-preview",
-    ".markos-preview-work",
-    ".markos-work",
-    ".markos-workspaces",
-    "node_modules",
-]);
-
-const TEXT_FILE_EXTENSIONS = new Set([
-    ".css",
-    ".csv",
-    ".html",
-    ".js",
-    ".json",
-    ".jsx",
-    ".md",
-    ".markdown",
-    ".mdx",
-    ".mjs",
-    ".svg",
-    ".ts",
-    ".tsx",
-    ".txt",
-    ".vue",
-    ".xml",
-    ".yaml",
-    ".yml",
-]);
+import {readFile, stat} from "node:fs/promises";
+import {basename, dirname, extname, join, relative, resolve} from "node:path";
 
 function toPosixPath(filePath) {
     return filePath.replace(/\\/g, "/");
@@ -51,10 +19,6 @@ function shouldIgnorePath(targetPath, ignoredPaths) {
     return ignoredPaths.some((ignoredPath) => isPathWithin(ignoredPath, targetPath));
 }
 
-function isTextFile(filePath) {
-    return TEXT_FILE_EXTENSIONS.has(extname(filePath).toLowerCase());
-}
-
 async function pathExists(targetPath) {
     try {
         await stat(targetPath);
@@ -64,38 +28,11 @@ async function pathExists(targetPath) {
     }
 }
 
-async function listProjectFiles(rootDir, {
-    ignoredDirs = DEFAULT_IGNORED_DIRS,
-    ignoredPaths = [],
-} = {}, currentDir = rootDir) {
-    const entries = await readdir(currentDir, {withFileTypes: true});
-    const files = [];
-
-    for (const entry of entries) {
-        const absolutePath = resolve(currentDir, entry.name);
-        if (shouldIgnorePath(absolutePath, ignoredPaths)) {
-            continue;
-        }
-
-        if (entry.isDirectory()) {
-            if (ignoredDirs.has(entry.name)) {
-                continue;
-            }
-            files.push(...await listProjectFiles(rootDir, {
-                ignoredDirs,
-                ignoredPaths,
-            }, absolutePath));
-            continue;
-        }
-
-        if (!entry.isFile()) {
-            continue;
-        }
-
-        files.push(absolutePath);
-    }
-
-    return files.sort((left, right) => left.localeCompare(right));
+function getSiblingCssPath(entryFilePath) {
+    return join(
+        dirname(entryFilePath),
+        `${basename(entryFilePath, extname(entryFilePath))}.css`,
+    );
 }
 
 export async function createLocalProjectInput({
@@ -121,32 +58,27 @@ export async function createLocalProjectInput({
     if (!isPathWithin(resolvedProjectRoot, resolvedEntryFilePath)) {
         throw new Error(`Entry file must be inside project root: ${resolvedEntryFilePath}`);
     }
-
-    const absoluteFiles = await listProjectFiles(resolvedProjectRoot, {
-        ignoredPaths: normalizedIgnoredPaths,
-    });
-    const relativeEntryPath = toPosixPath(relative(resolvedProjectRoot, resolvedEntryFilePath));
-
-    if (!absoluteFiles.includes(resolvedEntryFilePath)) {
+    if (shouldIgnorePath(resolvedEntryFilePath, normalizedIgnoredPaths)) {
         throw new Error(`Entry file is excluded by ignored paths: ${resolvedEntryFilePath}`);
     }
 
-    const sourceFiles = [];
-    for (const absolutePath of absoluteFiles) {
-        const relativePath = toPosixPath(relative(resolvedProjectRoot, absolutePath));
-        const buffer = await readFile(absolutePath);
+    const relativeEntryPath = toPosixPath(relative(resolvedProjectRoot, resolvedEntryFilePath));
+    const sourceFiles = [
+        {
+            path: relativeEntryPath,
+            content: await readFile(resolvedEntryFilePath, "utf8"),
+        },
+    ];
 
-        if (absolutePath === resolvedEntryFilePath || isTextFile(absolutePath)) {
-            sourceFiles.push({
-                path: relativePath,
-                content: buffer.toString("utf8"),
-            });
-            continue;
-        }
-
+    const siblingCssPath = getSiblingCssPath(resolvedEntryFilePath);
+    if (
+        await pathExists(siblingCssPath)
+        && isPathWithin(resolvedProjectRoot, siblingCssPath)
+        && !shouldIgnorePath(siblingCssPath, normalizedIgnoredPaths)
+    ) {
         sourceFiles.push({
-            path: relativePath,
-            contentBase64: buffer.toString("base64"),
+            path: toPosixPath(relative(resolvedProjectRoot, siblingCssPath)),
+            content: await readFile(siblingCssPath, "utf8"),
         });
     }
 

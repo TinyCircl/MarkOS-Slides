@@ -14,6 +14,7 @@ deck/
 
 - Keep one deck in one Markdown file such as `slides.md`
 - Keep custom styling in one sibling CSS file such as `slides.css`
+- Keep local authoring focused on that source pair; other files in the deck directory are ignored
 - Do not rely on `styles/index.css` or theme preset CSS
 - There is no deck-wide frontmatter block
 - The first slide follows the same page-frontmatter rules as every other slide
