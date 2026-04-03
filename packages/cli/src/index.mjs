@@ -4,9 +4,9 @@ import {dirname, resolve} from "node:path";
 import {
     buildStaticSiteFromInput,
     createLocalProjectInput,
-} from "@tinycircl/markos-core";
-import {startManifestSiteServer} from "@tinycircl/markos-core/dev-server";
-import {getCliRuntimeOptions, resolveCliPaths} from "@tinycircl/markos-core/config";
+} from "@tinycircl/markos-slides-core";
+import {startManifestSiteServer} from "@tinycircl/markos-slides-core/dev-server";
+import {getCliRuntimeOptions, resolveCliPaths} from "@tinycircl/markos-slides-core/config";
 
 export function parseCliArgs(argv) {
     const [command = "help", ...rest] = argv;

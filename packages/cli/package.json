@@ -9,13 +9,13 @@
     "src/"
   ],
   "bin": {
-    "markos": "./bin/markos.mjs"
+    "markos": "bin/markos.mjs"
   },
   "exports": {
     ".": "./index.mjs"
   },
   "dependencies": {
-    "@tinycircl/markos-core": "0.1.0"
+    "@tinycircl/markos-slides-core": "0.1.0"
   },
   "engines": {
     "node": ">=22.0.0"

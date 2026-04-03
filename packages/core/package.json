@@ -1,13 +1,22 @@
 {
-  "name": "@tinycircl/markos-core",
+  "name": "@tinycircl/markos-slides-core",
   "version": "0.1.0",
-  "private": true,
+  "description": "Core build engine for turning Markdown slide sources into static web slide sites.",
+  "license": "MIT",
   "type": "module",
   "files": [
     "assets/",
+    "README.md",
     "index.mjs",
     "src/",
     "styles/"
+  ],
+  "keywords": [
+    "markdown",
+    "slides",
+    "presentation",
+    "static-site",
+    "markos"
   ],
   "exports": {
     ".": "./index.mjs",
@@ -22,6 +31,9 @@
   "dependencies": {
     "marked": "^16.4.2",
     "yaml": "^2.8.3"
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "engines": {
     "node": ">=22.0.0"
