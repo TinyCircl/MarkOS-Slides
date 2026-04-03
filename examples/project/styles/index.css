@@ -1,0 +1,14 @@
+.slide h1 {
+  letter-spacing: 0.04em;
+}
+
+.slide ul li::marker {
+  color: #f06b1f;
+}
+
+.slide img {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  border: 1px solid rgba(240, 107, 31, 0.35);
+  border-radius: 999px;
+}

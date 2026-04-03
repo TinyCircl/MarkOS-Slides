@@ -1,14 +1,16 @@
 import {randomUUID} from "node:crypto";
-import {mkdir, rm} from "node:fs/promises";
+import {rm} from "node:fs/promises";
 import {join} from "node:path";
 import {
+    buildArtifactFromSourceFiles,
     buildDeckMarkdown,
     buildRenderOutputMetadata,
+    buildStaticSiteFromSourceFiles,
     createInlineSourceFiles,
     createPreviewSourceHash,
     createRenderArtifactSourceHash,
-    ensureSourceEntryExists,
-} from "./core/source-pipeline.mjs";
+    normalizeBuildSource,
+} from "./core/index.mjs";
 import {
     cleanupExpiredLocalArtifacts,
     getArtifactDir,
@@ -24,12 +26,9 @@ import {
     updateCachedPreviewPublishResult,
     updateCachedRenderPublishResult,
     writePreviewBuildCache,
-    writePreviewManifest,
     writeRenderBuildCache,
-    writeSourceFiles,
 } from "./core/artifact-store.mjs";
 import {normalizePreviewBasePath, sanitizePreviewId} from "./core/path-utils.mjs";
-import {getRenderEngine} from "./engines/index.mjs";
 
 const PREVIEW_BUILD_CACHE_VERSION = 2;
 const RENDER_BUILD_CACHE_VERSION = 2;
@@ -37,6 +36,7 @@ const RENDER_BUILD_CACHE_VERSION = 2;
 export {
     buildDeckMarkdown,
     createInlineSourceFiles,
+    normalizeBuildSource,
     cleanupExpiredLocalArtifacts,
     getCachedPreviewPublishResult,
     getCachedRenderPublishResult,
@@ -46,10 +46,8 @@ export {
 };
 
 export async function renderArtifact(input) {
-    const renderEngine = getRenderEngine();
     const {outputFileName} = buildRenderOutputMetadata(input);
-    const sourceFiles = createInlineSourceFiles(input);
-    const sourceEntry = ensureSourceEntryExists(sourceFiles, input.entry || "slides.md");
+    const {sourceFiles, sourceEntry} = normalizeBuildSource(input);
     const sourceHash = createRenderArtifactSourceHash({
         version: RENDER_BUILD_CACHE_VERSION,
         format: input.format,
@@ -75,76 +73,32 @@ export async function renderArtifact(input) {
     const jobId = randomUUID();
     const workDir = getWorkDir(jobId);
     const artifactDir = getArtifactDir(jobId);
-    const entryFilePath = join(workDir, sourceEntry);
     const cacheFilePath = getRenderBuildCacheFilePath(cacheKey);
-
-    await rm(workDir, {recursive: true, force: true});
-    await rm(artifactDir, {recursive: true, force: true});
-    await mkdir(workDir, {recursive: true});
-    await mkdir(artifactDir, {recursive: true});
+    const artifactPath = input.format === "web"
+        ? `/artifacts/${jobId}/web/`
+        : `/artifacts/${jobId}/${outputFileName}`;
 
     try {
-        await writeSourceFiles(workDir, sourceFiles);
-
-        if (input.format === "web") {
-            const outDir = join(artifactDir, "web");
-            const artifactPath = `/artifacts/${jobId}/web/`;
-            await renderEngine.buildStaticSite({
-                entryFilePath,
-                outputDir: outDir,
-                basePath: artifactPath,
-                cwd: workDir,
-            });
-
-            await writeRenderBuildCache({
-                version: RENDER_BUILD_CACHE_VERSION,
-                cacheKey,
-                jobId,
-                format: "web",
-                outputFileName,
-                artifactPath,
-                artifactDir,
-                artifactFilePath: null,
-                outputDir: outDir,
-                sourceHash,
-                createdAt: new Date().toISOString(),
-            });
-
-            scheduleRenderArtifactCleanup(jobId, {cacheFilePath});
-            return {
-                jobId,
-                format: "web",
-                artifactPath,
-                fileName: outputFileName,
-                artifactDir,
-                artifactFilePath: null,
-                outputDir: outDir,
-                sourceHash,
-                cacheKey,
-                cacheHit: false,
-            };
-        }
-
-        const outputFilePath = join(artifactDir, outputFileName);
-        const artifactPath = `/artifacts/${jobId}/${outputFileName}`;
-
-        await renderEngine.exportArtifact({
-            entryFilePath,
+        const builtArtifact = await buildArtifactFromSourceFiles({
+            sourceFiles,
+            sourceEntry,
+            artifactDir,
+            workDir,
             format: input.format,
-            outputFilePath,
-            cwd: workDir,
+            outputFileName,
+            webBasePath: input.format === "web" ? artifactPath : null,
         });
 
         await writeRenderBuildCache({
             version: RENDER_BUILD_CACHE_VERSION,
             cacheKey,
             jobId,
-            format: input.format,
+            format: builtArtifact.format,
             outputFileName,
             artifactPath,
             artifactDir,
-            artifactFilePath: outputFilePath,
-            outputDir: null,
+            artifactFilePath: builtArtifact.artifactFilePath,
+            outputDir: builtArtifact.outputDir,
             sourceHash,
             createdAt: new Date().toISOString(),
         });
@@ -152,12 +106,12 @@ export async function renderArtifact(input) {
         scheduleRenderArtifactCleanup(jobId, {cacheFilePath});
         return {
             jobId,
-            format: input.format,
+            format: builtArtifact.format,
             artifactPath,
-            fileName: outputFileName,
+            fileName: builtArtifact.fileName,
             artifactDir,
-            artifactFilePath: outputFilePath,
-            outputDir: null,
+            artifactFilePath: builtArtifact.artifactFilePath,
+            outputDir: builtArtifact.outputDir,
             sourceHash,
             cacheKey,
             cacheHit: false,
@@ -175,11 +129,9 @@ export async function renderArtifact(input) {
 }
 
 export async function buildPreviewSite(input) {
-    const renderEngine = getRenderEngine();
     const previewId = sanitizePreviewId(input.previewId);
     const basePath = normalizePreviewBasePath(previewId, input.basePath);
-    const sourceFiles = createInlineSourceFiles(input);
-    const sourceEntry = ensureSourceEntryExists(sourceFiles, input.entry || "slides.md");
+    const {sourceFiles, sourceEntry} = normalizeBuildSource(input);
     const outputDir = getPreviewArtifactDir(previewId);
     const manifestFilePath = join(outputDir, "manifest.json");
     const sourceHash = createPreviewSourceHash({
@@ -208,31 +160,21 @@ export async function buildPreviewSite(input) {
 
     const buildId = randomUUID();
     const workDir = getWorkDir(buildId);
-    const entryFilePath = join(workDir, sourceEntry);
-
-    await rm(workDir, {recursive: true, force: true});
-    await rm(outputDir, {recursive: true, force: true});
-    await mkdir(workDir, {recursive: true});
-    await mkdir(outputDir, {recursive: true});
 
     try {
-        await writeSourceFiles(workDir, sourceFiles);
         const engineStartedAt = Date.now();
-        await renderEngine.buildStaticSite({
-            entryFilePath,
-            outputDir,
-            basePath,
-            cwd: workDir,
-        });
-        console.log(`[build] ${renderEngine.name} build finished: previewId=${previewId}, buildMs=${Date.now() - engineStartedAt}`);
-
-        const {manifest, manifestFilePath: nextManifestFilePath} = await writePreviewManifest({
-            previewId,
-            buildId,
-            basePath,
-            outputDir,
+        const builtPreview = await buildStaticSiteFromSourceFiles({
+            sourceFiles,
             sourceEntry,
+            outputDir,
+            workDir,
+            basePath,
+            manifest: {
+                previewId,
+                buildId,
+            },
         });
+        console.log(`[build] buildStaticSite finished: previewId=${previewId}, buildMs=${Date.now() - engineStartedAt}`);
 
         await writePreviewBuildCache({
             version: PREVIEW_BUILD_CACHE_VERSION,
@@ -242,8 +184,8 @@ export async function buildPreviewSite(input) {
             sourceEntry,
             sourceHash,
             outputDir,
-            manifestFilePath: nextManifestFilePath,
-            createdAt: manifest.createdAt,
+            manifestFilePath: builtPreview.manifestFilePath,
+            createdAt: builtPreview.manifest.createdAt,
         });
 
         return {
@@ -254,8 +196,8 @@ export async function buildPreviewSite(input) {
             sourceHash,
             previewPath: basePath,
             outputDir,
-            manifest,
-            manifestFilePath: nextManifestFilePath,
+            manifest: builtPreview.manifest,
+            manifestFilePath: builtPreview.manifestFilePath,
             cacheHit: false,
         };
     } finally {

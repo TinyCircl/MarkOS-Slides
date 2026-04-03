@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { buildDeckMarkdown, createInlineSourceFiles } from "../src/render-manager.mjs";
+import { MARKOS_SOURCE_MODES, buildDeckMarkdown, createInlineSourceFiles } from "../src/core/index.mjs";
 
 test("legacy single-file decks still strip local resource references", () => {
     const markdown = buildDeckMarkdown({
@@ -69,6 +69,33 @@ test("folder-style source keeps entry-local CSS and component references", () =>
     assert.match(entry.content, /!\[Alt]\(\.\/image\.png\)/);
     assert.match(entry.content, /<MyWidget \/>/);
     assert.doesNotMatch(entry.content, /css: \.\/styles\.css/);
+});
+
+test("authoring mode keeps local resource references for single-file decks", () => {
+    const files = createInlineSourceFiles({
+        title: "demo",
+        content: [
+            "---",
+            "css: ./styles.css",
+            "---",
+            "",
+            "![Alt](./image.png)",
+            "",
+            "<MyWidget />",
+            "",
+            "<video src=\"./demo.mp4\"></video>",
+        ].join("\n"),
+    }, {
+        mode: MARKOS_SOURCE_MODES.AUTHORING,
+    });
+
+    const entry = files.find((file) => file.path === "slides.md");
+    assert.ok(entry);
+    assert.equal(typeof entry.content, "string");
+    assert.match(entry.content, /css: \.\/styles\.css/);
+    assert.match(entry.content, /!\[Alt]\(\.\/image\.png\)/);
+    assert.match(entry.content, /<MyWidget \/>/);
+    assert.match(entry.content, /<video src="\.\/*demo\.mp4"><\/video>/);
 });
 
 test("legacy css frontmatter paths are rewritten to auto-loaded styles index", () => {

@@ -1,9 +1,12 @@
 import {mkdir, readFile, readdir, rm, stat, writeFile} from "node:fs/promises";
 import {dirname, join, resolve} from "node:path";
+import {getArtifactStoreConfig} from "../config/index.mjs";
 import {isPathInside, sanitizePreviewId, sanitizeRelativePath} from "./path-utils.mjs";
 
-const LOCAL_ARTIFACT_RETENTION_MS = Number(process.env.MARKOS_LOCAL_ARTIFACT_RETENTION_MS || 7 * 24 * 60 * 60 * 1000);
-const LOCAL_ARTIFACT_CLEANUP_INTERVAL_MS = Number(process.env.MARKOS_LOCAL_ARTIFACT_CLEANUP_INTERVAL_MS || 60 * 60 * 1000);
+const {
+    localArtifactRetentionMs: LOCAL_ARTIFACT_RETENTION_MS,
+    localArtifactCleanupIntervalMs: LOCAL_ARTIFACT_CLEANUP_INTERVAL_MS,
+} = getArtifactStoreConfig();
 const RENDER_ARTIFACTS_DIRNAME = "renders";
 const PREVIEW_ARTIFACTS_DIRNAME = "previews";
 const PREVIEW_BUILD_CACHE_DIRNAME = "preview-cache";

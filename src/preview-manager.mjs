@@ -1,11 +1,10 @@
 import {createHash} from "node:crypto";
-import {mkdir, rm, writeFile} from "node:fs/promises";
-import {dirname, join} from "node:path";
-import {buildDeckMarkdown} from "./core/source-pipeline.mjs";
-import {writePreviewManifest} from "./core/artifact-store.mjs";
-import {getRenderEngine} from "./engines/index.mjs";
+import {rm} from "node:fs/promises";
+import {join} from "node:path";
+import {getPreviewSessionConfig} from "./config/index.mjs";
+import {buildStaticSiteFromInput} from "./core/index.mjs";
 
-const SESSION_IDLE_TTL_MS = Number(process.env.MARKOS_SESSION_TTL_MS || 15 * 60 * 1000);
+const {sessionIdleTtlMs: SESSION_IDLE_TTL_MS} = getPreviewSessionConfig();
 
 const previewSessions = new Map();
 
@@ -51,37 +50,28 @@ async function destroySessionArtifacts(session) {
 }
 
 async function buildStaticPreviewSession(session, input) {
-  const renderEngine = getRenderEngine();
   const contentHash = buildSessionContentHash(input);
   if (session.contentHash === contentHash && session.ready) {
     return;
   }
 
-  await rm(session.workDir, { recursive: true, force: true }).catch(() => {});
-  await rm(session.outputDir, { recursive: true, force: true }).catch(() => {});
-  await mkdir(dirname(session.entryFilePath), { recursive: true });
-  await writeFile(session.entryFilePath, buildDeckMarkdown(input), "utf8");
+  const buildId = contentHash.slice(0, 12);
 
   try {
-    await renderEngine.buildStaticSite({
-      entryFilePath: session.entryFilePath,
+    const builtPreview = await buildStaticSiteFromInput({
+      input,
       outputDir: session.outputDir,
       basePath: session.basePath,
-      cwd: session.workDir,
-    });
-
-    const buildId = contentHash.slice(0, 12);
-    const { manifestFilePath } = await writePreviewManifest({
-      previewId: session.id,
-      buildId,
-      basePath: session.basePath,
-      outputDir: session.outputDir,
-      sourceEntry: "slides.md",
+      workDir: session.workDir,
+      manifest: {
+        previewId: session.id,
+        buildId,
+      },
     });
 
     session.contentHash = contentHash;
     session.buildId = buildId;
-    session.manifestFilePath = manifestFilePath;
+    session.manifestFilePath = builtPreview.manifestFilePath;
     session.ready = true;
   } catch (error) {
     session.ready = false;
@@ -118,7 +108,6 @@ export async function ensurePreviewSession(input) {
     basePath: getBasePath(sessionId),
     workDir: getPreviewWorkDir(sessionId),
     outputDir: getPreviewDir(sessionId),
-    entryFilePath: join(getPreviewWorkDir(sessionId), "slides.md"),
     manifestFilePath: null,
     buildId: null,
     contentHash: null,

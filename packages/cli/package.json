@@ -1,0 +1,15 @@
+{
+  "name": "@pebble/markos-cli",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "markos": "./bin/markos.mjs"
+  },
+  "exports": {
+    ".": "./index.mjs"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

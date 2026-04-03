@@ -23,6 +23,11 @@ const LEGACY_CSS_COMPAT_PATH = "styles/index.css";
 const LEGACY_CSS_COMPAT_START = "/* markos legacy css frontmatter compatibility:start */";
 const LEGACY_CSS_COMPAT_END = "/* markos legacy css frontmatter compatibility:end */";
 
+export const MARKOS_SOURCE_MODES = Object.freeze({
+    HOSTED: "hosted",
+    AUTHORING: "authoring",
+});
+
 function normalizeText(value) {
     return value.replace(/\r\n?/g, "\n");
 }
@@ -30,6 +35,12 @@ function normalizeText(value) {
 function normalizeTitle(title) {
     const trimmed = title?.trim();
     return trimmed && trimmed.length > 0 ? trimmed : "Untitled Slides";
+}
+
+function normalizeSourceMode(mode) {
+    return mode === MARKOS_SOURCE_MODES.AUTHORING
+        ? MARKOS_SOURCE_MODES.AUTHORING
+        : MARKOS_SOURCE_MODES.HOSTED;
 }
 
 function escapeRegExp(value) {
@@ -361,25 +372,32 @@ function normalizeSourceFilesForHash(files) {
 }
 
 export function buildDeckMarkdown(input, {
-    sanitizeMarkdown = true,
+    sanitizeMarkdown,
+    mode = MARKOS_SOURCE_MODES.HOSTED,
 } = {}) {
+    const resolvedMode = normalizeSourceMode(mode);
+    const shouldSanitizeMarkdown = typeof sanitizeMarkdown === "boolean"
+        ? sanitizeMarkdown
+        : resolvedMode === MARKOS_SOURCE_MODES.HOSTED;
     const title = normalizeTitle(input.title);
     const content = normalizeText(input.content).trim();
 
     if (!content) {
         return `${enforceServiceFrontmatterOnMarkdown("", {
             title,
-            sanitizeMarkdown,
+            sanitizeMarkdown: shouldSanitizeMarkdown,
         })}\n# ${title}\n\nStart writing to generate slides.\n`;
     }
 
     return enforceServiceFrontmatterOnMarkdown(content, {
         title,
-        sanitizeMarkdown,
+        sanitizeMarkdown: shouldSanitizeMarkdown,
     });
 }
 
-export function createInlineSourceFiles(input) {
+export function createInlineSourceFiles(input, {
+    mode = MARKOS_SOURCE_MODES.HOSTED,
+} = {}) {
     const sourceEntry = sanitizeRelativePath(input.entry || "slides.md");
     const files = [];
 
@@ -409,7 +427,7 @@ export function createInlineSourceFiles(input) {
     } else {
         files.push({
             path: sourceEntry,
-            content: buildDeckMarkdown(input),
+            content: buildDeckMarkdown(input, {mode}),
         });
     }
 

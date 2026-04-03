@@ -3,9 +3,25 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "workspaces": [
+    "packages/*"
+  ],
+  "exports": {
+    ".": "./src/index.mjs",
+    "./core": "./src/core/index.mjs",
+    "./cli": "./src/cli/index.mjs",
+    "./server": "./src/server/index.mjs"
+  },
+  "bin": {
+    "markos": "./src/cli.mjs"
+  },
   "scripts": {
     "dev": "node --watch src/server.mjs",
     "start": "node src/server.mjs",
+    "markos:build": "node src/cli.mjs build",
+    "markos:dev": "node src/cli.mjs dev",
+    "check": "npm test && npm run check:fixtures && npm run check:examples",
+    "check:examples": "node scripts/check-examples.mjs",
     "check:fixtures": "node scripts/check-fixtures.mjs",
     "preview:local": "node scripts/preview-local-file.mjs",
     "preview:local:session": "node scripts/preview-local-file.mjs --api session",

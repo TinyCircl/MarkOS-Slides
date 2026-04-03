@@ -12,12 +12,17 @@ export function sanitizeRelativePath(relativePath) {
     return normalizedPath;
 }
 
-export function normalizeBasePath(basePath) {
+export function normalizeBasePath(basePath, {fallback = null} = {}) {
     const trimmed = basePath?.trim();
-    if (!trimmed) {
+    const resolvedPath = trimmed || fallback;
+    if (!resolvedPath) {
         throw new Error("Preview basePath is required.");
     }
-    return `/${trimmed.replace(/^\/+|\/+$/g, "")}/`;
+    if (resolvedPath === ".") {
+        return "/";
+    }
+    const normalizedPath = resolvedPath.replace(/^\/+|\/+$/g, "");
+    return normalizedPath ? `/${normalizedPath}/` : "/";
 }
 
 export function sanitizePreviewId(previewId) {
