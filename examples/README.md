@@ -18,7 +18,7 @@ Each subdirectory in `examples/` that contains `slides.md` and `slides.css` is t
 
 The current example deck demonstrates the file-frontmatter-plus-overrides convention.
 
-Its shared source theme lives at [Clay.css](../packages/core/themes/Clay.css). The deck references it through file-level frontmatter and keeps [slides.css](./tokyo3days/slides.css) as local overrides.
+Its shared source theme lives at [theme.css](../packages/core/themes/Clay/theme.css) with authoring notes in [README.md](../packages/core/themes/Clay/README.md). The deck references the theme through file-level frontmatter and keeps [slides.css](./tokyo3days/slides.css) as local overrides.
 
 You can still set the theme field with:
 

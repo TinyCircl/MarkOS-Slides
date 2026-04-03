@@ -65,7 +65,11 @@ function normalizeThemeName(value) {
         return null;
     }
 
-    return trimmed.endsWith(".css") ? trimmed.slice(0, -4) : trimmed;
+    if (trimmed.endsWith(".css")) {
+        throw new Error("Theme name must not include the .css suffix. Use the theme folder name, for example \"Clay\".");
+    }
+
+    return trimmed;
 }
 
 async function resolveThemeCssSource(workDir, deck) {

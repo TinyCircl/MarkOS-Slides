@@ -11,7 +11,7 @@ deck/
 
 For normal authoring, a deck only needs `slides.md` plus a file-level `theme`.
 
-When a deck file declares `theme: Clay` in its top-level frontmatter, MarkOS loads the built-in `Clay` theme from the core package theme library. A sibling `slides.css` file is optional and acts as the primary local override layer, and an optional `agent-overrides.css` file can add a final incremental override layer after that.
+When a deck file declares `theme: Clay` in its top-level frontmatter, MarkOS loads the built-in theme entry at `packages/core/themes/Clay/theme.css`. The `theme` value is the theme folder name, not a file name. A sibling `slides.css` file is optional and acts as the primary local override layer, and an optional `agent-overrides.css` file can add a final incremental override layer after that.
 
 For deck authoring rules, see [Syntax Guide](./syntax.md).
 
@@ -45,7 +45,7 @@ npm run markos:build -- playground\my-deck
 
 Default styling path:
 - write Markdown in `slides.md`
-- set `theme` in file-level frontmatter
+- set `theme` in file-level frontmatter using the theme folder name such as `Clay`
 - do not create `slides.css` unless you explicitly need local overrides
 - use `agent-overrides.css` only when an automated or advanced workflow needs a separate final override layer
 
@@ -88,7 +88,8 @@ Options:
 Behavior:
 - resolves `slides.md` from the given deck directory
 - reads deck-level frontmatter from `slides.md`
-- loads the built-in `<theme>` source from the core package theme library when `theme` is declared in file-level frontmatter
+- loads `packages/core/themes/<theme>/theme.css` when `theme` is declared in file-level frontmatter
+- requires the `theme` value to be the theme folder name without a `.css` suffix
 - loads the sibling `slides.css` file as an optional local override layer when it exists
 - loads `agent-overrides.css` after `slides.css` when it exists, so it can apply final incremental overrides
 - ignores other files in the deck directory during build input collection
@@ -134,7 +135,8 @@ markos theme apply Clay .
 ```
 
 Behavior:
-- verifies that the built-in `<theme>` source exists in the core package theme library
+- verifies that `packages/core/themes/<theme>/theme.css` exists
+- requires the requested theme name to be the folder name without a `.css` suffix
 - writes `theme: <theme>` into the top-level frontmatter of `slides.md`
 - creates `slides.css` only when the deck does not already have one
 - keeps the runtime contract explicit: shared theme first, `slides.css` second, optional `agent-overrides.css` last

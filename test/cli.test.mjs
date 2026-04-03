@@ -5,6 +5,7 @@ import {mkdir, mkdtemp, readFile, rm, stat, writeFile} from "node:fs/promises";
 import {join} from "node:path";
 import {runCli} from "../src/cli.mjs";
 import {getBundledThemesRoot} from "../packages/core/src/config/index.mjs";
+import {MARKOS_THEME_ENTRY_FILENAME} from "../packages/cli/src/theme.mjs";
 
 async function waitForHtml(url, predicate, {
     timeoutMs = 5000,
@@ -23,13 +24,25 @@ async function waitForHtml(url, predicate, {
     throw new Error(`Timed out waiting for ${url}`);
 }
 
+async function writeDirectoryTheme(themesRoot, themeName, css = "") {
+    const themeDir = join(themesRoot, themeName);
+    await mkdir(themeDir, {recursive: true});
+    await writeFile(join(themeDir, MARKOS_THEME_ENTRY_FILENAME), css, "utf8");
+    await writeFile(
+        join(themeDir, "README.md"),
+        `# ${themeName}\n\n- Shell: slide-shell\n`,
+        "utf8",
+    );
+    return themeDir;
+}
+
 test("CLI build command generates a static site from a local project", async () => {
     const tempRoot = await mkdtemp(join(os.tmpdir(), "markos-cli-"));
     const projectRoot = join(tempRoot, "project");
     const outDir = join(projectRoot, "dist");
     const themesRoot = getBundledThemesRoot();
     const themeName = `build-theme-${Date.now()}`;
-    const themeFilePath = join(themesRoot, `${themeName}.css`);
+    const themeDirPath = join(themesRoot, themeName);
 
     try {
         await mkdir(projectRoot, {recursive: true});
@@ -47,7 +60,7 @@ test("CLI build command generates a static site from a local project", async () 
             ].join("\n"),
             "utf8",
         );
-        await writeFile(themeFilePath, ".theme-title { color: blue; }\n", "utf8");
+        await writeDirectoryTheme(themesRoot, themeName, ".theme-title { color: blue; }\n");
         await writeFile(join(projectRoot, "slides.css"), ".slide h1 { color: #f06b1f; }\n", "utf8");
         await writeFile(join(projectRoot, "notes.txt"), "ignore me\n", "utf8");
 
@@ -79,7 +92,7 @@ test("CLI build command generates a static site from a local project", async () 
             /ENOENT/,
         );
     } finally {
-        await rm(themeFilePath, {force: true}).catch(() => {
+        await rm(themeDirPath, {recursive: true, force: true}).catch(() => {
         });
         await rm(tempRoot, {recursive: true, force: true});
     }
@@ -91,7 +104,7 @@ test("CLI build supports UTF-8 BOM in slides.md and still applies file-level the
     const outDir = join(projectRoot, "dist");
     const themesRoot = getBundledThemesRoot();
     const themeName = `bom-theme-${Date.now()}`;
-    const themeFilePath = join(themesRoot, `${themeName}.css`);
+    const themeDirPath = join(themesRoot, themeName);
 
     try {
         await mkdir(projectRoot, {recursive: true});
@@ -102,7 +115,7 @@ test("CLI build supports UTF-8 BOM in slides.md and still applies file-level the
             `\uFEFF---\ntheme: ${themeName}\ntitle: BOM Deck\n---\n\n---\nlayout: cover\nclass: slide-shell title-slide\n---\n\n# Hello BOM\n`,
             "utf8",
         );
-        await writeFile(themeFilePath, ".bom-theme { color: blue; }\n", "utf8");
+        await writeDirectoryTheme(themesRoot, themeName, ".bom-theme { color: blue; }\n");
 
         const result = await runCli([
             "build",
@@ -118,7 +131,7 @@ test("CLI build supports UTF-8 BOM in slides.md and still applies file-level the
         assert.match(html, /Hello BOM/);
         assert.match(html, /\.bom-theme \{ color: blue; \}/);
     } finally {
-        await rm(themeFilePath, {force: true}).catch(() => {
+        await rm(themeDirPath, {recursive: true, force: true}).catch(() => {
         });
         await rm(tempRoot, {recursive: true, force: true});
     }
@@ -216,7 +229,7 @@ test("CLI dev command serves the generated static site locally", async () => {
     const outDir = join(projectRoot, ".markos-dev");
     const themesRoot = getBundledThemesRoot();
     const themeName = `dev-theme-${Date.now()}`;
-    const themeFilePath = join(themesRoot, `${themeName}.css`);
+    const themeDirPath = join(themesRoot, themeName);
     let result = null;
 
     try {
@@ -236,7 +249,7 @@ test("CLI dev command serves the generated static site locally", async () => {
             ].join("\n"),
             "utf8",
         );
-        await writeFile(themeFilePath, ".theme-dev { color: blue; }\n", "utf8");
+        await writeDirectoryTheme(themesRoot, themeName, ".theme-dev { color: blue; }\n");
         await writeFile(join(projectRoot, "slides.css"), ".slide h1 { color: #f06b1f; }\n", "utf8");
         await writeFile(join(projectRoot, "dist", "stale.txt"), "old build output\n", "utf8");
         await writeFile(join(projectRoot, "notes.txt"), "ignore me\n", "utf8");
@@ -277,7 +290,7 @@ test("CLI dev command serves the generated static site locally", async () => {
     } finally {
         await result?.stop?.().catch(() => {
         });
-        await rm(themeFilePath, {force: true}).catch(() => {
+        await rm(themeDirPath, {recursive: true, force: true}).catch(() => {
         });
         await rm(tempRoot, {recursive: true, force: true});
     }
@@ -289,11 +302,13 @@ test("CLI dev rebuilds when a bundled theme source file changes", async () => {
     const outDir = join(projectRoot, ".markos-dev");
     const themesRoot = getBundledThemesRoot();
     const themeName = `watch-theme-${process.pid}-${Date.now()}`;
-    const themeFilePath = join(themesRoot, `${themeName}.css`);
+    const themeDirPath = join(themesRoot, themeName);
+    const themeFilePath = join(themeDirPath, MARKOS_THEME_ENTRY_FILENAME);
     let result = null;
 
     try {
         await mkdir(projectRoot, {recursive: true});
+        await writeDirectoryTheme(themesRoot, themeName, ".theme-version-a { color: blue; }\n");
         await writeFile(
             join(projectRoot, "slides.md"),
             [
@@ -307,7 +322,6 @@ test("CLI dev rebuilds when a bundled theme source file changes", async () => {
             "utf8",
         );
         await writeFile(join(projectRoot, "slides.css"), ".slide h1 { color: #f06b1f; }\n", "utf8");
-        await writeFile(themeFilePath, ".theme-version-a { color: blue; }\n", "utf8");
 
         result = await runCli([
             "dev",
@@ -333,7 +347,7 @@ test("CLI dev rebuilds when a bundled theme source file changes", async () => {
     } finally {
         await result?.stop?.().catch(() => {
         });
-        await rm(themeFilePath, {force: true}).catch(() => {
+        await rm(themeDirPath, {recursive: true, force: true}).catch(() => {
         });
         await rm(tempRoot, {recursive: true, force: true});
     }
@@ -351,14 +365,14 @@ test("CLI theme apply writes file-level theme metadata and preserves deck-local 
     const deckRoot = join(tempRoot, "deck");
     const themesRoot = getBundledThemesRoot();
     const themeName = `test-theme-${Date.now()}`;
-    const themeFilePath = join(themesRoot, `${themeName}.css`);
+    const themeDirPath = join(themesRoot, themeName);
 
     try {
         await mkdir(deckRoot, {recursive: true});
         await mkdir(themesRoot, {recursive: true});
         await writeFile(join(deckRoot, "slides.md"), "# Deck\n", "utf8");
         await writeFile(join(deckRoot, "slides.css"), ".old { color: blue; }\n", "utf8");
-        await writeFile(themeFilePath, ".theme { color: red; }\n", "utf8");
+        await writeDirectoryTheme(themesRoot, themeName, ".theme { color: red; }\n");
 
         const result = await runCli([
             "theme",
@@ -377,7 +391,7 @@ test("CLI theme apply writes file-level theme metadata and preserves deck-local 
         assert.equal(css, ".old { color: blue; }\n");
         assert.match(markdown, new RegExp(`theme:\\s+"${themeName}"`));
     } finally {
-        await rm(themeFilePath, {force: true}).catch(() => {
+        await rm(themeDirPath, {recursive: true, force: true}).catch(() => {
         });
         await rm(tempRoot, {recursive: true, force: true});
     }
@@ -388,7 +402,7 @@ test("CLI theme apply inserts a separate file-frontmatter block above an old fir
     const deckRoot = join(tempRoot, "deck");
     const themesRoot = getBundledThemesRoot();
     const themeName = `legacy-theme-${Date.now()}`;
-    const themeFilePath = join(themesRoot, `${themeName}.css`);
+    const themeDirPath = join(themesRoot, themeName);
 
     try {
         await mkdir(deckRoot, {recursive: true});
@@ -405,7 +419,7 @@ test("CLI theme apply inserts a separate file-frontmatter block above an old fir
             ].join("\n"),
             "utf8",
         );
-        await writeFile(themeFilePath, ".theme { color: red; }\n", "utf8");
+        await writeDirectoryTheme(themesRoot, themeName, ".theme { color: red; }\n");
 
         const result = await runCli([
             "theme",
@@ -424,8 +438,113 @@ test("CLI theme apply inserts a separate file-frontmatter block above an old fir
             ),
         );
     } finally {
+        await rm(themeDirPath, {recursive: true, force: true}).catch(() => {
+        });
+        await rm(tempRoot, {recursive: true, force: true});
+    }
+});
+
+test("CLI build rejects legacy single-file themes outside a theme folder", async () => {
+    const tempRoot = await mkdtemp(join(os.tmpdir(), "markos-cli-legacy-theme-"));
+    const projectRoot = join(tempRoot, "project");
+    const outDir = join(projectRoot, "dist");
+    const themesRoot = getBundledThemesRoot();
+    const themeName = `legacy-build-theme-${Date.now()}`;
+    const themeFilePath = join(themesRoot, `${themeName}.css`);
+
+    try {
+        await mkdir(projectRoot, {recursive: true});
+        await mkdir(themesRoot, {recursive: true});
+
+        await writeFile(
+            join(projectRoot, "slides.md"),
+            [
+                "---",
+                `theme: ${themeName}`,
+                "title: Legacy Theme Deck",
+                "---",
+                "",
+                "# Legacy Theme",
+            ].join("\n"),
+            "utf8",
+        );
+        await writeFile(themeFilePath, ".legacy-theme { color: rebeccapurple; }\n", "utf8");
+
+        await assert.rejects(
+            () => runCli([
+                "build",
+                projectRoot,
+                "--out-dir",
+                outDir,
+            ]),
+            new RegExp(`Theme not found: ${themeName}`),
+        );
+    } finally {
         await rm(themeFilePath, {force: true}).catch(() => {
         });
+        await rm(tempRoot, {recursive: true, force: true});
+    }
+});
+
+test("CLI build rejects file-level theme names that include a .css suffix", async () => {
+    const tempRoot = await mkdtemp(join(os.tmpdir(), "markos-cli-theme-suffix-"));
+    const projectRoot = join(tempRoot, "project");
+    const outDir = join(projectRoot, "dist");
+    const themesRoot = getBundledThemesRoot();
+    const themeName = `suffix-theme-${Date.now()}`;
+    const themeDirPath = join(themesRoot, themeName);
+
+    try {
+        await mkdir(projectRoot, {recursive: true});
+        await mkdir(themesRoot, {recursive: true});
+        await writeDirectoryTheme(themesRoot, themeName, ".theme-suffix { color: blue; }\n");
+        await writeFile(
+            join(projectRoot, "slides.md"),
+            [
+                "---",
+                `theme: ${themeName}.css`,
+                "title: Invalid Theme Name",
+                "---",
+                "",
+                "# Invalid Theme Name",
+            ].join("\n"),
+            "utf8",
+        );
+
+        await assert.rejects(
+            () => runCli([
+                "build",
+                projectRoot,
+                "--out-dir",
+                outDir,
+            ]),
+            /Theme name must not include the \.css suffix/,
+        );
+    } finally {
+        await rm(themeDirPath, {recursive: true, force: true}).catch(() => {
+        });
+        await rm(tempRoot, {recursive: true, force: true});
+    }
+});
+
+test("CLI theme apply rejects theme arguments that include a .css suffix", async () => {
+    const tempRoot = await mkdtemp(join(os.tmpdir(), "markos-theme-apply-suffix-"));
+    const deckRoot = join(tempRoot, "deck");
+
+    try {
+        await mkdir(deckRoot, {recursive: true});
+        await writeFile(join(deckRoot, "slides.md"), "# Deck\n", "utf8");
+
+        await assert.rejects(
+            () => runCli([
+                "theme",
+                "apply",
+                "Clay.css",
+                deckRoot,
+            ]),
+            /Theme name must not include the \.css suffix/,
+        );
+    } finally {
         await rm(tempRoot, {recursive: true, force: true});
     }
 });

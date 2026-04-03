@@ -15,13 +15,22 @@ import {
     parseYamlObject,
     upsertTopLevelKey,
 } from "@tinycircl/markos-slides-core/deck-utils";
+
 export {MARKOS_THEMES_DIRNAME} from "@tinycircl/markos-slides-core/config";
+
+export const MARKOS_THEME_ENTRY_FILENAME = "theme.css";
 
 const THEME_NAME_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._-]*$/;
 
 function sanitizeThemeName(themeName) {
-    const normalizedThemeName = themeName?.trim()?.replace(/\.css$/i, "");
-    if (!normalizedThemeName || !THEME_NAME_PATTERN.test(normalizedThemeName)) {
+    const normalizedThemeName = themeName?.trim();
+    if (!normalizedThemeName) {
+        throw new Error("Theme name is required and may contain only letters, numbers, dot, underscore, and dash.");
+    }
+    if (/\.css$/i.test(normalizedThemeName)) {
+        throw new Error("Theme name must not include the .css suffix. Use the theme folder name, for example \"Clay\".");
+    }
+    if (!THEME_NAME_PATTERN.test(normalizedThemeName)) {
         throw new Error("Theme name is required and may contain only letters, numbers, dot, underscore, and dash.");
     }
     return normalizedThemeName;
@@ -36,6 +45,24 @@ export function getThemesRoot(rootDir = null) {
     return basename(resolvedRoot) === MARKOS_THEMES_DIRNAME
         ? resolvedRoot
         : join(resolvedRoot, MARKOS_THEMES_DIRNAME);
+}
+
+async function resolveThemeSource(themeName, {
+    themesRoot = getThemesRoot(),
+} = {}) {
+    const resolvedThemesRoot = resolve(themesRoot);
+    const themeDirectoryPath = join(resolvedThemesRoot, themeName);
+    const themeFilePath = join(themeDirectoryPath, MARKOS_THEME_ENTRY_FILENAME);
+
+    if (await getPathKind(themeFilePath) === "file") {
+        return {
+            themeName,
+            themeDirectoryPath,
+            themeFilePath,
+        };
+    }
+
+    throw new Error(`Theme not found: ${themeName}`);
 }
 
 function withDeckThemeFrontmatter(markdown, themeName) {
@@ -93,7 +120,7 @@ function readThemeNameFromMarkdown(markdown) {
     }
 
     const rawValue = match[1].trim().replace(/^['"]|['"]$/g, "");
-    return rawValue ? sanitizeThemeName(rawValue.endsWith(".css") ? rawValue.slice(0, -4) : rawValue) : null;
+    return rawValue ? sanitizeThemeName(rawValue) : null;
 }
 
 export async function injectDeckThemeSource(input, {
@@ -114,11 +141,7 @@ export async function injectDeckThemeSource(input, {
         return input;
     }
 
-    const themeFilePath = join(resolve(themesRoot), `${themeName}.css`);
-    if (await getPathKind(themeFilePath) !== "file") {
-        throw new Error(`Theme not found: ${themeName}`);
-    }
-
+    const {themeFilePath} = await resolveThemeSource(themeName, {themesRoot});
     const themeWorkPath = `${MARKOS_THEME_WORK_DIRNAME}/${themeName}.css`;
     const existingThemeFile = sourceFiles.find((file) => file.path === themeWorkPath);
     const themeContent = await readFile(themeFilePath, "utf8");
@@ -152,11 +175,7 @@ export async function applyThemeToDeck({
         throw new Error(`Deck is missing ${MARKOS_DEFAULT_ENTRY}: ${resolvedDeckRoot}`);
     }
 
-    const themeFilePath = join(resolve(themesRoot), `${normalizedThemeName}.css`);
-    if (await getPathKind(themeFilePath) !== "file") {
-        throw new Error(`Theme not found: ${normalizedThemeName}`);
-    }
-
+    const {themeDirectoryPath, themeFilePath} = await resolveThemeSource(normalizedThemeName, {themesRoot});
     const targetFilePath = getSiblingCssPath(entryFilePath);
     const currentMarkdown = await readFile(entryFilePath, "utf8");
     await writeFile(entryFilePath, withDeckThemeFrontmatter(currentMarkdown, normalizedThemeName), "utf8");
@@ -169,6 +188,7 @@ export async function applyThemeToDeck({
     return {
         themeName: normalizedThemeName,
         themesRoot: resolve(themesRoot),
+        themeDirectoryPath,
         themeFilePath,
         deckRoot: resolvedDeckRoot,
         entryFilePath,

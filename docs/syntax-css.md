@@ -7,19 +7,18 @@ deck/
   slides.md
 ```
 
-`slides.css` is an optional deck-local override layer. MarkOS loads the shared theme CSS first, then bundles the sibling `slides.css`, and finally bundles `agent-overrides.css` when that extra file exists.
+`slides.css` is an optional deck-local override layer. MarkOS loads the shared theme CSS first and then bundles the sibling `slides.css` file after it when the file exists.
 
 ## Optional Override Layer
 
 - Most decks should not need a hand-written CSS file
 - Add `slides.css` only when the shared theme is not enough
 - Treat `slides.css` as the override layer that comes after the shared theme CSS
-- Use `agent-overrides.css` only when you need a separate final override layer, such as agent-generated adjustments
 - Do not split the main authoring path across `styles/` directories or preset CSS
 
 ## Shared Themes
 
-If you want a centrally managed theme library, add reusable theme CSS files under `packages/core/themes/` and reference one from file-level frontmatter:
+If you want a centrally managed theme library, keep the source CSS files in `themes/` and reference one from file-level frontmatter:
 
 ```md
 ---
@@ -27,11 +26,15 @@ theme: Clay
 ---
 ```
 
+Use the theme folder name only. Do not write `theme: Clay.css`.
+
 That flow keeps the architecture explicit:
-- `packages/core/themes/*.css` are reusable built-in theme sources
-- `deck/slides.css` is the main local override layer for that deck
-- `deck/agent-overrides.css` is an optional final incremental override layer
+- `themes/<Theme>/theme.css` files are the standard reusable theme sources
+- `themes/<Theme>/README.md` is the theme manifest and usage surface for authors and AI
+- `deck/slides.css` is the local override layer for that deck
 - the runtime loads the shared theme first and the deck-local overrides second
+
+If you are creating a reusable shared theme, use [Theme Authoring](./theme-authoring.md) as the normative guide for page-template structure, naming, selector rules, and review criteria.
 
 ## Build Output Note
 
@@ -168,4 +171,4 @@ class: content-pane
 
 ## Example
 
-See [slides.css](../examples/tokyo3days/slides.css) for a working example.
+See [slides.css](C:/Users/xuao5/Desktop/MarkOS-Slides/examples/tokyo3days/slides.css) for a working example.

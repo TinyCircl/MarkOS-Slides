@@ -116,6 +116,41 @@ test("markos-web does not load a shared theme when no file-level theme is declar
     }
 });
 
+test("markos-web rejects file-level theme names that include a .css suffix", async () => {
+    const tempRoot = await mkdtemp(join(os.tmpdir(), "markos-engine-theme-suffix-"));
+    const workDir = join(tempRoot, "work");
+    const outDir = join(tempRoot, "out");
+
+    try {
+        await mkdir(join(workDir, ".markos-theme"), {recursive: true});
+        await writeFile(
+            join(workDir, "slides.md"),
+            [
+                "---",
+                "title: Invalid Theme Deck",
+                "theme: Clay.css",
+                "---",
+                "",
+                "# Invalid Theme",
+            ].join("\n"),
+            "utf8",
+        );
+        await writeFile(join(workDir, ".markos-theme", "Clay.css"), ".slide-shell { color: blue; }\n", "utf8");
+
+        await assert.rejects(
+            () => markosWebRenderEngine.buildStaticSite({
+                entryFilePath: join(workDir, "slides.md"),
+                outputDir: outDir,
+                basePath: "/",
+                cwd: workDir,
+            }),
+            /Theme name must not include the \.css suffix/,
+        );
+    } finally {
+        await rm(tempRoot, {recursive: true, force: true});
+    }
+});
+
 test("markos-web treats the opening frontmatter block as deck-level metadata", async () => {
     const tempRoot = await mkdtemp(join(os.tmpdir(), "markos-first-slide-"));
     const workDir = join(tempRoot, "work");
