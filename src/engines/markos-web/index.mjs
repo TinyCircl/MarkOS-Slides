@@ -22,7 +22,10 @@ async function bundleCssFile(filePath, seen = new Set()) {
     }
     seen.add(normalizedPath);
 
-    const css = await readFile(normalizedPath, "utf8").catch(() => "");
+    const css = await readFile(normalizedPath, "utf8").catch((err) => {
+        if (err?.code !== "ENOENT") console.warn("[markos] failed to read CSS file:", normalizedPath, err.message);
+        return "";
+    });
     const importPattern = /@import\s+(?:url\()?['"]([^'"]+)['"]\)?\s*;/g;
 
     let cursor = 0;
@@ -141,6 +144,7 @@ async function buildStaticSite({entryFilePath, outputDir, basePath, cwd}) {
     );
 }
 
+// eslint-disable-next-line no-unused-vars
 async function exportArtifact({entryFilePath, format, outputFilePath, cwd}) {
     throw new Error(`Render format "${format}" is not supported by ${MARKOS_WEB_ENGINE_NAME}. Only "web" is currently available.`);
 }

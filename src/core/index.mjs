@@ -32,7 +32,8 @@ function uniqueDirs(dirs) {
 
 async function recreateDirs(...dirs) {
     for (const dir of uniqueDirs(dirs)) {
-        await rm(dir, {recursive: true, force: true}).catch(() => {
+        await rm(dir, {recursive: true, force: true}).catch((err) => {
+            if (err?.code !== "ENOENT") console.warn("[markos] cleanup dir failed:", dir, err.message);
         });
         await mkdir(dir, {recursive: true});
     }

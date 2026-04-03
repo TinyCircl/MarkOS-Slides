@@ -1,6 +1,7 @@
 import "../load-env.mjs";
 import cors from "cors";
 import express from "express";
+import rateLimit from "express-rate-limit";
 import { mkdir } from "node:fs/promises";
 import { join } from "node:path";
 import { z } from "zod";
@@ -25,6 +26,10 @@ const {
   publicBaseUrl: PUBLIC_BASE_URL,
   previewSiteBaseUrl: PREVIEW_SITE_BASE_URL,
   bodyLimit: BODY_LIMIT,
+  corsOrigin: CORS_ORIGIN,
+  rateLimitWindowMs: RATE_LIMIT_WINDOW_MS,
+  rateLimitMax: RATE_LIMIT_MAX,
+  requestTimeoutMs: REQUEST_TIMEOUT_MS,
 } = getServerRuntimeConfig();
 const ARTIFACT_ROOT = join(process.cwd(), ".markos-artifacts");
 const RENDER_ARTIFACT_ROOT = join(ARTIFACT_ROOT, "renders");
@@ -114,8 +119,26 @@ const previewBuildRequestSchema = z.object({
 
 export const app = express();
 app.set("trust proxy", true);
-app.use(cors({ origin: true }));
+app.use(cors({ origin: CORS_ORIGIN }));
 app.use(express.json({ limit: BODY_LIMIT }));
+
+const apiRateLimiter = rateLimit({
+  windowMs: RATE_LIMIT_WINDOW_MS,
+  max: RATE_LIMIT_MAX,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Too many requests, please try again later." },
+});
+app.use("/api/", apiRateLimiter);
+
+app.use("/api/", (req, res, next) => {
+  res.setTimeout(REQUEST_TIMEOUT_MS, () => {
+    if (!res.headersSent) {
+      res.status(408).json({ error: "Request timeout." });
+    }
+  });
+  next();
+});
 
 function getOrigin(req) {
   if (PUBLIC_BASE_URL) return PUBLIC_BASE_URL;
@@ -219,7 +242,8 @@ app.post("/api/preview/session", async (req, res) => {
       res.status(400).json({ error: "Invalid preview request.", details: error.flatten() });
       return;
     }
-    res.status(500).json({ error: error instanceof Error ? error.message : "Failed to start preview." });
+    console.error("[markos] preview session error:", error);
+    res.status(500).json({ error: "Failed to start preview." });
   }
 });
 
@@ -276,7 +300,8 @@ app.post("/api/render", async (req, res) => {
       res.status(400).json({ error: "Invalid render request.", details: error.flatten() });
       return;
     }
-    res.status(500).json({ error: error instanceof Error ? error.message : "Failed to render presentation." });
+    console.error("[markos] render error:", error);
+    res.status(500).json({ error: "Failed to render presentation." });
   }
 });
 
@@ -345,7 +370,8 @@ app.post("/api/previews/build", async (req, res) => {
       res.status(400).json({ error: "Invalid preview build request.", details: error.flatten() });
       return;
     }
-    res.status(500).json({ error: error instanceof Error ? error.message : "Failed to build preview site." });
+    console.error("[markos] preview build error:", error);
+    res.status(500).json({ error: "Failed to build preview site." });
   }
 });
 
@@ -367,7 +393,8 @@ app.use("/preview/:sessionId", async (req, res) => {
       notFoundMessage: "Preview session not found.",
     });
   } catch (error) {
-    res.status(500).json({ error: error instanceof Error ? error.message : "Failed to serve preview." });
+    console.error("[markos] serve preview error:", error);
+    res.status(500).json({ error: "Failed to serve preview." });
   }
 });
 
@@ -383,7 +410,8 @@ app.use("/p/:previewId", async (req, res) => {
     });
   } catch (error) {
     if (!res.headersSent) {
-      res.status(500).json({ error: error instanceof Error ? error.message : "Failed to serve preview site." });
+      console.error("[markos] serve preview site error:", error);
+      res.status(500).json({ error: "Failed to serve preview site." });
     }
   }
 });
@@ -395,8 +423,9 @@ export async function startServer() {
   await mkdir(RENDER_ARTIFACT_ROOT, { recursive: true });
   await cleanupExpiredLocalArtifacts();
   startArtifactCleanupScheduler();
-  await startGrpcServer();
-  return app.listen(PORT, () => {
-    console.log(`[markos-renderer] listening on :${PORT}`);
+  const grpcServer = await startGrpcServer();
+  const httpServer = app.listen(PORT, () => {
+    console.log(`[markos] listening on :${PORT}`);
   });
+  return { httpServer, grpcServer };
 }

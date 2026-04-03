@@ -117,13 +117,16 @@ export async function renderArtifact(input) {
             cacheHit: false,
         };
     } catch (error) {
-        await rm(cacheFilePath, {force: true}).catch(() => {
+        await rm(cacheFilePath, {force: true}).catch((err) => {
+            if (err?.code !== "ENOENT") console.warn("[markos] cleanup cache failed:", cacheFilePath, err.message);
         });
-        await rm(artifactDir, {recursive: true, force: true}).catch(() => {
+        await rm(artifactDir, {recursive: true, force: true}).catch((err) => {
+            if (err?.code !== "ENOENT") console.warn("[markos] cleanup artifact failed:", artifactDir, err.message);
         });
         throw error;
     } finally {
-        await rm(workDir, {recursive: true, force: true}).catch(() => {
+        await rm(workDir, {recursive: true, force: true}).catch((err) => {
+            if (err?.code !== "ENOENT") console.warn("[markos] cleanup workdir failed:", workDir, err.message);
         });
     }
 }
@@ -201,7 +204,8 @@ export async function buildPreviewSite(input) {
             cacheHit: false,
         };
     } finally {
-        await rm(workDir, {recursive: true, force: true}).catch(() => {
+        await rm(workDir, {recursive: true, force: true}).catch((err) => {
+            if (err?.code !== "ENOENT") console.warn("[markos] cleanup workdir failed:", workDir, err.message);
         });
     }
 }

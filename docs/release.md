@@ -54,7 +54,7 @@
    这是最重要的一项。没有明确 LICENSE，就不适合把仓库真正作为开源项目发布。
 
 2. 包名与品牌
-   当前根包名仍然是 `@pebble/markos-renderer`，更像内部或过渡命名。
+   根包名已更新为 `@tinycircl/markos-slides`。
    如果要公开发布，通常需要确认：
    - GitHub 仓库名
    - npm 包名

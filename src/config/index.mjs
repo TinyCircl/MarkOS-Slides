@@ -15,6 +15,11 @@ export const MARKOS_DEFAULT_BODY_LIMIT = "20mb";
 export const MARKOS_DEFAULT_SESSION_TTL_MS = 15 * 60 * 1000;
 export const MARKOS_DEFAULT_LOCAL_ARTIFACT_RETENTION_MS = 7 * 24 * 60 * 60 * 1000;
 export const MARKOS_DEFAULT_LOCAL_ARTIFACT_CLEANUP_INTERVAL_MS = 60 * 60 * 1000;
+export const MARKOS_DEFAULT_GRPC_HOST = "127.0.0.1";
+export const MARKOS_DEFAULT_RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000;
+export const MARKOS_DEFAULT_RATE_LIMIT_MAX = 100;
+export const MARKOS_DEFAULT_REQUEST_TIMEOUT_MS = 60 * 1000;
+export const MARKOS_DEFAULT_MAX_PREVIEW_SESSIONS = 1000;
 export const MARKOS_DEFAULT_AUTHORING_MODE = MARKOS_SOURCE_MODES.AUTHORING;
 export const MARKOS_DEFAULT_HOSTED_MODE = MARKOS_SOURCE_MODES.HOSTED;
 
@@ -40,19 +45,32 @@ export function resolveSourceMode(mode) {
         : MARKOS_SOURCE_MODES.HOSTED;
 }
 
+function parseCorsOrigin(value) {
+    const trimmed = value?.trim();
+    if (!trimmed || trimmed === "true") return true;
+    if (trimmed === "false") return false;
+    return trimmed.split(",").map((s) => s.trim()).filter(Boolean);
+}
+
 export function getServerRuntimeConfig(env = process.env) {
     return {
         httpPort: parseNumber(env.PORT, MARKOS_DEFAULT_HTTP_PORT),
         grpcPort: parseNumber(env.GRPC_PORT, MARKOS_DEFAULT_GRPC_PORT),
+        grpcHost: env.MARKOS_GRPC_HOST?.trim() || MARKOS_DEFAULT_GRPC_HOST,
         publicBaseUrl: normalizeUrlBase(env.MARKOS_PUBLIC_BASE_URL),
         previewSiteBaseUrl: normalizeUrlBase(env.MARKOS_PREVIEW_SITE_BASE_URL),
         bodyLimit: env.MARKOS_BODY_LIMIT || MARKOS_DEFAULT_BODY_LIMIT,
+        corsOrigin: parseCorsOrigin(env.MARKOS_CORS_ORIGIN),
+        rateLimitWindowMs: parseNumber(env.MARKOS_RATE_LIMIT_WINDOW_MS, MARKOS_DEFAULT_RATE_LIMIT_WINDOW_MS, {min: 1}),
+        rateLimitMax: parseNumber(env.MARKOS_RATE_LIMIT_MAX, MARKOS_DEFAULT_RATE_LIMIT_MAX, {min: 1}),
+        requestTimeoutMs: parseNumber(env.MARKOS_REQUEST_TIMEOUT_MS, MARKOS_DEFAULT_REQUEST_TIMEOUT_MS, {min: 1}),
     };
 }
 
 export function getPreviewSessionConfig(env = process.env) {
     return {
         sessionIdleTtlMs: parseNumber(env.MARKOS_SESSION_TTL_MS, MARKOS_DEFAULT_SESSION_TTL_MS, {min: 1}),
+        maxPreviewSessions: parseNumber(env.MARKOS_MAX_PREVIEW_SESSIONS, MARKOS_DEFAULT_MAX_PREVIEW_SESSIONS, {min: 1}),
     };
 }
 

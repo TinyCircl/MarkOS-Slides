@@ -17,6 +17,7 @@ const PROTO_PATH = fileURLToPath(new URL("../slidev_service.proto", import.meta.
 const {
   httpPort: HTTP_PORT,
   grpcPort: GRPC_PORT,
+  grpcHost: GRPC_HOST,
   publicBaseUrl: PUBLIC_BASE_URL,
   previewSiteBaseUrl: PREVIEW_SITE_BASE_URL,
 } = getServerRuntimeConfig();
@@ -355,7 +356,7 @@ export async function startGrpcServer() {
 
   return new Promise((resolve, reject) => {
     server.bindAsync(
-      `0.0.0.0:${GRPC_PORT}`,
+      `${GRPC_HOST}:${GRPC_PORT}`,
       grpc.ServerCredentials.createInsecure(),
       (err, port) => {
         if (err) {

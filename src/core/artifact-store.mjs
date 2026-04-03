@@ -77,12 +77,14 @@ async function listSubdirectories(rootDir) {
 }
 
 async function removeDirIfExists(dirPath) {
-    await rm(dirPath, {recursive: true, force: true}).catch(() => {
+    await rm(dirPath, {recursive: true, force: true}).catch((err) => {
+        if (err?.code !== "ENOENT") console.warn("[markos] cleanup dir failed:", dirPath, err.message);
     });
 }
 
 async function removeFileIfExists(filePath) {
-    await rm(filePath, {force: true}).catch(() => {
+    await rm(filePath, {force: true}).catch((err) => {
+        if (err?.code !== "ENOENT") console.warn("[markos] cleanup file failed:", filePath, err.message);
     });
 }
 
@@ -124,10 +126,12 @@ export function scheduleRenderArtifactCleanup(jobId, {cacheFilePath} = {}) {
 
     const timer = setTimeout(() => {
         renderArtifactCleanupTimers.delete(jobId);
-        void rm(getArtifactDir(jobId), {recursive: true, force: true}).catch(() => {
+        void rm(getArtifactDir(jobId), {recursive: true, force: true}).catch((err) => {
+            if (err?.code !== "ENOENT") console.warn("[markos] artifact cleanup failed:", jobId, err.message);
         });
         if (cacheFilePath) {
-            void rm(cacheFilePath, {force: true}).catch(() => {
+            void rm(cacheFilePath, {force: true}).catch((err) => {
+                if (err?.code !== "ENOENT") console.warn("[markos] cache cleanup failed:", cacheFilePath, err.message);
             });
         }
     }, LOCAL_ARTIFACT_RETENTION_MS);
@@ -519,6 +523,17 @@ export function startArtifactCleanupScheduler() {
         void cleanupExpiredLocalArtifacts();
     }, LOCAL_ARTIFACT_CLEANUP_INTERVAL_MS);
     artifactCleanupTimer.unref?.();
+}
+
+export function stopArtifactCleanupScheduler() {
+    if (artifactCleanupTimer) {
+        clearInterval(artifactCleanupTimer);
+        artifactCleanupTimer = null;
+    }
+    for (const [, timer] of renderArtifactCleanupTimers) {
+        clearTimeout(timer);
+    }
+    renderArtifactCleanupTimers.clear();
 }
 
 export async function writePreviewManifest({previewId, buildId, basePath, outputDir, sourceEntry}) {

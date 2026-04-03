@@ -14,7 +14,8 @@ if (process.argv[1] && resolve(process.argv[1]) === currentFilePath) {
         }
 
         const shutdown = async () => {
-            await result.stop().catch(() => {
+            await result.stop().catch((err) => {
+                console.warn("[markos] shutdown error:", err.message);
             });
             process.exit(0);
         };

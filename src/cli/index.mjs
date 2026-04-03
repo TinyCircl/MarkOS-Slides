@@ -138,7 +138,8 @@ async function runBuildCommand(rawOptions) {
             sourceMode,
         });
     } finally {
-        await rm(workDir, {recursive: true, force: true}).catch(() => {
+        await rm(workDir, {recursive: true, force: true}).catch((err) => {
+            if (err?.code !== "ENOENT") console.warn("[markos] cleanup workdir failed:", workDir, err.message);
         });
     }
 
@@ -255,7 +256,8 @@ async function runDevCommand(rawOptions) {
         }
         watcher.close();
         await devServer.stop();
-        await rm(workDir, {recursive: true, force: true}).catch(() => {
+        await rm(workDir, {recursive: true, force: true}).catch((err) => {
+            if (err?.code !== "ENOENT") console.warn("[markos] cleanup workdir failed:", workDir, err.message);
         });
     };
 

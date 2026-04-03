@@ -1,5 +1,5 @@
 {
-  "name": "@pebble/markos-cli",
+  "name": "@tinycircl/markos-cli",
   "version": "0.1.0",
   "private": true,
   "type": "module",

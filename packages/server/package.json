@@ -1,5 +1,5 @@
 {
-  "name": "@pebble/markos-server",
+  "name": "@tinycircl/markos-server",
   "version": "0.1.0",
   "private": true,
   "type": "module",

@@ -1,5 +1,5 @@
 {
-  "name": "@pebble/markos-renderer",
+  "name": "@tinycircl/markos-slides",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -26,7 +26,11 @@
     "preview:local": "node scripts/preview-local-file.mjs",
     "preview:local:session": "node scripts/preview-local-file.mjs --api session",
     "preview:local:watch": "node scripts/watch-preview-local-file.mjs",
-    "test": "node --test"
+    "test": "node --test",
+    "lint": "eslint src/ test/",
+    "lint:fix": "eslint src/ test/ --fix",
+    "format": "prettier --check src/ test/",
+    "format:fix": "prettier --write src/ test/"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1006.0",
@@ -34,11 +38,17 @@
     "@grpc/proto-loader": "^0.7.15",
     "cors": "^2.8.5",
     "express": "^5.1.0",
+    "express-rate-limit": "^8.3.2",
     "marked": "^16.4.2",
     "yaml": "^2.8.3",
     "zod": "^4.3.6"
   },
   "engines": {
     "node": ">=20.0.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.1.0",
+    "prettier": "^3.8.1"
   }
 }

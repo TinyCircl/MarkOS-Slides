@@ -4,9 +4,26 @@ import {join} from "node:path";
 import {getPreviewSessionConfig} from "./config/index.mjs";
 import {buildStaticSiteFromInput} from "./core/index.mjs";
 
-const {sessionIdleTtlMs: SESSION_IDLE_TTL_MS} = getPreviewSessionConfig();
+const {
+  sessionIdleTtlMs: SESSION_IDLE_TTL_MS,
+  maxPreviewSessions: MAX_PREVIEW_SESSIONS,
+} = getPreviewSessionConfig();
 
 const previewSessions = new Map();
+
+function evictOldestSession() {
+  let oldest = null;
+  for (const session of previewSessions.values()) {
+    if (!oldest || session.lastTouchedAt < oldest.lastTouchedAt) {
+      oldest = session;
+    }
+  }
+  if (oldest) {
+    if (oldest.shutdownTimer) clearTimeout(oldest.shutdownTimer);
+    previewSessions.delete(oldest.id);
+    void destroySessionArtifacts(oldest);
+  }
+}
 
 function normalizeText(value) {
   return value.replace(/\r\n?/g, "\n");
@@ -45,8 +62,12 @@ function getBasePath(sessionId) {
 }
 
 async function destroySessionArtifacts(session) {
-  await rm(session.outputDir, { recursive: true, force: true }).catch(() => {});
-  await rm(session.workDir, { recursive: true, force: true }).catch(() => {});
+  await rm(session.outputDir, { recursive: true, force: true }).catch((err) => {
+    if (err?.code !== "ENOENT") console.warn("[markos] cleanup session output failed:", session.id, err.message);
+  });
+  await rm(session.workDir, { recursive: true, force: true }).catch((err) => {
+    if (err?.code !== "ENOENT") console.warn("[markos] cleanup session workdir failed:", session.id, err.message);
+  });
 }
 
 async function buildStaticPreviewSession(session, input) {
@@ -79,7 +100,9 @@ async function buildStaticPreviewSession(session, input) {
     await destroySessionArtifacts(session);
     throw error;
   } finally {
-    await rm(session.workDir, { recursive: true, force: true }).catch(() => {});
+    await rm(session.workDir, { recursive: true, force: true }).catch((err) => {
+      if (err?.code !== "ENOENT") console.warn("[markos] cleanup session workdir failed:", session.id, err.message);
+    });
   }
 }
 
@@ -118,6 +141,9 @@ export async function ensurePreviewSession(input) {
   };
 
   session.lastTouchedAt = Date.now();
+  if (!existing && previewSessions.size >= MAX_PREVIEW_SESSIONS) {
+    evictOldestSession();
+  }
   previewSessions.set(sessionId, session);
 
   if (!session.buildPromise) {
