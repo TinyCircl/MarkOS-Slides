@@ -1,3 +1,20 @@
+/*
+ * Theme: Clay
+ * Shell: slide-shell
+ * Page templates:
+ * - title-slide
+ * - overview-slide
+ * - competitors-slide
+ * - feature-slide
+ * - pricing-slide
+ * - positioning-slide
+ * - strengths-slide
+ * - differentiation-slide
+ * - swot-slide
+ * - roadmap-slide
+ */
+
+/* Section: Design Tokens */
 :root {
   --ab-bg: #f5f5f5;
   --ab-card: #ffffff;
@@ -12,11 +29,13 @@
   --ab-shadow: 0 18px 48px rgba(45, 45, 45, 0.08);
 }
 
+/* Section: Base Typography */
 .slidev-layout {
   font-family: 'Montserrat', 'Helvetica Neue', Arial, sans-serif;
   color: var(--ab-text);
 }
 
+/* Section: Shared Shell */
 .slide-shell {
   position: relative;
   isolation: isolate;
@@ -37,6 +56,20 @@
   margin: 0;
 }
 
+/*
+ * Template: title-slide
+ * Layout: cover
+ * Attach: class="slide-shell title-slide"
+ * Purpose: editorial title or closing cover
+ * Expected Markdown:
+ * - optional first paragraph badge
+ * - h1 title
+ * - h2 subtitle
+ * - optional supporting paragraph
+ * - optional unordered list
+ * Notes:
+ * - first paragraph and last paragraph receive positional styling
+ */
 .title-slide {
   padding: 24px 60px;
   text-align: left !important;
@@ -126,6 +159,7 @@
   font-weight: 700;
 }
 
+/* Shared helper: two-cols shell defaults */
 .slidev-layout.two-columns.slide-shell {
   gap: 0;
   padding: 24px;
@@ -180,6 +214,15 @@
   font-style: italic;
 }
 
+/*
+ * Template: overview-slide
+ * Layout: two-cols
+ * Attach: layoutClass="slide-shell overview-slide"
+ * Purpose: high-level summary with table plus key callouts
+ * Expected Markdown:
+ * - left column contains heading and table
+ * - right column contains h3 callouts, short paragraphs, and optional blockquote
+ */
 .overview-slide {
   grid-template-columns: 3fr 2fr;
 }
@@ -245,6 +288,16 @@
   color: var(--ab-subtle);
 }
 
+/*
+ * Template: competitors-slide
+ * Layout: two-cols
+ * Attach: layoutClass="slide-shell competitors-slide"
+ * Purpose: narrative comparison with supporting list content
+ * Expected Markdown:
+ * - both columns begin with headings
+ * - paragraphs carry the main narrative
+ * - unordered lists add supporting bullets
+ */
 .competitors-slide .col-right {
   background: linear-gradient(180deg, #fffaf8 0%, #fafafa 100%);
 }
@@ -299,6 +352,16 @@
   text-align: center;
 }
 
+/*
+ * Template: feature-slide
+ * Layout: default
+ * Attach: class="slide-shell feature-slide"
+ * Purpose: full-width feature table or capability matrix
+ * Expected Markdown:
+ * - h1 title
+ * - table as the primary content
+ * - optional blockquote or summary note
+ */
 .feature-slide {
   padding: 54px 60px;
 }
@@ -368,6 +431,18 @@
   color: var(--ab-muted);
 }
 
+/*
+ * Template: pricing-slide
+ * Layout: two-cols
+ * Attach: layoutClass="slide-shell pricing-slide"
+ * Purpose: side-by-side package, pricing, or plan comparison
+ * Expected Markdown:
+ * - left column contains heading and table
+ * - right column contains h2 sections followed by unordered lists
+ * - optional blockquote note
+ * Notes:
+ * - `h2 + ul` receives special treatment
+ */
 .pricing-slide {
   grid-template-columns: 3fr 2fr;
 }
@@ -426,6 +501,15 @@
   color: var(--ab-subtle);
 }
 
+/*
+ * Template: positioning-slide
+ * Layout: two-cols
+ * Attach: layoutClass="slide-shell positioning-slide"
+ * Purpose: positioning matrix plus supporting strategic notes
+ * Expected Markdown:
+ * - left column contains comparison table
+ * - right column contains headings, lists, and optional note
+ */
 .positioning-slide {
   grid-template-columns: 3fr 1.4fr;
 }
@@ -489,6 +573,15 @@
   color: var(--ab-subtle);
 }
 
+/*
+ * Template: strengths-slide
+ * Layout: two-cols
+ * Attach: layoutClass="slide-shell strengths-slide"
+ * Purpose: balanced two-column strengths or highlights slide
+ * Expected Markdown:
+ * - both columns contain h2 sections followed by unordered lists
+ * - optional blockquote note at the end
+ */
 .strengths-slide {
   grid-template-columns: 1fr 1fr;
 }
@@ -516,6 +609,15 @@
   color: var(--ab-subtle);
 }
 
+/*
+ * Template: differentiation-slide
+ * Layout: two-cols
+ * Attach: layoutClass="slide-shell differentiation-slide"
+ * Purpose: differentiation summary with table and structured talking points
+ * Expected Markdown:
+ * - left column contains table
+ * - right column contains h3 callouts, paragraphs, lists, and optional note
+ */
 .differentiation-slide {
   grid-template-columns: 3fr 2fr;
 }
@@ -579,6 +681,17 @@
   color: var(--ab-subtle);
 }
 
+/*
+ * Template: swot-slide
+ * Layout: two-cols
+ * Attach: layoutClass="slide-shell swot-slide"
+ * Purpose: SWOT-style split view with paired sections per column
+ * Expected Markdown:
+ * - each column starts with a heading
+ * - each column then alternates h2 sections and unordered lists
+ * Notes:
+ * - nth-of-type selectors map the four SWOT sections by order
+ */
 .swot-slide {
   grid-template-columns: 1fr 1fr;
   gap: 30px;
@@ -706,6 +819,17 @@
   color: currentColor;
 }
 
+/*
+ * Template: roadmap-slide
+ * Layout: two-cols
+ * Attach: layoutClass="slide-shell roadmap-slide"
+ * Purpose: staged roadmap with ordered steps and supporting notes
+ * Expected Markdown:
+ * - left column contains an ordered list
+ * - right column contains h2 sections, short paragraphs, and optional note
+ * Notes:
+ * - ordered-list items receive sequence-based accent styling
+ */
 .roadmap-slide {
   grid-template-columns: 7fr 3fr;
 }
