@@ -1,6 +1,6 @@
 {
   "name": "@tinycircl/markos-slides-core",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Core build engine for turning Markdown slide sources into static web slide sites.",
   "license": "MIT",
   "type": "module",
