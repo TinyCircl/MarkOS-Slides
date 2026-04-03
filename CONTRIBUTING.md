@@ -2,19 +2,14 @@
 
 感谢你愿意参与 MarkOS。
 
-当前这个仓库同时服务两类场景：
-- 本地作者工作流
-- 托管服务接入
-
-所以在改动时，尽量同时考虑：
-- `src/core`
-- `src/cli`
-- `src/server`
+当前这个仓库聚焦开源侧的两类能力：
+- 通用构建内核
+- 本地作者 CLI
 
 ## 本地开发
 
 运行环境：
-- Node.js `>=20`
+- Node.js `>=22`
 
 安装依赖：
 
@@ -38,37 +33,28 @@ npm run markos:build -- examples/basic/slides.md --out-dir .markos-example-basic
 npm run markos:dev -- examples/project/slides.md --port 3030
 ```
 
-本地启动服务端：
-
-```bash
-npm run dev
-```
-
 ## 代码组织
 
 当前推荐把改动落在明确分层里：
-- `src/core`
-  纯构建和输入规范化能力
-- `src/cli`
+- `packages/core/src`
+  纯构建、输入规范化、引擎、manifest site、共享配置
+- `packages/core/assets`
+  `core` 自带的内置资源
+- `packages/core/styles/presets`
+  `core` 自带的默认样式预设
+- `packages/cli/src`
   本地作者工作流
-- `src/server`
-  HTTP / gRPC / preview / publish 这类托管服务适配层
-- `src/config`
-  共享默认值和配置解析
 
-另外，仓库已经预留了未来拆包的 workspace 包装层：
+根目录保留少量兼容入口：
+- `src/index.mjs`
+- `src/cli.mjs`
+- `src/cli/index.mjs`
+
+当前对外公开的 workspace 包是：
 - `packages/core`
 - `packages/cli`
-- `packages/server`
 
-这些目录当前主要承担“对外包边界”和“未来发布形态”的作用，不是主要实现位置。
-
-兼容入口：
-- `src/cli.mjs`
-- `src/server.mjs`
-- `src/grpc-server.mjs`
-
-如果你在改动核心能力，尽量不要把 `server-only` 假设重新带回 `core`。
+公司内部的服务端仓库已经拆出；这个开源仓库不再维护服务端、部署和内部 bootstrap 文档。
 
 ## 提交前建议
 
@@ -91,12 +77,16 @@ npm run check:fixtures
 - 支持 `web`
 - CLI 支持 `build` / `dev`
 - `markos export` 目前明确未开放
-- HTTP / gRPC 兼容层仍然保留
+
+当前不在这个开源仓库里的内容：
+- HTTP / gRPC 服务适配层
+- preview / publish / R2 这类托管服务能力
+- Docker / GCP / 部署 CI/CD
 
 如果你想推动：
 - `pdf` / `pptx`
 - 真正的 `export`
 - 主题/插件系统
-- monorepo 拆包
+- 更复杂的仓库拆分策略
 
 建议先在 issue 或设计文档里明确影响范围，再进入实现。

@@ -3,13 +3,21 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "files": [
+    "bin/",
+    "index.mjs",
+    "src/"
+  ],
   "bin": {
     "markos": "./bin/markos.mjs"
   },
   "exports": {
     ".": "./index.mjs"
   },
+  "dependencies": {
+    "@tinycircl/markos-core": "0.1.0"
+  },
   "engines": {
-    "node": ">=20.0.0"
+    "node": ">=22.0.0"
   }
 }

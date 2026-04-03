@@ -4,47 +4,31 @@
   "private": true,
   "type": "module",
   "workspaces": [
-    "packages/*"
+    "packages/core",
+    "packages/cli"
   ],
   "exports": {
     ".": "./src/index.mjs",
     "./core": "./src/core/index.mjs",
-    "./cli": "./src/cli/index.mjs",
-    "./server": "./src/server/index.mjs"
+    "./cli": "./src/cli/index.mjs"
   },
   "bin": {
     "markos": "./src/cli.mjs"
   },
   "scripts": {
-    "dev": "node --watch src/server.mjs",
-    "start": "node src/server.mjs",
     "markos:build": "node src/cli.mjs build",
     "markos:dev": "node src/cli.mjs dev",
     "check": "npm test && npm run check:fixtures && npm run check:examples",
     "check:examples": "node scripts/check-examples.mjs",
     "check:fixtures": "node scripts/check-fixtures.mjs",
-    "preview:local": "node scripts/preview-local-file.mjs",
-    "preview:local:session": "node scripts/preview-local-file.mjs --api session",
-    "preview:local:watch": "node scripts/watch-preview-local-file.mjs",
     "test": "node --test",
-    "lint": "eslint src/ test/",
-    "lint:fix": "eslint src/ test/ --fix",
-    "format": "prettier --check src/ test/",
-    "format:fix": "prettier --write src/ test/"
-  },
-  "dependencies": {
-    "@aws-sdk/client-s3": "^3.1006.0",
-    "@grpc/grpc-js": "^1.13.4",
-    "@grpc/proto-loader": "^0.7.15",
-    "cors": "^2.8.5",
-    "express": "^5.1.0",
-    "express-rate-limit": "^8.3.2",
-    "marked": "^16.4.2",
-    "yaml": "^2.8.3",
-    "zod": "^4.3.6"
+    "lint": "eslint packages/ src/ scripts/ test/",
+    "lint:fix": "eslint packages/ src/ scripts/ test/ --fix",
+    "format": "prettier --check packages/ src/ scripts/ test/",
+    "format:fix": "prettier --write packages/ src/ scripts/ test/"
   },
   "engines": {
-    "node": ">=20.0.0"
+    "node": ">=22.0.0"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

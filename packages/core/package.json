@@ -3,10 +3,27 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "files": [
+    "assets/",
+    "index.mjs",
+    "src/",
+    "styles/"
+  ],
   "exports": {
-    ".": "./index.mjs"
+    ".": "./index.mjs",
+    "./artifact-store": "./src/core/artifact-store.mjs",
+    "./config": "./src/config/index.mjs",
+    "./dev-server": "./src/core/dev-server.mjs",
+    "./engines": "./src/engines/index.mjs",
+    "./engines/markos-web": "./src/engines/markos-web/index.mjs",
+    "./manifest-site": "./src/core/manifest-site.mjs",
+    "./path-utils": "./src/core/path-utils.mjs"
+  },
+  "dependencies": {
+    "marked": "^16.4.2",
+    "yaml": "^2.8.3"
   },
   "engines": {
-    "node": ">=20.0.0"
+    "node": ">=22.0.0"
   }
 }

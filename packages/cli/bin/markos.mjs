@@ -2,7 +2,7 @@
 
 import {resolve} from "node:path";
 import {fileURLToPath} from "node:url";
-import {runCli} from "../../../src/cli/index.mjs";
+import {runCli} from "../src/index.mjs";
 
 const currentFilePath = fileURLToPath(import.meta.url);
 if (process.argv[1] && resolve(process.argv[1]) === currentFilePath) {

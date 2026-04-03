@@ -1,1 +1,1 @@
-export {parseCliArgs, runCli} from "../../src/cli/index.mjs";
+export {parseCliArgs, runCli} from "./src/index.mjs";

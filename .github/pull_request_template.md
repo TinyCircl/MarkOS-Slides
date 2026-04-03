@@ -14,7 +14,6 @@ Which areas does this touch?
 
 - [ ] `src/core`
 - [ ] `src/cli`
-- [ ] `src/server`
 - [ ] `src/config`
 - [ ] docs / examples
 

@@ -1,1 +1,1 @@
-export * from "../../src/core/index.mjs";
+export * from "./src/index.mjs";

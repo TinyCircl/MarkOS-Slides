@@ -10,7 +10,6 @@ import {
 } from "../src/config/index.mjs";
 import * as corePackage from "../src/index.mjs";
 import * as cliPackage from "../src/cli/index.mjs";
-import * as serverPackage from "../src/server/index.mjs";
 
 test("shared runtime config keeps root base paths and defaults consistent", () => {
     const cli = getCliRuntimeOptions({command: "build"});
@@ -44,6 +43,4 @@ test("package-style entrypoints expose the intended public surface", () => {
     assert.equal(typeof corePackage.createLocalProjectInput, "function");
     assert.equal(typeof cliPackage.parseCliArgs, "function");
     assert.equal(typeof cliPackage.runCli, "function");
-    assert.equal(typeof serverPackage.startServer, "function");
-    assert.equal(typeof serverPackage.startGrpcServer, "function");
 });

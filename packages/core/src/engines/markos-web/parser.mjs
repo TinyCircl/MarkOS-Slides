@@ -80,7 +80,6 @@ function parseSlides(lines, startIndex, headmatter, defaults) {
     let contentBuffer = [];
     let cursor = startIndex;
     let activeFence = null;
-    let isFirstSlide = true;
 
     function flushCurrentSlide() {
         const content = contentBuffer.join("\n").trim();
@@ -101,7 +100,6 @@ function parseSlides(lines, startIndex, headmatter, defaults) {
 
         if (!activeFence && line === "---") {
             flushCurrentSlide();
-            isFirstSlide = false;
             cursor += 1;
 
             const frontmatterStart = cursor;
@@ -111,7 +109,7 @@ function parseSlides(lines, startIndex, headmatter, defaults) {
 
             if (cursor < lines.length && cursor > frontmatterStart && looksLikeFrontmatter(lines.slice(frontmatterStart, cursor))) {
                 currentFrontmatter = {
-                    ...(isFirstSlide ? headmatter : defaults),
+                    ...defaults,
                     ...parseYamlBlock(lines.slice(frontmatterStart, cursor).join("\n")),
                 };
                 cursor += 1;

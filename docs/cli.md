@@ -3,8 +3,8 @@
 MarkOS CLI 当前面向本地作者工作流，重点是把本地 Markdown 项目构建成静态幻灯片站点。
 
 当前代码入口有两层：
-- 实现入口：`src/cli/index.mjs`
-- workspace 包装层：`packages/cli`
+- 实现入口：`packages/cli/src/index.mjs`
+- 兼容入口：`src/cli/index.mjs`
 
 ## 当前命令
 
