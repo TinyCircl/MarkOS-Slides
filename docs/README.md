@@ -1,30 +1,21 @@
-# Docs Guide
+# Documentation Index
 
-这份索引用于说明开源仓库中哪些文档值得读。
+Use this index when you already know you want a specific document.
 
-## 用户文档
+## Start Here
 
-- [CLI 使用说明](./cli.md)
-  如何使用 `markos build` 和 `markos dev`
-- [架构概览](./architecture.md)
-  开源仓库里 `core + cli` 的职责与执行路径
+- [CLI Reference](./cli.md): commands, flags, defaults, and examples
+- [Architecture Overview](./architecture.md): repo layout and build flow
+- [Project Scope](./scope.md): what belongs in this OSS repo and what does not
 
-## 维护文档
+## Planning
 
-- [路线图](./roadmap.md)
-  当前开源仓库的演进方向
-- [发布说明](./release.md)
-  开源发布前的边界与检查项
+- [Roadmap](./roadmap.md): current priorities and future directions
 
-## 协作文档
+## Contributing and Maintenance
 
-- [Commit 规范](./COMMIT_CONVENTION.md)
-  提交信息格式约定
-
-## 已迁出内容
-
-这些内容已经迁往内部仓库，不再在开源仓库维护：
-- 服务端 API 文档
-- 双仓库拆分细节
-- 内部仓库 bootstrap 说明
-- Worker / deploy 相关示例
+- [Contributing](../CONTRIBUTING.md): local setup, test expectations, and PR guidance
+- [Release Checklist](./release.md): maintainer checklist for polishing the OSS repo
+- [Commit Convention](./COMMIT_CONVENTION.md): commit message format
+- [Security Policy](../SECURITY.md): how to report security issues
+- [Code of Conduct](../CODE_OF_CONDUCT.md): collaboration expectations

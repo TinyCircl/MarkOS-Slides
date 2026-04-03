@@ -1,43 +1,33 @@
-# MarkOS Roadmap
+# Roadmap
 
-这份文档记录当前开源仓库的目标形态。
+This page captures the direction of the open-source repository, not every experiment around MarkOS.
 
-## 当前结论
+## Near Term
 
-MarkOS 已经完成从“工具 + 服务混合仓库”到“开源工具仓库”的迁移。
+- stabilize the public core API surface
+- improve the local authoring experience for `build` and `dev`
+- keep examples, tests, and docs aligned with the actual CLI behavior
+- make the repository easier for external contributors to navigate
 
-当前这个仓库只负责：
-- `core`
-- `cli`
+## Later
 
-内部服务仓库负责：
-- `server`
-- deploy / CI/CD
-- preview / publish / R2
+- improve the packaging and publishing story for the reusable core
+- add richer authoring ergonomics within the web-first toolchain
+- expand the set of example projects that exercise real local project layouts
 
-## 当前重点
+## Not Planned Right Now
 
-开源仓库接下来的重点是：
-- 稳定 `core` 的公开接口
-- 完善 CLI 作者体验
-- 补齐开源文档、示例和发布流程
+These may be discussed later, but they are not active goals for this repository today:
+- `pdf` or `pptx` output
+- a production `markos export` workflow
+- hosted preview or publish services
+- deployment or cloud automation inside this repository
 
-## 当前边界
+## Proposing Larger Changes
 
-支持：
-- `markos build`
-- `markos dev`
-- `web`
+If you want to push the project beyond the current web-first OSS scope, start with an issue or design note that explains:
+- the user problem being solved
+- the expected impact on packages, docs, and tests
+- whether the change belongs in this repository or in a separate service or tooling layer
 
-暂不支持：
-- `pdf`
-- `pptx`
-- `markos export`
-
-## 双仓库建议
-
-如果要继续推进双仓库协作，推荐：
-
-1. 开源仓库发布稳定版本的 `core`
-2. 内部仓库按版本升级依赖
-3. 内部仓库独立验证和部署
+See [Project Scope](./scope.md) for the current boundary.

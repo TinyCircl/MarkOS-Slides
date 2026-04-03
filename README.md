@@ -1,103 +1,82 @@
 # MarkOS
 
-MarkOS 是一个 Markdown -> Slides 的开源工具链仓库。
+MarkOS is an open-source Markdown-to-slides toolchain focused on local authoring and static web output.
 
-当前这个仓库只保留开源侧能力：
-- 通用构建内核
-- 本地作者 CLI
+This repository currently contains:
+- a reusable build core in `packages/core`
+- a local CLI for building and previewing slide projects in `packages/cli`
 
-服务端接入、预览发布、对象存储和部署链路已经迁往内部仓库，不再作为这个开源仓库的默认职责。
+Hosted services, deployment pipelines, and other internal tooling are intentionally out of scope for this repository. See [Project Scope](docs/scope.md).
 
-## 当前能力
+## Current Status
 
-支持：
+MarkOS currently supports:
 - `markos build`
 - `markos dev`
-- 多文件 source tree
-- 本地 CSS 打包和静态资源复制
-- presenter / overview / export 视图运行时
+- web output
+- single-file decks and multi-file local projects
 
-当前不支持：
+MarkOS does not currently support:
 - `pdf`
 - `pptx`
-- `markos export`
+- a production `markos export` workflow
 
-## 快速开始
+## Quick Start
 
-运行环境要求：
+Requirements:
 - Node.js `>=22`
 
-安装依赖：
+Install dependencies:
 
 ```bash
 npm install
 ```
 
-本地 CLI 构建：
+Build the basic example:
 
 ```bash
-npm run markos:build -- examples/basic/slides.md --out-dir .markos-example-basic
+npm run markos:build -- examples/basic/slides.md
 ```
 
-本地 CLI 预览：
+This writes a static site to `examples/basic/dist`.
+
+Run the project example in dev mode:
 
 ```bash
 npm run markos:dev -- examples/project/slides.md --port 3030
 ```
 
-完整检查：
+Run the full check suite:
 
 ```bash
 npm run check
 ```
 
-## 仓库结构
-
-当前仓库采用“workspace 实现包 + 根级兼容入口”的结构：
-
-- `packages/core/src`
-  开源侧的通用构建内核、引擎、manifest site、共享配置
-- `packages/core/assets` / `packages/core/styles/presets`
-  `core` 自带的内置资源与默认样式
-- `packages/cli/src`
-  开源侧的本地作者 CLI
-- `src/`
-  开源侧兼容入口，主要保留 `src/index.mjs`、`src/cli/index.mjs`、`src/cli.mjs`
-
-## 双仓库说明
-
-如果要拆成“开源仓库 + 公司内部仓库”，推荐这样划分：
-
-- 开源仓库
-  保留 `packages/core`、`packages/cli`、`examples/`、`test/`、公共 CI 和面向外部用户的文档
-- 内部仓库
-  承接服务端适配层、部署脚本、Docker / GCP / 对象存储相关 CI/CD，以及任何业务接入层
-
-内部服务仓库相关文档已经迁出，不再在这个开源仓库维护。
-
-## 文档
-
-- 文档索引：[docs/README.md](docs/README.md)
-- 架构说明：[docs/architecture.md](docs/architecture.md)
-- CLI 使用说明：[docs/cli.md](docs/cli.md)
-- 拆分路线图：[docs/roadmap.md](docs/roadmap.md)
-- 开源发布与收尾清单：[docs/release.md](docs/release.md)
-- Commit 规范：[docs/COMMIT_CONVENTION.md](docs/COMMIT_CONVENTION.md)
-- 贡献说明：[CONTRIBUTING.md](CONTRIBUTING.md)
-- 协作规范：[CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)
-- 安全说明：[SECURITY.md](SECURITY.md)
-
 ## Examples
 
-- [examples/basic](examples/basic)
-  最小单文件 deck
-- [examples/project](examples/project)
-  带 `styles/` 和 `assets/` 的本地作者项目
+- [examples/basic](examples/basic): the smallest single-file deck
+- [examples/project](examples/project): a project-style deck with local `styles/` and `assets/`
 
-## 验证
+## Repository Layout
 
-常用验证命令：
-- `npm test`
-- `npm run check:fixtures`
-- `npm run check:examples`
-- `npm run check`
+- `packages/core`: reusable build core, engines, config, and built-in assets
+- `packages/cli`: local authoring CLI
+- `src/`: compatibility entry points that re-export the workspace packages
+- `examples/`: runnable example slide projects
+- `test/`: automated coverage for CLI, config, and render flows
+
+## Documentation
+
+Start here:
+- [CLI Reference](docs/cli.md)
+- [Architecture Overview](docs/architecture.md)
+- [Project Scope](docs/scope.md)
+
+Contributor and maintenance docs:
+- [Contributing](CONTRIBUTING.md)
+- [Documentation Index](docs/README.md)
+- [Roadmap](docs/roadmap.md)
+- [Release Checklist](docs/release.md)
+- [Commit Convention](docs/COMMIT_CONVENTION.md)
+- [Security Policy](SECURITY.md)
+- [Code of Conduct](CODE_OF_CONDUCT.md)

@@ -1,41 +1,29 @@
-# Open Source Release Notes
+# Release Checklist
 
-这份文档记录当前开源仓库的发布边界。
+This checklist is for maintainers preparing or polishing the open-source repository.
 
-## 当前仓库形态
+## Product and Scope
 
-当前仓库只保留开源侧能力：
-- `packages/core`
-- `packages/cli`
+- confirm the root README reflects the current OSS surface
+- confirm [Project Scope](./scope.md) matches the actual code and docs
+- confirm unsupported features are described consistently across docs
 
-实际实现位置：
-- `packages/core/src`
-- `packages/core/assets`
-- `packages/core/styles/presets`
-- `packages/cli/src`
+## Docs and Examples
 
-根目录 `src/*` 只保留开源侧兼容入口。
+- confirm [CLI Reference](./cli.md) matches current command behavior and defaults
+- confirm [Architecture Overview](./architecture.md) still reflects the repo layout
+- confirm `examples/` can be run from the repo root as documented
+- confirm contributor docs point people to the right entry points
 
-## 已迁出内容
+## Quality
 
-这些内容已经迁到内部仓库：
-- 服务端适配层
-- preview / publish / R2
-- Dockerfile
-- `docs/deploy/`
-- `.github/workflows/deploy.yml`
-- 服务端联调脚本与服务端测试
+- run `npm test`
+- run `npm run check:fixtures`
+- run `npm run check:examples`
+- run `npm run check`
 
-## 发布前还需要确认
+## Release Decisions
 
-1. 许可证
-2. 包名与品牌
-3. 是否发布 npm CLI
-
-## 开源仓库检查清单
-
-- README 是否面向外部用户
-- `docs/cli.md` 是否与当前 CLI 一致
-- `examples/` 是否可直接跑通
-- `npm run check` 是否通过
-- LICENSE 是否已经明确
+- confirm package names and branding are ready for publication
+- confirm which packages, if any, should be published to npm
+- confirm `LICENSE`, `SECURITY.md`, and `CODE_OF_CONDUCT.md` are ready for external users

@@ -1,21 +1,31 @@
 # Examples
 
-这个目录提供两个最小可运行示例：
+This directory contains small runnable examples for the local-authoring workflow.
 
-- `basic/`
-  最小单文件 deck
-- `project/`
-  带 `styles/` 和 `assets/` 的本地作者项目
+## `basic/`
 
-构建示例：
+A minimal single-file deck with `slides.md` as the only source file.
 
-```bash
-node src/cli.mjs build examples/basic/slides.md --out-dir .markos-example-basic
-node src/cli.mjs build examples/project/slides.md --out-dir .markos-example-project
-```
-
-本地预览：
+Build it from the repository root:
 
 ```bash
-node src/cli.mjs dev examples/project/slides.md --port 3030
+npm run markos:build -- examples/basic/slides.md
 ```
+
+## `project/`
+
+A project-style deck that includes local `styles/` and `assets/` folders.
+
+Build it:
+
+```bash
+npm run markos:build -- examples/project/slides.md
+```
+
+Preview it locally:
+
+```bash
+npm run markos:dev -- examples/project/slides.md --port 3030
+```
+
+For general setup and repository-wide docs, start from the [root README](../README.md).
