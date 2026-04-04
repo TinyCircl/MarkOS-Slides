@@ -40,22 +40,37 @@ Use these files for different responsibilities:
 
 ## Theme README Standard
 
-The theme `README.md` is the primary authoring surface for humans and AI.
+The theme `README.md` is the primary public authoring contract for humans and AI.
 
 When someone needs to understand, use, or modify a theme, they should read the theme `README.md` first and the `theme.css` second.
 
-The recommended minimum structure is:
+A good theme README should be sufficient to:
+
+- choose the right template for a piece of content
+- understand what Markdown shape each template expects
+- preserve source content while adapting hierarchy and pagination
+- wire the template correctly without reverse-engineering CSS selectors
+
+The recommended structure is:
 
 ```md
 # ThemeName
 
-## Shell
+## Theme Summary
 
-## Implemented Templates
+## Authoring Rules
 
-## Notes
+## Template Catalog
 
-## Example Wiring
+### title-slide
+
+### overview-slide
+
+## Template Selection Guide
+
+## Content Fidelity Guidance
+
+## Examples
 ```
 
 The minimum required information is:
@@ -63,15 +78,23 @@ The minimum required information is:
 - theme name
 - shell class name
 - implemented templates
-- important deviations or unsupported standard templates when relevant
+- theme-specific deviations or unsupported canonical templates when relevant
+- one-line purpose for each implemented template
+- wiring information for each implemented template
 
 Recommended additional information:
 
-- one-line purpose for each template
-- ordering assumptions
-- one or two frontmatter examples
+- best-fit guidance for each template
+- anti-patterns or "avoid when" guidance for templates that are easy to misuse
+- expected Markdown shape for each template
+- one or two short content examples
+- explicit content-fidelity guidance for AI-assisted adaptation
 
-If the theme is simple and follows the shared standard closely, that short `README.md` is enough. Do not force long theme-specific manuals when the only goal is to restate the global standard.
+If a theme is intentionally very small, sections may stay short, but the README should still answer three practical questions:
+
+1. Which template should I pick?
+2. What Markdown shape should I feed it?
+3. What content changes are allowed during adaptation?
 
 ## Authoring Source Of Truth
 
@@ -88,6 +111,8 @@ This means:
 - implementation details belong in the CSS
 
 Avoid duplicating the full template contract in all three places.
+
+For theme usage and content adaptation, prefer README-level rules over inferred CSS behavior. CSS should implement the contract, not define it implicitly.
 
 ## Runtime Contract
 
@@ -280,13 +305,16 @@ A page template is not a separate file. In MarkOS, a page template is the combin
 - a documented Markdown content shape
 - CSS selectors scoped to that shape
 
-Each page template in a shared theme should have a documented contract with these fields:
+Each page template in a shared theme should have a documented contract in the theme `README.md` with these fields:
 
 - `Name`: template class name
 - `Layout`: `default`, `cover`, or `two-cols`
 - `Attach Point`: `class` or `layoutClass`
 - `Purpose`: what kind of slide this template is for
+- `Best For`: the content shape or job this template fits best
+- `Avoid When`: common misuse or poor-fit content shapes
 - `Expected Markdown Shape`: the heading/list/table/quote structure it expects
+- `Wiring`: the frontmatter form authors should copy
 - `Notes`: any important ordering assumptions or optional elements
 
 Example template spec:
@@ -296,16 +324,37 @@ Name: pricing-slide
 Layout: two-cols
 Attach Point: layoutClass
 Purpose: side-by-side comparison of pricing or package details
+Best For:
+- left-column table plus right-column notes
+Avoid When:
+- purely narrative prose with no clear comparison structure
 Expected Markdown Shape:
 - left column starts with `#` or `##`
 - table appears in the left column
 - right column contains `##` sections followed by lists or notes
+Wiring:
+- `layout: two-cols`
+- `layoutClass: slide-shell pricing-slide`
 Notes:
 - theme styles tables and `h2 + ul`
 - avoid extra leading paragraphs before the first heading
 ```
 
 If a theme relies on special ordering, document it explicitly. Do not make deck authors reverse-engineer the contract from CSS.
+
+## Content Fidelity Guidance
+
+Theme READMEs should explicitly support content-preserving adaptation, especially when decks are being reshaped by AI.
+
+Document these principles in the theme README when the theme is intended for real authoring work:
+
+- preserve facts, names, dates, numbers, ordering, and claims
+- allow hierarchy changes such as turning prose into headings, bullets, tables, or multi-slide splits
+- allow pagination changes when a source block is too dense for one slide
+- avoid inventing new supporting points, summaries, or decorative filler just to satisfy a template
+- note which templates are safe for light restructuring and which rely on stricter ordering
+
+Themes do not need to prescribe one universal rewriting style, but they should make clear that the public API is about fitting existing content into stable Markdown shapes, not about forcing authors to guess from CSS.
 
 ## Theme Manifest
 
@@ -319,15 +368,17 @@ The minimal manifest should live in the theme's `README.md`.
 
 CSS comments are optional support material, not the primary manifest.
 
-The minimal manifest should include:
-- `Theme`
+The manifest should include:
+- `Theme Summary`
 - `Shell`
+- authoring rules that differ from the repo-wide defaults
 - implemented canonical templates
 - unsupported canonical templates when that matters
 - non-canonical templates, if any
 - deviations from the standard contract, if any
+- a template catalog with content-shape guidance
 
-If a theme follows canonical names and has no unusual behavior, that minimal manifest is usually enough. A long theme-specific authoring guide is only needed when the theme introduces special structure or important deviations.
+If a theme follows canonical names and has no unusual behavior, the guide can stay concise. The goal is not length; the goal is that authors and AI can pick a template and use it correctly without opening the CSS.
 
 ## AI Workflow
 
@@ -344,6 +395,12 @@ This gives the model:
 - the implementation details last
 
 That order is usually better than asking the model to infer theme usage directly from CSS selectors.
+
+For content adaptation tasks:
+
+- use the theme README to choose templates
+- use the theme README to decide what Markdown hierarchy to emit
+- inspect `theme.css` only when debugging a mismatch, missing style, or selector-level bug
 
 ## Comment Standard
 
@@ -580,6 +637,64 @@ packages/core/themes/
     theme.css
 ```
 
+Recommended README skeleton:
+
+```md
+# MyTheme
+
+MyTheme is a one-line summary of the visual direction and best use cases.
+
+## Theme Summary
+
+- Shell: `slide-shell`
+- Tone: editorial / analytic / minimal / etc.
+
+## Authoring Rules
+
+- Use the theme name `MyTheme` in file-level frontmatter
+- Use `class` for `cover` and `default`
+- Use `layoutClass` for `two-cols`
+
+## Template Catalog
+
+### title-slide
+
+- Layout: `cover`
+- Attach Point: `class`
+- Purpose: opening cover or title-led closing page
+- Best For: short framing copy, title, subtitle, CTA
+- Avoid When: dense tables or long bullet lists
+- Expected Markdown Shape:
+  - optional short badge paragraph
+  - `#` title
+  - `##` subtitle
+  - optional supporting paragraph
+- Wiring:
+  - `layout: cover`
+  - `class: slide-shell title-slide`
+
+### metrics-slide
+
+- Layout: `two-cols`
+- Attach Point: `layoutClass`
+- Purpose: KPI or scorecard page
+- Best For: numbers, metric-led bullets, chart-adjacent summaries
+- Avoid When: purely narrative storytelling
+
+## Template Selection Guide
+
+- Use `title-slide` for opening and closing pages
+- Use `metrics-slide` when numbers lead the story
+
+## Content Fidelity Guidance
+
+- Preserve facts and ordering
+- Allow headings, bullets, tables, and pagination changes
+- Do not invent new claims to make a template feel fuller
+
+## Examples
+```
+
 ```css
 :root {
   --mk-bg: #f4f1ec;
@@ -713,7 +828,9 @@ Before merging a new shared theme, check these points:
 - Markdown elements are styled contextually, not through unscoped global selectors
 - Ordering-based selectors are rare and documented
 - Theme does not depend on Tailwind, Chart.js, or page-level JavaScript
-- Theme provides a minimal manifest of implemented templates and deviations
+- Theme README is sufficient to choose templates without reading CSS
+- Theme README documents expected Markdown shape and wiring for implemented templates
+- Theme README includes content-fidelity guidance for adaptation work
 
 ## Relation To Existing Docs
 

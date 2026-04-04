@@ -1,17 +1,3 @@
-/*
- * Theme: Cobalt
- * Shell: slide-shell
- * Implemented templates:
- * - title-slide
- * - closing-slide
- * - summary-slide
- * - overview-slide
- * - comparison-slide
- * - metrics-slide
- * - process-slide
- */
-
-/* Section: Design Tokens */
 :root {
   --cb-bg: #f8f9fa;
   --cb-surface: #ffffff;
@@ -28,7 +14,6 @@
   --cb-shadow-card: 0 4px 20px rgba(0, 0, 0, 0.05);
 }
 
-/* Section: Base Typography */
 .slidev-layout {
   font-family: "Inter", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
   color: var(--cb-text);

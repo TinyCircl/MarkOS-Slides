@@ -1,0 +1,4 @@
+interface:
+  display_name: "MarkOS Slides Layout"
+  short_description: "Adapt Markdown into MarkOS-Slides decks."
+  default_prompt: "Use $markos-slides-layout to adapt this Markdown into a MarkOS-Slides deck while preserving content fidelity."

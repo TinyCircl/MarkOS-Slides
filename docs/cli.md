@@ -43,6 +43,34 @@ npm run markos:dev -- playground\my-deck --port 3030
 npm run markos:build -- playground\my-deck
 ```
 
+macOS with zsh:
+
+Use `/` in deck paths on macOS shells such as `zsh`. A path like
+`playground\my-deck` is parsed as `playgroundmy-deck`, so MarkOS will not find
+the deck directory.
+
+```bash
+npm install
+mkdir -p playground/my-deck
+cat > playground/my-deck/slides.md <<'EOF'
+---
+theme: Clay
+title: My first deck
+---
+
+---
+layout: cover
+class: slide-shell title-slide
+---
+
+# Hello MarkOS
+
+## My first deck
+EOF
+npm run markos:dev -- playground/my-deck --port 3030
+npm run markos:build -- playground/my-deck
+```
+
 Default styling path:
 - write Markdown in `slides.md`
 - set `theme` in file-level frontmatter using the theme folder name such as `Clay`
