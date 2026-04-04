@@ -1,0 +1,4 @@
+interface:
+  display_name: "MarkOS Theme Check"
+  short_description: "Review MarkOS shared theme contracts."
+  default_prompt: "Use $markos-theme-check to review this MarkOS shared theme against the repo contract and report issues."

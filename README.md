@@ -6,7 +6,7 @@ This repository currently contains:
 - a reusable build core in `packages/core`
 - a local CLI for building and previewing slide projects in `packages/cli`
 
-Hosted services, deployment pipelines, and other internal tooling are intentionally out of scope for this repository. See [Project Scope](docs/scope.md).
+Hosted services, deployment pipelines, and other internal tooling are intentionally out of scope for this repository. See [Developer Guide](docs/developer-guide.md#scope-and-boundaries).
 
 ## Current Status
 
@@ -75,17 +75,15 @@ For local scratch decks, use `playground/`. It is ignored by Git in this reposit
 
 ## Documentation
 
-Start here:
-- [CLI Reference](docs/cli.md)
+For users:
 - [Syntax Guide](docs/syntax.md)
-- [Architecture Overview](docs/architecture.md)
-- [Project Scope](docs/scope.md)
+- [CLI Reference](docs/cli.md)
+- [Examples](examples/README.md)
 
-Contributor and maintenance docs:
-- [Contributing](CONTRIBUTING.md)
-- [Documentation Index](docs/README.md)
-- [Roadmap](docs/roadmap.md)
-- [Release Checklist](docs/release.md)
+For theme authors:
+- [Theme Authoring](docs/theme-authoring.md)
+- [Developer Guide](docs/developer-guide.md#development-principles)
+
+For developers:
+- [Developer Guide](docs/developer-guide.md)
 - [Commit Convention](docs/COMMIT_CONVENTION.md)
-- [Security Policy](SECURITY.md)
-- [Code of Conduct](CODE_OF_CONDUCT.md)

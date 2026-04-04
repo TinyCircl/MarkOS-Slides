@@ -96,6 +96,8 @@ If a theme is intentionally very small, sections may stay short, but the README 
 2. What Markdown shape should I feed it?
 3. What content changes are allowed during adaptation?
 
+These expectations follow the [Developer Guide](./developer-guide.md#development-principles): clear README contracts matter more than forcing every theme into identical names or identical template inventories.
+
 ## Authoring Source Of Truth
 
 Use this precedence order when documenting and maintaining themes:
@@ -207,7 +209,31 @@ Every theme should expose one stable shell class named `.slide-shell`.
 
 Deck authors should be able to recognize `.slide-shell` as the default outer wrapper for the theme.
 
-### 4. Page Types
+### 4. Recommended CSS Layering Order
+
+Across themes, the preferred CSS organization is:
+
+1. `:root` design tokens
+2. `.slidev-layout` base typography and shared text defaults
+3. `.slide-shell` shared outer surface
+4. shared layout helpers such as `two-cols` shell rules
+5. optional shared template-family helpers
+6. concrete page-template blocks such as `.title-slide` or `.metrics-slide`
+7. export or responsive safety fixes when needed
+
+This is the pattern both existing themes broadly follow, even when the intermediate helper layers differ.
+
+The goal is to keep the file easy to scan:
+
+- global decisions first
+- shared structural helpers second
+- individual templates last
+
+Prefer this order over mixing template-specific selectors into the global layers.
+
+Theme authors do not need to use these exact section titles, but the file should read in that order.
+
+### 5. Page Types
 
 Page templates are represented by page-type classes such as:
 - `.title-slide`
@@ -234,7 +260,7 @@ Avoid:
 - `.tokyo-day-three`
 - `.customer-alpha-slide`
 
-### 5. Contextual Element Styling
+### 6. Contextual Element Styling
 
 Style Markdown output inside the shell or page type, not globally.
 
@@ -264,11 +290,11 @@ table {
 
 ## Canonical Template Names
 
-For reusable shared themes, page-template names are part of the repo-wide authoring API.
+For reusable shared themes, canonical template names are the recommended shared vocabulary.
 
-If a template matches one of the standard slide roles below, use the canonical name instead of inventing a theme-local name.
+If a template matches one of the standard slide roles below, prefer the canonical name instead of inventing a theme-local name.
 
-Themes do not need to implement every canonical template, but when they implement one of these roles they should keep the name stable.
+Themes do not need to implement every canonical template, and themes may keep distinct names when that improves author clarity. The key requirement is that the README makes the role, Markdown shape, and wiring obvious.
 
 Canonical names:
 
@@ -286,9 +312,10 @@ Canonical names:
 
 Naming rules:
 
-- Prefer canonical names over theme-specific names
-- Use a non-canonical name only when the template role is materially different from the standard list
-- Public examples and docs should show the canonical name
+- Prefer canonical names over theme-specific names when the role is effectively the same
+- Use a non-canonical name when the template role is materially different or the theme needs a clearer author-facing name
+- When a non-canonical name is used, document the role and content shape explicitly in the README
+- Public examples and docs should favor the clearest user-facing name for that theme
 
 Examples:
 
@@ -834,7 +861,8 @@ Before merging a new shared theme, check these points:
 
 ## Relation To Existing Docs
 
-- Use [Markdown Syntax](./syntax-markdown.md) for deck file rules and frontmatter
+- Use the [Developer Guide](./developer-guide.md#development-principles) for the repo-level principles behind theme flexibility, doc-first contracts, override boundaries, and examples
+- Use [Syntax Guide](./syntax.md) for deck file rules and frontmatter
 - Use [CSS Rules](./syntax-css.md) for the single-entry CSS model and class wiring basics
 - Use this document when creating or refactoring reusable shared themes
 

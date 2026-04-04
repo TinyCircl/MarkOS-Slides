@@ -18,14 +18,9 @@ async function discoverExamples() {
 
     const exampleRoot = join(examplesRoot, entry.name);
     const slidesPath = join(exampleRoot, "slides.md");
-    const cssPath = join(exampleRoot, "slides.css");
 
     if (!await pathExists(slidesPath)) {
       continue;
-    }
-
-    if (!await pathExists(cssPath)) {
-      throw new Error(`Example deck is missing slides.css: ${exampleRoot}`);
     }
 
     examples.push({

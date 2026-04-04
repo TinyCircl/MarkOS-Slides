@@ -13,7 +13,7 @@ For normal authoring, a deck only needs `slides.md` plus a file-level `theme`.
 
 When a deck file declares `theme: Clay` in its top-level frontmatter, MarkOS loads the built-in theme entry at `packages/core/themes/Clay/theme.css`. The `theme` value is the theme folder name, not a file name. A sibling `slides.css` file is optional and acts as the primary local override layer, and an optional `overrides.css` file can add a final incremental override layer after that.
 
-For deck authoring rules, see [Syntax Guide](./syntax.md).
+For deck Markdown authoring rules, see [Syntax Guide](./syntax.md).
 
 ## TL;DR
 
@@ -181,4 +181,4 @@ npm run check
 
 ## Scope Notes
 
-The CLI is currently for local authoring and web output only. The recommended local convention is one Markdown file with `slides.css` as the main local override layer and optional `overrides.css` as a final incremental override layer. For repository boundaries and non-goals, see [Project Scope](./scope.md).
+The CLI is currently for local authoring and web output only. The recommended local convention is one Markdown file with `slides.css` as the main local override layer and optional `overrides.css` as a final incremental override layer. For repository boundaries and non-goals, see the [Developer Guide](./developer-guide.md#scope-and-boundaries).
