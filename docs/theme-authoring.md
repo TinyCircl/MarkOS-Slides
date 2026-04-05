@@ -414,6 +414,35 @@ Notes:
 
 If a theme relies on special ordering, document it explicitly. Do not make deck authors reverse-engineer the contract from CSS.
 
+## Adaptivity First
+
+The most important requirement for a real shared theme is adaptivity.
+
+Templates are not designed for one perfect demo page. They are designed to keep working when the same page role receives more content, less content, longer copy, shorter copy, or a different valid Markdown shape.
+
+The default posture should be to leave breathing room. A stable template should look intentional when content is light or standard, and only spend that spare space once density actually increases.
+
+In practice this means:
+
+- adapt spacing before inventing a new template
+- adapt card height before letting content spill outside the slide
+- adapt typography before giving up on the layout
+- adapt media framing so images stay inside the same panel contract as text
+- test sparse, standard, and dense states as part of normal theme work
+- prefer open space in the default state, then let adaptivity gradually consume that space as density rises
+
+A theme that looks good only in its ideal example is not finished. A reusable theme should actively compress, rebalance, and tighten itself as density increases while keeping the page role recognizable.
+
+Adaptive behavior may include:
+
+- smaller gaps when card counts increase
+- smaller padding when a panel becomes denser
+- smaller title or body font sizes when card height is under pressure
+- card spanning behavior such as letting the last odd item take full width
+- media height clamps that preserve the panel frame instead of letting images define the layout
+
+Treat these adaptive rules as part of the public template contract, not as optional polish.
+
 ## Fixture Validation Strategy
 
 Each reusable page template should have a matching fixture deck when the theme is intended for real authoring work.

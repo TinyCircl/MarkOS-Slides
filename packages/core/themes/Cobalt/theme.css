@@ -4,11 +4,9 @@
 @import "./layouts/two-cols.css";
 @import "./templates/title.css";
 @import "./templates/summary.css";
-@import "./templates/executive-summary.css";
 @import "./templates/overview.css";
 @import "./templates/project-overview.css";
 @import "./templates/competitive-landscape.css";
-@import "./templates/detailed-findings.css";
 @import "./templates/market-trends.css";
 @import "./templates/conclusion-outlook.css";
 @import "./templates/metrics.css";
