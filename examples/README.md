@@ -25,7 +25,7 @@ Examples should be:
 
 The current example deck demonstrates a structure-first shared-theme workflow.
 
-Its shared source theme lives at [theme.css](../packages/core/themes/Clay/theme.css) with authoring notes in [README.md](../packages/core/themes/Clay/README.md). The deck references the theme through file-level frontmatter and focuses on slide structure in [slides.md](./tokyo3days/slides.md).
+Its shared source theme lives at [theme.css](../packages/core/themes/Clay/theme.css). The deck references the theme through file-level frontmatter and focuses on slide structure in [slides.md](./tokyo3days/slides.md).
 
 You can still set the theme field with:
 

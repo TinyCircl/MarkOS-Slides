@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Key Performance Indicators</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+        
+        .slide-container {
+            width: 1280px;
+            min-height: 720px; /* keep as required */
+            background: #f8f9fa;
+            margin: 0 auto;
+            /* keep top padding to preserve title spacing, reduce bottom padding to remove overflow */
+            padding: 40px 40px 8px 40px;
+            display: grid;
+            grid-template-rows: auto auto 1fr;
+            font-family: 'Inter', sans-serif;
+        }
+        
+        .slide-title {
+            color: #1f4788;
+            font-size: 42px;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+        
+        .slide-subtitle {
+            color: #666666;
+            font-size: 20px;
+            margin-bottom: 24px; /* slightly reduced */
+        }
+        
+        .content-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px; /* reduced gap to save vertical space */
+        }
+        
+        .gauges-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px; /* reduced */
+            background: white;
+            padding: 16px; /* reduced from 32 */
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        
+        .gauge-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .gauge-title {
+            color: #1f4788;
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 10px; /* slightly reduced */
+            text-align: center;
+        }
+        
+        .insights-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px; /* reduced */
+        }
+        
+        .insight-item {
+            padding: 12px; /* reduced from 20 */
+            background: white;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            border-left: 4px solid #1f4788;
+        }
+        
+        .insight-title {
+            color: #1f4788;
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+        
+        .insight-text {
+            color: #333333;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        
+        .data-source {
+            color: #666666;
+            font-size: 12px;
+            font-style: italic;
+            margin-top: 24px;
+            text-align: right;
+            grid-column: 1 / -1;
+        }
+    </style>
+</head>
+<body>
+    <div class="slide-container">
+        <h1 class="slide-title">Key Performance Indicators</h1>
+        <h2 class="slide-subtitle">Measuring the impact and efficiency of the Cobalt framework</h2>
+        
+        <div class="content-container">
+            <div class="gauges-container">
+                <div class="gauge-item">
+                    <div class="gauge-title">User Engagement</div>
+                    <div style="height: 140px; width: 140px;">
+                        <canvas id="engagementGauge"></canvas>
+                    </div>
+                </div>
+                
+                <div class="gauge-item">
+                    <div class="gauge-title">Retention Rate</div>
+                    <div style="height: 140px; width: 140px;">
+                        <canvas id="retentionGauge"></canvas>
+                    </div>
+                </div>
+                
+                <div class="gauge-item">
+                    <div class="gauge-title">Conversion Rate</div>
+                    <div style="height: 140px; width: 140px;">
+                        <canvas id="conversionGauge"></canvas>
+                    </div>
+                </div>
+                
+                <div class="gauge-item">
+                    <div class="gauge-title">NPS Score</div>
+                    <div style="height: 140px; width: 140px;">
+                        <canvas id="npsGauge"></canvas>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="insights-container">
+                <div class="insight-item">
+                    <div class="insight-title">Engagement Growth</div>
+                    <div class="insight-text">
+                        A 45% year-over-year increase in user engagement driven by intuitive navigation and clear visual hierarchy.
+                    </div>
+                </div>
+                
+                <div class="insight-item">
+                    <div class="insight-title">Retention Strategy</div>
+                    <div class="insight-text">
+                        Maintaining an 88% retention rate through consistent design patterns and reliable data presentation.
+                    </div>
+                </div>
+                
+                <div class="insight-item">
+                    <div class="insight-title">Conversion Optimization</div>
+                    <div class="insight-text">
+                        Strategic placement of call-to-action elements has resulted in a 12.4% conversion rate across key metrics.
+                    </div>
+                </div>
+                
+                <div class="insight-item">
+                    <div class="insight-title">Customer Satisfaction</div>
+                    <div class="insight-text">
+                        An NPS score of 72 reflects high user trust and satisfaction with the professional aesthetic of the Cobalt system.
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="data-source">
+            Source: Internal Analytics Report, April 2026
+        </div>
+    </div>
+    
+    <script>
+        window.addEventListener('load', function() {
+            function createGaugeChart(canvasId, value, maxValue, color, suffix = '%') {
+                const ctx = document.getElementById(canvasId).getContext('2d');
+                new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        datasets: [{
+                            data: [value, maxValue - value],
+                            backgroundColor: [color, '#e5e7eb'],
+                            borderWidth: 0,
+                            cutout: '75%'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: { enabled: false }
+                        }
+                    },
+                    plugins: [{
+                        id: 'centerText',
+                        beforeDraw: function(chart) {
+                            const ctx = chart.ctx;
+                            const centerX = (chart.chartArea.left + chart.chartArea.right) / 2;
+                            const centerY = (chart.chartArea.top + chart.chartArea.bottom) / 2;
+                            ctx.save();
+                            ctx.textAlign = 'center';
+                            ctx.textBaseline = 'middle';
+                            ctx.font = 'bold 24px Inter, sans-serif';
+                            ctx.fillStyle = color;
+                            ctx.fillText(value + suffix, centerX, centerY);
+                            ctx.restore();
+                        }
+                    }]
+                });
+            }
+            
+            createGaugeChart('engagementGauge', 45, 100, '#1f4788');
+            createGaugeChart('retentionGauge', 88, 100, '#4a90e2');
+            createGaugeChart('conversionGauge', 12.4, 100, '#1f4788');
+            createGaugeChart('npsGauge', 72, 100, '#4a90e2', '');
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Core Design Philosophy</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
+        .slide-container {
+            width: 1280px;
+            min-height: 720px;
+            background: #f8f9fa;
+            margin: 0 auto;
+            padding: 40px;
+            display: grid;
+            grid-template-rows: auto auto 1fr;
+        }
+        
+        .slide-title {
+            font-family: 'Inter', sans-serif;
+            color: #1f4788;
+            font-size: 42px;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+        
+        .slide-subtitle {
+            font-family: 'Inter', sans-serif;
+            color: #666666;
+            font-size: 20px;
+            margin-bottom: 24px;
+        }
+        
+        .content-container {
+            display: grid;
+            grid-template-columns: 3fr 2fr;
+            gap: 40px;
+            align-items: center;
+        }
+        
+        .chart-container {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: white;
+            padding: 32px;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        
+        .insights-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .insight-item {
+            padding: 20px;
+            background: white;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            border-left: 4px solid #1f4788;
+        }
+        
+        .insight-title {
+            font-family: 'Inter', sans-serif;
+            color: #1f4788;
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        
+        .insight-text {
+            font-family: 'Inter', sans-serif;
+            color: #333333;
+            font-size: 16px;
+            line-height: 1.5;
+        }
+        
+        .chart-legend {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-top: 24px;
+            gap: 16px;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+        }
+        
+        .legend-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 2px;
+            margin-right: 8px;
+        }
+        
+        .legend-text {
+            font-family: 'Inter', sans-serif;
+            color: #666666;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="slide-container">
+        <h1 class="slide-title">Core Design Philosophy</h1>
+        <h2 class="slide-subtitle">Establishing the pillars of the Cobalt visual framework</h2>
+        
+        <div class="content-container">
+            <div class="chart-container">
+                <div style="height: 350px; width: 350px;">
+                    <canvas id="philosophyChart"></canvas>
+                </div>
+                
+                <div class="chart-legend">
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: #1f4788;"></div>
+                        <div class="legend-text">Clarity</div>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: #4a90e2;"></div>
+                        <div class="legend-text">Data Focus</div>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: #87ceeb;"></div>
+                        <div class="legend-text">Consistency</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="insights-container">
+                <div class="insight-item">
+                    <div class="insight-title">Clean & Minimalist</div>
+                    <div class="insight-text">
+                        Prioritizing clarity and readability through generous white space and a reduction of non-essential elements.
+                    </div>
+                </div>
+                
+                <div class="insight-item">
+                    <div class="insight-title">Data-Driven</div>
+                    <div class="insight-text">
+                        Built specifically to highlight statistics and analytical insights through integrated visualization tools.
+                    </div>
+                </div>
+                
+                <div class="insight-item">
+                    <div class="insight-title">Consistent Hierarchy</div>
+                    <div class="insight-text">
+                        Standardized 40px margins and 24px internal spacing ensure a predictable and professional user experience.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        window.addEventListener('load', function() {
+            const ctx = document.getElementById('philosophyChart').getContext('2d');
+            
+            const data = {
+                labels: ['Clarity', 'Data Focus', 'Consistency'],
+                datasets: [{
+                    data: [40, 35, 25],
+                    backgroundColor: ['#1f4788', '#4a90e2', '#87ceeb'],
+                    borderColor: '#ffffff',
+                    borderWidth: 2
+                }]
+            };
+            
+            const config = {
+                type: 'doughnut',
+                data: data,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '70%',
+                    plugins: {
+                        legend: { display: false }
+                    }
+                }
+            };
+            
+            new Chart(ctx, config);
+        });
+    </script>
+</body>
+</html>

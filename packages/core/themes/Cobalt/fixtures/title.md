@@ -5,7 +5,7 @@ title: Cobalt Title Fixture
 
 ---
 layout: cover
-class: slide-shell title-slide
+class: slide-shell title
 ---
 
 市场更新 · 2026
@@ -22,7 +22,7 @@ class: slide-shell title-slide
 
 ---
 layout: cover
-class: slide-shell title-slide
+class: slide-shell title
 ---
 
 年度复盘 · 西北区
@@ -40,7 +40,7 @@ class: slide-shell title-slide
 
 ---
 layout: cover
-class: slide-shell title-slide
+class: slide-shell title
 ---
 
 项目启动
@@ -53,15 +53,15 @@ class: slide-shell title-slide
 
 ---
 layout: cover
-class: slide-shell title-slide
+class: slide-shell title
 ---
 
-视觉测试
+文字测试
 
-# 封面也应该能吃 Markdown 图片
+# 封面不支持图片
 
-## 图片只是内容的一部分，不应该把封面结构弄乱
+## 即使作者误写图片，模板也应该把它过滤掉
 
-这页用来测试 cover 卡片里直接放一张 Unsplash 图片时，宽度、圆角和节奏是否稳定。
+这页用来测试 title 仍然只保留标题、副标题和说明，不把图片当成可见内容。
 
 ![夜间城市街区](https://images.unsplash.com/photo-1467269204594-9661b134dd2b?auto=format&fit=crop&w=1400&q=80)

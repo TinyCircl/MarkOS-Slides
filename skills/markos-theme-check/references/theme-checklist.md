@@ -6,49 +6,22 @@ Use this file as a condensed review rubric. If anything here conflicts with the 
 
 1. `docs/theme-authoring.md`
 2. `docs/developer-guide.md`
-3. `packages/core/themes/<Theme>/README.md`
+3. `packages/core/themes/<Theme>/fixtures/*.md`
 4. `packages/core/themes/<Theme>/theme.css`
 5. related examples or changed decks
 
 ## Required Theme Surface
 
 - Theme lives under `packages/core/themes/<Theme>/`
-- `README.md` exists
 - `theme.css` exists
+- fixtures exist for all eight required page roles
+- only `body`, `two-column`, `image-text`, and `full-bleed-image` accept Markdown images
+- `title`, `toc`, `section-divider`, and `closing` filter images instead of rendering them
 - The theme is reviewable without reverse-engineering CSS alone
-
-## README Contract
-
-Check that the README clearly covers:
-
-- `Theme Summary`
-- `Authoring Rules`
-- `Template Catalog`
-- `Template Selection Guide`
-- `Content Fidelity Guidance`
-- `Examples`
-
-Check that template entries describe:
-
-- template name
-- layout
-- attach point
-- purpose
-- best fit
-- avoid-when guidance when needed
-- expected Markdown shape
-- wiring
-- notes for strict ordering or unusual assumptions
-
-The README should answer three practical questions:
-
-1. Which template should I pick?
-2. What Markdown shape should I feed it?
-3. What content changes are allowed during adaptation?
 
 ## Runtime And Wiring
 
-Check that the README and CSS respect the renderer contract:
+Check that fixtures and CSS respect the renderer contract:
 
 - theme name matches the theme folder name
 - `cover` and `default` templates attach classes with `class`
@@ -72,15 +45,16 @@ Check for:
 
 - tokens centralized in `:root`
 - contextual styling scoped to shell or template classes
-- page-type classes ending in `-slide`
-- template blocks matching what the README claims to expose
+- page-type classes using the fixed suffix-free public names
+- template blocks matching the fixed eight-page public inventory
+- no missing implementation for any of the eight required page roles
 
 ## Selector Safety
 
 Prefer:
 
-- `.title-slide h1`
-- `.comparison-slide table`
+- `.title h1`
+- `.two-column table`
 - `.slide-shell blockquote`
 
 Be careful with:
@@ -90,15 +64,14 @@ Be careful with:
 - `> p:last-of-type`
 - deep descendant chains
 
-Ordering-based selectors are acceptable only when the README or comments document the assumption.
+Ordering-based selectors are acceptable only when comments or fixtures document the assumption.
 
 ## Boundaries And Philosophy
 
 Check that the theme follows the repo philosophy:
 
-- README defines the contract, CSS implements it
-- theme personality is allowed; rigid naming uniformity is not required
-- non-canonical names are acceptable when the README makes role, shape, and wiring obvious
+- `docs/theme-authoring.md` defines the contract, CSS implements it
+- theme personality is allowed, but extra public page names are not
 - shared theme CSS is not treated as a place for page-level JavaScript or external framework assumptions
 - `slides.css` remains the deck-local override layer
 - `overrides.css` remains the final AI or renderer adjustment layer
@@ -115,7 +88,7 @@ Useful verification commands:
 
 ```bash
 rg --files packages/core/themes
-rg -n '^## |^### ' packages/core/themes/<Theme>/README.md
+rg -n 'title|toc|section-divider|body|two-column|image-text|full-bleed-image|closing' packages/core/themes/<Theme>
 npm run check:examples
 ```
 

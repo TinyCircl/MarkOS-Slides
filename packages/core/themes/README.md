@@ -4,9 +4,9 @@ This directory stores the built-in shared theme folders that ship with `@tinycir
 
 Each theme should live in its own directory such as:
 - `Clay/theme.css`
-- `Clay/README.md`
 - `Cobalt/theme.css`
-- `Cobalt/README.md`
+- `Clay/fixtures/body.md`
+- `Cobalt/fixtures/body.md`
 
 For the repo-wide standard on making reusable themes and page templates, see [../../../docs/theme-authoring.md](../../../docs/theme-authoring.md).
 

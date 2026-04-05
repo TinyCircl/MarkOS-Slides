@@ -113,12 +113,34 @@ function tokenizeClassNames(value) {
         : [];
 }
 
+const KNOWN_TEMPLATES = new Set([
+    "title",
+    "toc",
+    "section-divider",
+    "body",
+    "two-column",
+    "image-text",
+    "full-bleed-image",
+    "closing",
+    "implementation-process",
+]);
+
+function normalizeTemplateToken(token) {
+    if (typeof token !== "string" || !token.trim()) {
+        return "";
+    }
+
+    return token.trim();
+}
+
 function resolveSlideTemplate(slide) {
     const tokens = [
         ...tokenizeClassNames(slide.frontmatter?.class),
         ...tokenizeClassNames(slide.frontmatter?.layoutClass),
     ];
-    const namedTemplate = tokens.findLast((token) => token.endsWith("-slide"));
+    const namedTemplate = tokens
+        .map((token) => normalizeTemplateToken(token))
+        .findLast((token) => KNOWN_TEMPLATES.has(token));
     if (namedTemplate) {
         return namedTemplate;
     }
@@ -126,6 +148,12 @@ function resolveSlideTemplate(slide) {
     return typeof slide.frontmatter?.layout === "string" && slide.frontmatter.layout.trim()
         ? slide.frontmatter.layout.trim()
         : "default";
+}
+
+function extractLeadingSectionNumber(slide) {
+    const titleSource = extractSlideTitle(slide, 0);
+    const match = titleSource.match(/^\s*(\d{1,3})\b/);
+    return match ? match[1] : "";
 }
 
 function renderSlideHtml(slide) {
@@ -136,7 +164,10 @@ function renderSlideHtml(slide) {
 
     if (layout === "cover") {
         const className = toClassName("slidev-layout cover", slideClass);
-        return `<div class="${className}" data-markos-role="slide-layout" data-markos-layout="cover"${style}><div class="my-auto w-full" data-markos-role="cover-content">${renderMarkdown(slide.content)}</div></div>`;
+        const template = resolveSlideTemplate(slide);
+        const sectionNumber = template === "section-divider" ? extractLeadingSectionNumber(slide) : "";
+        const sectionNumberAttr = sectionNumber ? ` data-markos-section-number="${escapeHtml(sectionNumber)}"` : "";
+        return `<div class="${className}" data-markos-role="slide-layout" data-markos-layout="cover"${style}><div class="my-auto w-full" data-markos-role="cover-content"${sectionNumberAttr}>${renderMarkdown(slide.content)}</div></div>`;
     }
 
     if (layout === "two-cols") {

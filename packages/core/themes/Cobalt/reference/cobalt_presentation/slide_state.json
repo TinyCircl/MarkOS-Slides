@@ -1,0 +1,144 @@
+{
+  "project_info": {
+    "title": "Cobalt Design System",
+    "created": 1775404430.291525,
+    "last_updated": 1775404563.7058969,
+    "total_slides": 11
+  },
+  "slides": [
+    {
+      "id": "title_slide",
+      "state": "edited",
+      "pageNum": 1
+    },
+    {
+      "id": "toc_slide",
+      "state": "edited",
+      "pageNum": 2
+    },
+    {
+      "id": "section_1_divider",
+      "state": "edited",
+      "pageNum": 3
+    },
+    {
+      "id": "body_slide_1",
+      "state": "edited",
+      "pageNum": 4
+    },
+    {
+      "id": "two_column_slide_1",
+      "state": "edited",
+      "pageNum": 5
+    },
+    {
+      "id": "image_text_slide_1",
+      "state": "edited",
+      "pageNum": 6
+    },
+    {
+      "id": "full_bleed_image_slide_1",
+      "state": "edited",
+      "pageNum": 7
+    },
+    {
+      "id": "section_2_divider",
+      "state": "edited",
+      "pageNum": 8
+    },
+    {
+      "id": "body_slide_2_code",
+      "state": "edited",
+      "pageNum": 9
+    },
+    {
+      "id": "two_column_slide_2_metrics",
+      "state": "edited",
+      "pageNum": 10
+    },
+    {
+      "id": "closing_slide",
+      "state": "edited",
+      "pageNum": 11
+    }
+  ],
+  "outline": [
+    {
+      "id": "title_slide",
+      "title": "Cobalt Design System",
+      "summary": "Title slide with main title, subtitle, author, and date. Establishing the visual tone.",
+      "image_plan": "Use a suitable image if needed",
+      "slide_template_key": "slide_1"
+    },
+    {
+      "id": "toc_slide",
+      "title": "Presentation Overview",
+      "summary": "Table of contents listing the main sections of the presentation.",
+      "image_plan": "Use a suitable image if needed",
+      "slide_template_key": "slide_2"
+    },
+    {
+      "id": "section_1_divider",
+      "title": "01 Introduction to Cobalt",
+      "summary": "Section divider for the first part of the presentation.",
+      "image_plan": "Use a suitable image if needed",
+      "slide_template_key": "slide_3"
+    },
+    {
+      "id": "body_slide_1",
+      "title": "Core Design Philosophy",
+      "summary": "Standard content slide with bullet points describing the design philosophy.",
+      "image_plan": "Use a suitable image if needed",
+      "slide_template_key": "slide_4"
+    },
+    {
+      "id": "two_column_slide_1",
+      "title": "Traditional vs. Cobalt Design",
+      "summary": "Comparison slide with two columns contrasting traditional and Cobalt design.",
+      "image_plan": "Use a suitable image if needed",
+      "slide_template_key": "slide_5"
+    },
+    {
+      "id": "image_text_slide_1",
+      "title": "Visual Hierarchy in Action",
+      "summary": "Slide with text on one side and a placeholder for an image on the other.",
+      "image_plan": "Use a suitable image if needed",
+      "slide_template_key": "slide_6"
+    },
+    {
+      "id": "full_bleed_image_slide_1",
+      "title": "Impactful Visuals",
+      "summary": "Full-bleed image slide for high visual impact.",
+      "image_plan": "Use a suitable image if needed",
+      "slide_template_key": "slide_7"
+    },
+    {
+      "id": "section_2_divider",
+      "title": "02 Data Visualization",
+      "summary": "Section divider for the second part of the presentation.",
+      "image_plan": "Use a suitable image if needed",
+      "slide_template_key": "slide_8"
+    },
+    {
+      "id": "body_slide_2_code",
+      "title": "Implementation Details",
+      "summary": "Content slide featuring a code block for technical implementation.",
+      "image_plan": "Use a suitable image if needed",
+      "slide_template_key": "slide_9"
+    },
+    {
+      "id": "two_column_slide_2_metrics",
+      "title": "Key Performance Indicators",
+      "summary": "Two-column slide displaying key metrics and statistics.",
+      "image_plan": "Use a suitable image if needed",
+      "slide_template_key": "slide_10"
+    },
+    {
+      "id": "closing_slide",
+      "title": "Thank You for Your Attention",
+      "summary": "Closing slide with contact information and Q&A prompt.",
+      "image_plan": "Use a suitable image if needed",
+      "slide_template_key": "slide_1"
+    }
+  ]
+}

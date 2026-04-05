@@ -5,7 +5,7 @@ title: Cobalt Implementation Process Fixture
 
 ---
 layout: two-cols
-layoutClass: slide-shell implementation-process-slide
+layoutClass: slide-shell two-column
 ---
 
 # Implementation Process and Methodology
@@ -41,7 +41,7 @@ Treat launch as a transition point, not the end of the methodology.
 
 ---
 layout: two-cols
-layoutClass: slide-shell implementation-process-slide
+layoutClass: slide-shell two-column
 ---
 
 # Implementation Process and Methodology
@@ -67,7 +67,7 @@ End with how progress is judged after the first release.
 
 ---
 layout: two-cols
-layoutClass: slide-shell implementation-process-slide
+layoutClass: slide-shell two-column
 ---
 
 # Implementation Process and Methodology Across Pilot Design, Delivery Cadence, and Operational Adoption
@@ -107,7 +107,7 @@ The operating model after launch should already be visible inside the process.
 
 ---
 layout: two-cols
-layoutClass: slide-shell implementation-process-slide
+layoutClass: slide-shell two-column
 ---
 
 # Implementation Process and Methodology

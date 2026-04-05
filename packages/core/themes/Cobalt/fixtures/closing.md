@@ -1,11 +1,11 @@
 ---
 theme: Cobalt
-title: Cobalt Q and A Fixture
+title: Cobalt Closing Fixture
 ---
 
 ---
 layout: cover
-class: slide-shell q-and-a-slide
+class: slide-shell closing
 ---
 
 Thank You
@@ -22,7 +22,7 @@ Share the final contact or invitation for follow-up.
 
 ---
 layout: cover
-class: slide-shell q-and-a-slide
+class: slide-shell closing
 ---
 
 Thank You
@@ -35,7 +35,7 @@ One short follow-up line should still sit comfortably inside the card.
 
 ---
 layout: cover
-class: slide-shell q-and-a-slide
+class: slide-shell closing
 ---
 
 Thank You
@@ -54,7 +54,7 @@ This slide tests whether a longer contact list still stays centered and readable
 
 ---
 layout: cover
-class: slide-shell q-and-a-slide
+class: slide-shell closing
 ---
 
 Thank You
@@ -71,7 +71,7 @@ This slide tests the upper bound for title length, subtitle length, and a denser
 
 ---
 layout: cover
-class: slide-shell q-and-a-slide
+class: slide-shell closing
 ---
 
 Thank You
@@ -91,15 +91,18 @@ Use this page to check whether more rows with different text lengths still maint
 
 ---
 layout: cover
-class: slide-shell q-and-a-slide
+class: slide-shell closing
 ---
 
 Thank You
 
 # Questions & Discussion
 
-## Image-in-card stress case
+## Text-only closing reminder
 
-This slide checks whether a remote Markdown image can sit inside the centered closing card without pushing the rhythm off balance.
+This template is intentionally text-only and should not be used for Markdown images.
 
-![Audience leaving the venue](https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1400&q=80)
+- Thank-you message
+- CTA or next step
+- Contact details
+- Q&A prompt

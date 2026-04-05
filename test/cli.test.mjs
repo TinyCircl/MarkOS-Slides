@@ -192,7 +192,7 @@ test("CLI build supports UTF-8 BOM in slides.md and still applies file-level the
 
         await writeFile(
             join(projectRoot, "slides.md"),
-            `\uFEFF---\ntheme: ${themeName}\ntitle: BOM Deck\n---\n\n---\nlayout: cover\nclass: slide-shell title-slide\n---\n\n# Hello BOM\n`,
+            `\uFEFF---\ntheme: ${themeName}\ntitle: BOM Deck\n---\n\n---\nlayout: cover\nclass: slide-shell title\n---\n\n# Hello BOM\n`,
             "utf8",
         );
         await writeDirectoryTheme(themesRoot, themeName, ".bom-theme { color: blue; }\n");
@@ -854,7 +854,7 @@ test("CLI theme apply inserts a separate file-frontmatter block above an old fir
             [
                 "---",
                 "layout: cover",
-                "class: slide-shell title-slide",
+                "class: slide-shell title",
                 "---",
                 "",
                 "# Legacy Deck",
@@ -876,7 +876,7 @@ test("CLI theme apply inserts a separate file-frontmatter block above an old fir
         assert.match(
             markdown,
             new RegExp(
-                `^---\\ntheme: "${themeName}"\\n---\\n\\n---\\nlayout: cover\\nclass: slide-shell title-slide\\n---`,
+                `^---\\ntheme: "${themeName}"\\n---\\n\\n---\\nlayout: cover\\nclass: slide-shell title\\n---`,
             ),
         );
     } finally {
@@ -1026,7 +1026,7 @@ test("CLI theme preview serves a theme fixture through the real dev pipeline", a
     const themeName = `preview-theme-${process.pid}-${Date.now()}`;
     const themeDirPath = join(themesRoot, themeName);
     const fixtureDirPath = join(themeDirPath, "fixtures");
-    const fixtureFilePath = join(fixtureDirPath, "comparison.md");
+    const fixtureFilePath = join(fixtureDirPath, "two-column.md");
     let result = null;
     let opened = false;
 
@@ -1043,7 +1043,7 @@ test("CLI theme preview serves a theme fixture through the real dev pipeline", a
                 "",
                 "---",
                 "layout: two-cols",
-                "layoutClass: slide-shell comparison-slide",
+                "layoutClass: slide-shell two-column",
                 "---",
                 "",
                 "# Fixture Heading",
@@ -1063,7 +1063,7 @@ test("CLI theme preview serves a theme fixture through the real dev pipeline", a
             "theme",
             "preview",
             themeName,
-            "comparison",
+            "two-column",
             "--port",
             "0",
             "--no-open",
@@ -1079,7 +1079,7 @@ test("CLI theme preview serves a theme fixture through the real dev pipeline", a
         assert.equal(result.command, "theme");
         assert.equal(result.action, "preview");
         assert.equal(result.themeName, themeName);
-        assert.equal(result.fixtureName, "comparison");
+        assert.equal(result.fixtureName, "two-column");
         assert.equal(opened, false);
         assert.match(firstHtml, /Fixture Heading/);
         assert.match(firstHtml, /Right Panel/);
@@ -1095,7 +1095,7 @@ test("CLI theme preview serves a theme fixture through the real dev pipeline", a
                 "",
                 "---",
                 "layout: two-cols",
-                "layoutClass: slide-shell comparison-slide",
+                "layoutClass: slide-shell two-column",
                 "---",
                 "",
                 "# Updated Fixture Heading",

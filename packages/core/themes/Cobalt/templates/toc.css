@@ -1,0 +1,45 @@
+.slidev-layout.default.slide-shell.toc {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 1.5rem;
+}
+
+.toc > h1 {
+  margin: 0;
+  color: var(--cb-primary);
+  font-size: 2.8rem;
+  line-height: 1.06;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+.toc > h1 + p {
+  margin: 0;
+  max-width: 40rem;
+  color: var(--cb-muted);
+  font-size: 1.04rem;
+  line-height: 1.62;
+  opacity: 1;
+}
+
+.toc > ol,
+.toc > ul {
+  display: grid;
+  gap: 0.9rem;
+  margin: 0;
+  padding-left: 1.35rem;
+}
+
+.toc > ol li,
+.toc > ul li {
+  color: var(--cb-text);
+  font-size: 1.12rem;
+  line-height: 1.5;
+}
+
+.toc img,
+.toc figure,
+.toc p:has(> img) {
+  display: none;
+}

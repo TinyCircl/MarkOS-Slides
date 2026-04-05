@@ -3,7 +3,10 @@
 @import "./shell.css";
 @import "./layouts/two-cols.css";
 @import "./templates/title.css";
-@import "./templates/competitive-landscape.css";
-@import "./templates/conclusion-outlook.css";
-@import "./templates/implementation-process.css";
-@import "./templates/q-and-a.css";
+@import "./templates/toc.css";
+@import "./templates/body.css";
+@import "./templates/full-bleed-image.css";
+@import "./templates/section-divider.css";
+@import "./templates/two-column.css";
+@import "./templates/image-text.css";
+@import "./templates/closing.css";

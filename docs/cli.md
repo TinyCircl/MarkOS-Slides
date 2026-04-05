@@ -32,7 +32,7 @@ title: My first deck
 
 ---
 layout: cover
-class: slide-shell title-slide
+class: slide-shell title
 ---
 
 # Hello MarkOS
@@ -60,7 +60,7 @@ title: My first deck
 
 ---
 layout: cover
-class: slide-shell title-slide
+class: slide-shell title
 ---
 
 # Hello MarkOS
@@ -211,9 +211,9 @@ Run a theme fixture through the real MarkOS dev pipeline.
 Examples:
 
 ```bash
-markos theme preview Cobalt comparison
-markos theme preview Cobalt comparison --port 3030
-npm run markos:theme-preview -- Cobalt comparison --port 3030
+markos theme preview Cobalt image-text
+markos theme preview Cobalt image-text --port 3030
+npm run markos:theme-preview -- Cobalt image-text --port 3030
 ```
 
 Behavior:

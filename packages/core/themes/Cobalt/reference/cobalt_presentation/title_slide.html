@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cobalt Design System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800&display=swap');
+        .slide-container {
+            width: 1280px;
+            min-height: 720px;
+            background-color: #f8f9fa;
+            font-family: 'Inter', sans-serif;
+            color: #333333;
+            position: relative;
+            overflow: hidden;
+        }
+        .cobalt-title {
+            color: #1f4788;
+            font-size: 72px;
+            font-weight: 800;
+            line-height: 1.1;
+        }
+        .cobalt-subtitle {
+            color: #666666;
+            font-size: 32px;
+            font-weight: 400;
+            margin-top: 24px;
+        }
+        .hex-pattern {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 60%;
+            opacity: 0.05;
+            z-index: 0;
+        }
+        .content-layer {
+            position: relative;
+            z-index: 10;
+            padding: 40px;
+            height: 720px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+        .footer-meta {
+            position: absolute;
+            bottom: 40px;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            color: #666666;
+            font-size: 18px;
+        }
+    </style>
+</head>
+<body>
+    <div class="slide-container">
+        <!-- Hexagonal Pattern Placeholder -->
+        <svg class="hex-pattern" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <pattern id="hexagons" width="10" height="17.32" patternUnits="userSpaceOnUse" patternTransform="scale(2)">
+                    <path d="M5 0 L10 2.88 L10 8.66 L5 11.54 L0 8.66 L0 2.88 Z" fill="none" stroke="#1f4788" stroke-width="0.2"/>
+                </pattern>
+            </defs>
+            <rect width="100" height="100" fill="url(#hexagons)" />
+        </svg>
+
+        <div class="content-layer">
+            <h1 class="cobalt-title">Cobalt Design System</h1>
+            <p class="cobalt-subtitle">A Modern, Data-Driven Presentation Framework</p>
+        </div>
+
+        <div class="footer-meta">
+            <span>Manus AI</span>
+            <span>•</span>
+            <span>April 5, 2026</span>
+        </div>
+    </div>
+</body>
+</html>

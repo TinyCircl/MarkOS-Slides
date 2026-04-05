@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visual Hierarchy</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+        
+        .slide-container {
+            width: 1280px;
+            min-height: 720px;
+            background: #F2F9FC;
+            margin: 0 auto;
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            font-family: 'Inter', sans-serif;
+        }
+        
+        .slide-title {
+            color: #1f4788;
+            font-size: 36px;
+            font-weight: 700;
+            margin-bottom: 15px;
+        }
+        
+        .slide-subtitle {
+            color: #666666;
+            font-size: 20px;
+            margin-bottom: 40px;
+        }
+        
+        .content-container {
+            display: flex;
+            flex: 1;
+            gap: 40px;
+        }
+        
+        .visual-area {
+            flex: 1.5;
+            background: white;
+            border-radius: 8px;
+            padding: 40px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        
+        .hierarchy-demo {
+            border-left: 4px solid #1f4788;
+            padding-left: 32px;
+        }
+        
+        .demo-title {
+            color: #1f4788;
+            font-size: 42px;
+            font-weight: 700;
+            margin-bottom: 16px;
+        }
+        
+        .demo-subtitle {
+            color: #666666;
+            font-size: 20px;
+            margin-bottom: 24px;
+        }
+        
+        .demo-body {
+            color: #333333;
+            font-size: 16px;
+            line-height: 1.6;
+            max-width: 600px;
+        }
+        
+        .insights-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 24px;
+        }
+        
+        .insight-item {
+            padding: 20px;
+            background: rgba(31, 71, 136, 0.05);
+            border-radius: 8px;
+        }
+        
+        .insight-title {
+            color: #1f4788;
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        
+        .insight-text {
+            color: #666666;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        
+        .spec-tag {
+            display: inline-block;
+            padding: 2px 8px;
+            background: #1f4788;
+            color: white;
+            font-size: 12px;
+            border-radius: 4px;
+            margin-top: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="slide-container">
+        <h1 class="slide-title">Visual Hierarchy in Action</h1>
+        <h2 class="slide-subtitle">Defining typography and spacing standards for the Cobalt system</h2>
+        
+        <div class="content-container">
+            <div class="visual-area">
+                <div class="hierarchy-demo">
+                    <div class="demo-title">Main Section Title</div>
+                    <div class="demo-subtitle">Supporting Subtitle or Contextual Lead-in</div>
+                    <div class="demo-body">
+                        The body text is designed for maximum readability. By using a 16px font size with 24px line spacing, we ensure that complex data descriptions remain accessible to the audience even in dense presentations.
+                    </div>
+                </div>
+            </div>
+            
+            <div class="insights-container">
+                <div class="insight-item">
+                    <div class="insight-title">Typography Scale</div>
+                    <div class="insight-text">
+                        Titles use 36-42px for high impact. Subtitles are set at 18-20px to provide clear secondary context.
+                    </div>
+                    <span class="spec-tag">Inter Bold / Regular</span>
+                </div>
+                
+                <div class="insight-item">
+                    <div class="insight-title">Color Palette</div>
+                    <div class="insight-text">
+                        Primary Blue (#1f4788) is reserved for structural elements and headings to maintain brand authority.
+                    </div>
+                    <span class="spec-tag">#1f4788 • #666666 • #333333</span>
+                </div>
+                
+                <div class="insight-item">
+                    <div class="insight-title">Grid & Spacing</div>
+                    <div class="insight-text">
+                        A strict 40px outer margin and 24px internal element spacing creates a balanced, professional rhythm.
+                    </div>
+                    <span class="spec-tag">40px Margin • 24px Gutter</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -37,20 +37,20 @@
   margin: 0;
 }
 
-.title-slide {
+.title {
   padding: 24px 60px;
   text-align: left !important;
 }
 
-.title-slide::before {
+.title::before {
   border: 1px solid #efe4de;
 }
 
-.title-slide > p:first-child {
+.title > p:first-child {
   margin: 36px 0 0;
 }
 
-.title-slide > p:first-child code {
+.title > p:first-child code {
   display: inline-block;
   padding: 0.45rem 0.95rem;
   border: 2px solid var(--ab-accent);
@@ -62,7 +62,7 @@
   letter-spacing: 0.03em;
 }
 
-.title-slide h1 {
+.title h1 {
   margin: 2.6rem 0 1rem;
   max-width: 11.5em;
   font-size: 3rem;
@@ -71,7 +71,7 @@
   color: var(--ab-text);
 }
 
-.title-slide h1::before {
+.title h1::before {
   content: '';
   display: block;
   width: 5rem;
@@ -80,7 +80,7 @@
   background: var(--ab-accent);
 }
 
-.title-slide h2 {
+.title h2 {
   margin: 0 0 0.85rem;
   max-width: 34rem;
   font-size: 1.5rem;
@@ -89,14 +89,14 @@
   color: var(--ab-muted);
 }
 
-.title-slide > p:last-of-type {
+.title > p:last-of-type {
   max-width: 42rem;
   font-size: 1rem;
   line-height: 1.7;
   color: var(--ab-muted);
 }
 
-.title-slide ul {
+.title ul {
   display: flex;
   gap: 4.5rem;
   margin: 4.75rem 0 0;
@@ -104,7 +104,7 @@
   list-style: none;
 }
 
-.title-slide li {
+.title li {
   display: flex;
   align-items: center;
   gap: 1rem;
@@ -113,7 +113,7 @@
   font-weight: 500;
 }
 
-.title-slide li code {
+.title li code {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -182,62 +182,62 @@
 }
 
 /*
- * Template: overview-slide
+ * Template: overview
  * Layout: two-cols
- * Attach: layoutClass="slide-shell overview-slide"
+ * Attach: layoutClass="slide-shell overview"
  * Purpose: high-level summary with table plus key callouts
  * Expected Markdown:
  * - left column contains heading and table
  * - right column contains h3 callouts, short paragraphs, and optional blockquote
  */
-.overview-slide {
+.overview {
   grid-template-columns: 3fr 2fr;
 }
 
-.overview-slide .col-right {
+.overview .col-right {
   display: flex;
   flex-direction: column;
   justify-content: center;
 }
 
-.overview-slide table {
+.overview table {
   margin-top: 0.25rem;
   background: var(--ab-bg);
   border-radius: 0.5rem;
 }
 
-.overview-slide th,
-.overview-slide td {
+.overview th,
+.overview td {
   padding: 0.85rem 1rem;
   border-bottom: 1px solid var(--ab-border);
   font-size: 0.95rem;
 }
 
-.overview-slide th {
+.overview th {
   text-align: left;
   color: var(--ab-text);
   font-weight: 600;
 }
 
-.overview-slide th:last-child,
-.overview-slide td:last-child {
+.overview th:last-child,
+.overview td:last-child {
   text-align: right;
 }
 
-.overview-slide td {
+.overview td {
   color: var(--ab-muted);
 }
 
-.overview-slide tbody tr:last-child td {
+.overview tbody tr:last-child td {
   border-bottom: 0;
 }
 
-.overview-slide tbody tr:first-child td:last-child {
+.overview tbody tr:first-child td:last-child {
   color: var(--ab-accent);
   font-weight: 700;
 }
 
-.overview-slide h3 + p {
+.overview h3 + p {
   margin: 0 0 1.35rem;
   padding-left: 1rem;
   border-left: 4px solid var(--ab-accent);
@@ -246,7 +246,7 @@
   color: var(--ab-muted);
 }
 
-.overview-slide blockquote {
+.overview blockquote {
   margin: 1rem 0 0;
   padding: 0.85rem 1rem;
   border-left: 4px solid var(--ab-accent);
@@ -256,38 +256,38 @@
 }
 
 /*
- * Template: competitors-slide
+ * Template: competitors
  * Layout: two-cols
- * Attach: layoutClass="slide-shell competitors-slide"
+ * Attach: layoutClass="slide-shell competitors"
  * Purpose: narrative comparison with supporting list content
  * Expected Markdown:
  * - both columns begin with headings
  * - paragraphs carry the main narrative
  * - unordered lists add supporting bullets
  */
-.competitors-slide .col-right {
+.competitors .col-right {
   background: linear-gradient(180deg, #fffaf8 0%, #fafafa 100%);
 }
 
-.competitors-slide h2 {
+.competitors h2 {
   margin: 0 0 0.75rem;
   padding-top: 1rem;
   border-top: 4px solid var(--ab-accent);
   font-size: 1.25rem;
 }
 
-.competitors-slide h2:first-of-type {
+.competitors h2:first-of-type {
   padding-top: 0;
 }
 
-.competitors-slide p {
+.competitors p {
   margin: 0 0 1rem;
   font-size: 1rem;
   line-height: 1.6;
   color: var(--ab-muted);
 }
 
-.competitors-slide p:has(> strong) {
+.competitors p:has(> strong) {
   margin-bottom: 0.75rem;
   font-size: 1.45rem;
   line-height: 1.25;
@@ -295,22 +295,22 @@
   color: var(--ab-accent);
 }
 
-.competitors-slide p:has(> strong) strong {
+.competitors p:has(> strong) strong {
   color: inherit;
 }
 
-.competitors-slide ul {
+.competitors ul {
   margin-top: 0.5rem;
   padding-left: 1.2rem;
 }
 
-.competitors-slide li {
+.competitors li {
   margin: 0 0 0.7rem;
   font-size: 0.95rem;
   line-height: 1.55;
 }
 
-.competitors-slide blockquote {
+.competitors blockquote {
   margin: 2rem 0 0;
   padding-top: 1rem;
   border-top: 1px solid #e6e6e6;
@@ -320,75 +320,75 @@
 }
 
 /*
- * Template: feature-slide
+ * Template: feature
  * Layout: default
- * Attach: class="slide-shell feature-slide"
+ * Attach: class="slide-shell feature"
  * Purpose: full-width feature table or capability matrix
  * Expected Markdown:
  * - h1 title
  * - table as the primary content
  * - optional blockquote or summary note
  */
-.feature-slide {
+.feature {
   padding: 54px 60px;
 }
 
-.feature-slide::before {
+.feature::before {
   border: 1px solid #ededed;
 }
 
-.feature-slide h1 {
+.feature h1 {
   margin: 0 0 1.75rem;
   font-size: 2rem;
   font-weight: 700;
   color: var(--ab-text);
 }
 
-.feature-slide table {
+.feature table {
   width: 100%;
   border-collapse: collapse;
   table-layout: fixed;
   text-align: center;
 }
 
-.feature-slide th,
-.feature-slide td {
+.feature th,
+.feature td {
   padding: 0.9rem 0.65rem;
   border-bottom: 1px solid var(--ab-border);
   font-size: 0.88rem;
 }
 
-.feature-slide th {
+.feature th {
   background: var(--ab-text);
   color: #ffffff;
   font-weight: 600;
 }
 
-.feature-slide th:first-child,
-.feature-slide td:first-child {
+.feature th:first-child,
+.feature td:first-child {
   text-align: left;
 }
 
-.feature-slide th:last-child {
+.feature th:last-child {
   background: var(--ab-accent);
 }
 
-.feature-slide td {
+.feature td {
   color: var(--ab-accent);
 }
 
-.feature-slide td:first-child {
+.feature td:first-child {
   background: var(--ab-card-soft);
   color: var(--ab-text);
   font-weight: 600;
 }
 
-.feature-slide td:last-child {
+.feature td:last-child {
   background: var(--ab-card-warm);
   font-weight: 700;
 }
 
-.feature-slide blockquote {
+.feature blockquote {
   margin: 1.8rem 0 0;
   padding: 0.95rem 1rem;
   border-left: 4px solid var(--ab-accent);
@@ -399,9 +399,9 @@
 }
 
 /*
- * Template: pricing-slide
+ * Template: pricing
  * Layout: two-cols
- * Attach: layoutClass="slide-shell pricing-slide"
+ * Attach: layoutClass="slide-shell pricing"
  * Purpose: side-by-side package, pricing, or plan comparison
  * Expected Markdown:
  * - left column contains heading and table
@@ -410,56 +410,56 @@
  * Notes:
  * - `h2 + ul` receives special treatment
  */
-.pricing-slide {
+.pricing {
   grid-template-columns: 3fr 2fr;
 }
 
-.pricing-slide table {
+.pricing table {
   background: var(--ab-card-soft);
   border-radius: 0.5rem;
 }
 
-.pricing-slide th,
-.pricing-slide td {
+.pricing th,
+.pricing td {
   padding: 0.85rem 1rem;
   border-bottom: 1px solid #e7e7e7;
   font-size: 0.95rem;
 }
 
-.pricing-slide th {
+.pricing th {
   text-align: left;
   color: var(--ab-text);
   font-weight: 600;
 }
 
-.pricing-slide th:last-child,
-.pricing-slide td:last-child {
+.pricing th:last-child,
+.pricing td:last-child {
   text-align: right;
 }
 
-.pricing-slide td {
+.pricing td {
   color: var(--ab-muted);
 }
 
-.pricing-slide tbody tr:last-child td {
+.pricing tbody tr:last-child td {
   color: var(--ab-accent);
   font-weight: 700;
 }
 
-.pricing-slide h2 + ul {
+.pricing h2 + ul {
   margin: 0 0 1.25rem;
   padding: 1rem 1rem 0.45rem 2rem;
   border-left: 4px solid var(--ab-accent);
   background: #f9f9f9;
 }
 
-.pricing-slide li {
+.pricing li {
   margin: 0 0 0.65rem;
   font-size: 0.9rem;
   line-height: 1.5;
 }
 
-.pricing-slide blockquote {
+.pricing blockquote {
   margin: 1rem 0 0;
   padding: 0.85rem 1rem;
   border-left: 4px solid var(--ab-accent);
@@ -469,69 +469,69 @@
 }
 
 /*
- * Template: positioning-slide
+ * Template: positioning
  * Layout: two-cols
- * Attach: layoutClass="slide-shell positioning-slide"
+ * Attach: layoutClass="slide-shell positioning"
  * Purpose: positioning matrix plus supporting strategic notes
  * Expected Markdown:
  * - left column contains comparison table
  * - right column contains headings, lists, and optional note
  */
-.positioning-slide {
+.positioning {
   grid-template-columns: 3fr 1.4fr;
 }
 
-.positioning-slide .col-right {
+.positioning .col-right {
   background: linear-gradient(180deg, #fffaf8 0%, #fafafa 100%);
 }
 
-.positioning-slide table {
+.positioning table {
   text-align: center;
   background: var(--ab-card-soft);
   border-radius: 0.5rem;
 }
 
-.positioning-slide th,
-.positioning-slide td {
+.positioning th,
+.positioning td {
   padding: 1rem 0.9rem;
   border: 1px solid var(--ab-border);
   font-size: 0.92rem;
 }
 
-.positioning-slide th {
+.positioning th {
   background: var(--ab-text);
   color: #ffffff;
   font-weight: 600;
 }
 
-.positioning-slide td {
+.positioning td {
   color: var(--ab-muted);
 }
 
-.positioning-slide td:first-child {
+.positioning td:first-child {
   background: var(--ab-bg);
   color: var(--ab-text);
   font-weight: 600;
 }
 
-.positioning-slide tbody tr:first-child td:last-child {
+.positioning tbody tr:first-child td:last-child {
   background: var(--ab-card-warm);
   color: var(--ab-accent);
   font-weight: 700;
 }
 
-.positioning-slide ul {
+.positioning ul {
   margin: 0 0 1.25rem;
   padding-left: 1.2rem;
 }
 
-.positioning-slide li {
+.positioning li {
   margin: 0 0 0.65rem;
   font-size: 0.9rem;
   line-height: 1.5;
 }
 
-.positioning-slide blockquote {
+.positioning blockquote {
   margin: 1rem 0 0;
   padding: 0.85rem 1rem;
   border-left: 4px solid var(--ab-accent);
@@ -541,34 +541,34 @@
 }
 
 /*
- * Template: strengths-slide
+ * Template: strengths
  * Layout: two-cols
- * Attach: layoutClass="slide-shell strengths-slide"
+ * Attach: layoutClass="slide-shell strengths"
  * Purpose: balanced two-column strengths or highlights slide
  * Expected Markdown:
  * - both columns contain h2 sections followed by unordered lists
  * - optional blockquote note at the end
  */
-.strengths-slide {
+.strengths {
   grid-template-columns: 1fr 1fr;
 }
 
-.strengths-slide h2 + ul {
+.strengths h2 + ul {
   margin: 0 0 1.35rem;
   padding-left: 1.45rem;
 }
 
-.strengths-slide li {
+.strengths li {
   margin: 0 0 0.7rem;
   font-size: 0.92rem;
   line-height: 1.5;
 }
 
-.strengths-slide li::marker {
+.strengths li::marker {
   color: var(--ab-accent);
 }
 
-.strengths-slide blockquote {
+.strengths blockquote {
   margin: 1.2rem 0 0;
   padding-top: 0.8rem;
   border-top: 1px solid #e6e6e6;
@@ -577,48 +577,48 @@
 }
 
 /*
- * Template: differentiation-slide
+ * Template: differentiation
  * Layout: two-cols
- * Attach: layoutClass="slide-shell differentiation-slide"
+ * Attach: layoutClass="slide-shell differentiation"
  * Purpose: differentiation summary with table and structured talking points
  * Expected Markdown:
  * - left column contains table
  * - right column contains h3 callouts, paragraphs, lists, and optional note
  */
-.differentiation-slide {
+.differentiation {
   grid-template-columns: 3fr 2fr;
 }
 
-.differentiation-slide table {
+.differentiation table {
   background: var(--ab-card-soft);
   border-radius: 0.5rem;
 }
 
-.differentiation-slide th,
-.differentiation-slide td {
+.differentiation th,
+.differentiation td {
   padding: 0.85rem 1rem;
   border-bottom: 1px solid var(--ab-border);
   font-size: 0.95rem;
 }
 
-.differentiation-slide th {
+.differentiation th {
   text-align: left;
   color: var(--ab-text);
   font-weight: 600;
 }
 
-.differentiation-slide th:last-child,
-.differentiation-slide td:last-child {
+.differentiation th:last-child,
+.differentiation td:last-child {
   text-align: right;
   color: var(--ab-accent);
   font-weight: 700;
 }
 
-.differentiation-slide td {
+.differentiation td {
   color: var(--ab-muted);
 }
 
-.differentiation-slide h3 + p {
+.differentiation h3 + p {
   margin: 0 0 1.15rem;
   padding-left: 1rem;
   border-left: 4px solid var(--ab-accent);
@@ -627,19 +627,19 @@
   color: var(--ab-muted);
 }
 
-.differentiation-slide ul {
+.differentiation ul {
   padding: 0.95rem 1rem 0.4rem 2rem;
   border-left: 4px solid var(--ab-accent);
   background: #f9f9f9;
 }
 
-.differentiation-slide li {
+.differentiation li {
   margin: 0 0 0.6rem;
   font-size: 0.9rem;
   line-height: 1.5;
 }
 
-.differentiation-slide blockquote {
+.differentiation blockquote {
   margin: 1rem 0 0;
   padding: 0.85rem 1rem;
   border-left: 4px solid var(--ab-accent);
@@ -649,9 +649,9 @@
 }
 
 /*
- * Template: swot-slide
+ * Template: swot
  * Layout: two-cols
- * Attach: layoutClass="slide-shell swot-slide"
+ * Attach: layoutClass="slide-shell swot"
  * Purpose: SWOT-style split view with paired sections per column
  * Expected Markdown:
  * - each column starts with a heading
@@ -659,26 +659,26 @@
  * Notes:
  * - nth-of-type selectors map the four SWOT sections by order
  */
-.swot-slide {
+.swot {
   grid-template-columns: 1fr 1fr;
   gap: 30px;
 }
 
-.swot-slide .col-left,
-.swot-slide .col-right {
+.swot .col-left,
+.swot .col-right {
   display: flex;
   flex-direction: column;
 }
 
-.swot-slide > .two-cols-header > h1,
-.swot-slide .col-left > h1 {
+.swot > .two-cols-header > h1,
+.swot .col-left > h1 {
   margin: 0 0 1.6rem;
   font-size: 2rem;
   font-weight: 700;
   color: var(--ab-text);
 }
 
-.swot-slide .col-right > h1 {
+.swot .col-right > h1 {
   margin: 0 0 1.6rem;
   font-size: 0.95rem;
   font-weight: 700;
@@ -687,7 +687,7 @@
   color: var(--ab-subtle);
 }
 
-.swot-slide h2 {
+.swot h2 {
   display: flex;
   align-items: center;
   gap: 0.75rem;
@@ -699,7 +699,7 @@
   background: var(--ab-card-soft);
 }
 
-.swot-slide h2::before {
+.swot h2::before {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -711,47 +711,47 @@
   font-weight: 700;
 }
 
-.swot-slide .col-left h2:nth-of-type(1) {
+.swot .col-left h2:nth-of-type(1) {
   background: var(--ab-card-warm);
   border-top: 6px solid var(--ab-accent);
 }
 
-.swot-slide .col-left h2:nth-of-type(1)::before {
+.swot .col-left h2:nth-of-type(1)::before {
   content: 'S';
   background: var(--ab-accent);
 }
 
-.swot-slide .col-left h2:nth-of-type(2) {
+.swot .col-left h2:nth-of-type(2) {
   background: #fff7f3;
   border-top: 6px solid var(--ab-accent-soft);
 }
 
-.swot-slide .col-left h2:nth-of-type(2)::before {
+.swot .col-left h2:nth-of-type(2)::before {
   content: 'O';
   background: var(--ab-accent-soft);
 }
 
-.swot-slide .col-right h2:nth-of-type(1) {
+.swot .col-right h2:nth-of-type(1) {
   background: var(--ab-card-soft);
   border-top: 6px solid #bdbdbd;
 }
 
-.swot-slide .col-right h2:nth-of-type(1)::before {
+.swot .col-right h2:nth-of-type(1)::before {
   content: 'W';
   background: #bdbdbd;
 }
 
-.swot-slide .col-right h2:nth-of-type(2) {
+.swot .col-right h2:nth-of-type(2) {
   background: #f3f3f3;
   border-top: 6px solid #616161;
 }
 
-.swot-slide .col-right h2:nth-of-type(2)::before {
+.swot .col-right h2:nth-of-type(2)::before {
   content: 'T';
   background: #616161;
 }
 
-.swot-slide h2 + ul {
+.swot h2 + ul {
   margin: 0 0 1.6rem;
   min-height: 11.75rem;
   padding: 0 1.5rem 1.3rem;
@@ -759,19 +759,19 @@
   list-style: none;
 }
 
-.swot-slide .col-left h2:nth-of-type(1) + ul {
+.swot .col-left h2:nth-of-type(1) + ul {
   background: var(--ab-card-warm);
 }
 
-.swot-slide .col-left h2:nth-of-type(2) + ul {
+.swot .col-left h2:nth-of-type(2) + ul {
   background: #fff7f3;
 }
 
-.swot-slide .col-right h2:nth-of-type(2) + ul {
+.swot .col-right h2:nth-of-type(2) + ul {
   background: #f3f3f3;
 }
 
-.swot-slide li {
+.swot li {
   position: relative;
   margin: 0 0 0.7rem;
   padding-left: 1rem;
@@ -780,7 +780,7 @@
   color: var(--ab-muted);
 }
 
-.swot-slide li::before {
+.swot li::before {
   content: '-';
   position: absolute;
   left: 0;
@@ -788,9 +788,9 @@
 }
 
 /*
- * Template: roadmap-slide
+ * Template: roadmap
  * Layout: two-cols
- * Attach: layoutClass="slide-shell roadmap-slide"
+ * Attach: layoutClass="slide-shell roadmap"
  * Purpose: staged roadmap with ordered steps and supporting notes
  * Expected Markdown:
  * - left column contains an ordered list
@@ -798,15 +798,15 @@
  * Notes:
  * - ordered-list items receive sequence-based accent styling
  */
-.roadmap-slide {
+.roadmap {
   grid-template-columns: 7fr 3fr;
 }
 
-.roadmap-slide ol {
+.roadmap ol {
   padding-left: 1.5rem;
 }
 
-.roadmap-slide ol li {
+.roadmap ol li {
   margin: 0 0 0.95rem;
   padding: 0.95rem 1.1rem;
   border-radius: 999px;
@@ -816,25 +816,25 @@
   color: #555555;
 }
 
-.roadmap-slide ol li::marker {
+.roadmap ol li::marker {
   color: var(--ab-accent);
   font-weight: 700;
 }
 
-.roadmap-slide ol li:nth-child(1) {
+.roadmap ol li:nth-child(1) {
   background: linear-gradient(90deg, rgba(255, 138, 101, 0.18) 0%, #fafafa 100%);
 }
 
-.roadmap-slide ol li:nth-child(2),
-.roadmap-slide ol li:nth-child(5) {
+.roadmap ol li:nth-child(2),
+.roadmap ol li:nth-child(5) {
   background: linear-gradient(90deg, rgba(255, 171, 145, 0.22) 0%, #fafafa 100%);
 }
 
-.roadmap-slide ol li:nth-child(3) {
+.roadmap ol li:nth-child(3) {
   background: linear-gradient(90deg, rgba(189, 189, 189, 0.25) 0%, #fafafa 100%);
 }
 
-.roadmap-slide h2 + p {
+.roadmap h2 + p {
   margin: 0 0 1rem;
   padding-left: 1rem;
   border-left: 4px solid var(--ab-accent);
@@ -843,7 +843,7 @@
   color: var(--ab-muted);
 }
 
-.roadmap-slide blockquote {
+.roadmap blockquote {
   margin: 1rem 0 0;
   padding: 0.85rem 1rem;
   border-left: 4px solid var(--ab-accent);

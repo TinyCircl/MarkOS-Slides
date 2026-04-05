@@ -1,0 +1,49 @@
+.slidev-layout.default.slide-shell.body {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 1.2rem;
+}
+
+.body > h1 {
+  margin: 0;
+  color: var(--cb-primary);
+  font-size: 2.7rem;
+  line-height: 1.08;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+.body > h1 + p,
+.body > h1 + h2 {
+  margin: 0;
+  max-width: 42rem;
+  color: var(--cb-muted);
+  font-size: 1.04rem;
+  line-height: 1.62;
+  opacity: 1;
+}
+
+.body > h2,
+.body > h3 {
+  color: var(--cb-primary);
+}
+
+.body > img,
+.body > p:has(> img) {
+  margin: 0.25rem 0 0;
+  align-self: flex-start;
+  max-width: min(100%, 52rem);
+}
+
+.body > img,
+.body > p:has(> img) > img {
+  display: block;
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: 25rem;
+  border-radius: var(--cb-radius-image);
+  box-shadow: var(--cb-shadow-soft);
+  object-fit: contain;
+}

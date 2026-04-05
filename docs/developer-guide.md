@@ -19,15 +19,14 @@ These principles guide authoring, theme design, examples, and validation across 
 
 - Repository docs define the public authoring rules.
 - Skills should consume and apply those rules, not invent parallel rulesets.
-- Theme `README.md` files are the public contract for humans and AI.
+- `docs/theme-authoring.md` defines the shared theme contract.
 - `theme.css` implements the contract; it should not be the first place authors need to read.
 
-### Theme Flexibility Over Forced Uniformity
+### Fixed Page Vocabulary
 
-- Themes should share a common documentation format, not a forced identical template inventory.
-- Canonical template names are useful as a shared vocabulary, but strict naming uniformity is less important than clear README contracts.
-- If a theme uses a distinct template name, document the role and Markdown shape clearly.
-- Let themes keep visual and authoring personality as long as the public contract stays understandable.
+- Shared themes use one fixed public page inventory.
+- The author-facing template names are limited to the eight names in `docs/theme-authoring.md`.
+- Theme personality should come from visual design and adaptive behavior, not from inventing extra public page names.
 
 ### Structure Over Mandatory Shared CSS APIs
 

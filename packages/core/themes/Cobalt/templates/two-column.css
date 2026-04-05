@@ -1,4 +1,4 @@
-.implementation-process-slide {
+.two-column {
   grid-template-columns: minmax(0, 1fr) minmax(320px, 1fr);
   grid-template-rows: auto minmax(0, 1fr);
   column-gap: 36px;
@@ -6,7 +6,7 @@
   align-content: stretch;
 }
 
-.implementation-process-slide .col-left {
+.two-column .col-left {
   grid-column: 1;
   grid-row: 2;
   align-self: stretch;
@@ -17,7 +17,7 @@
   height: 100%;
 }
 
-.implementation-process-slide .col-right {
+.two-column .col-right {
   grid-column: 2;
   grid-row: 2;
   align-self: stretch;
@@ -30,7 +30,7 @@
   padding-top: 0;
 }
 
-.slidev-layout.two-columns.slide-shell.implementation-process-slide > .two-cols-header {
+.slidev-layout.two-columns.slide-shell.two-column > .two-cols-header {
   grid-column: 1 / -1;
   grid-row: 1;
   width: 100%;
@@ -38,7 +38,7 @@
   padding-bottom: 0;
 }
 
-.slidev-layout.two-columns.slide-shell.implementation-process-slide > .two-cols-header > h1 {
+.slidev-layout.two-columns.slide-shell.two-column > .two-cols-header > h1 {
   width: 100%;
   max-width: none;
   margin: 0;
@@ -49,8 +49,8 @@
   letter-spacing: -0.02em;
 }
 
-.slidev-layout.two-columns.slide-shell.implementation-process-slide > .two-cols-header > h1 + p,
-.slidev-layout.two-columns.slide-shell.implementation-process-slide > .two-cols-header > h1 + h2 {
+.slidev-layout.two-columns.slide-shell.two-column > .two-cols-header > h1 + p,
+.slidev-layout.two-columns.slide-shell.two-column > .two-cols-header > h1 + h2 {
   width: 100%;
   max-width: none;
   margin: 0.35rem 0 0;
@@ -59,12 +59,12 @@
   line-height: 1.6;
 }
 
-.slidev-layout.two-columns.slide-shell.implementation-process-slide > .two-cols-header > h1 + h2 {
+.slidev-layout.two-columns.slide-shell.two-column > .two-cols-header > h1 + h2 {
   font-size: 1.12rem;
   font-weight: 500;
 }
 
-.implementation-process-slide .col-left > ol {
+.two-column .col-left > ol {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   grid-auto-rows: auto;
@@ -78,7 +78,7 @@
   counter-reset: cobalt-step;
 }
 
-.implementation-process-slide .col-left > ol > li {
+.two-column .col-left > ol > li {
   counter-increment: cobalt-step;
   margin: 0;
   min-height: 164px;
@@ -96,11 +96,11 @@
   line-height: 1.56;
 }
 
-.implementation-process-slide .col-left > ol > li:last-child:nth-child(odd) {
+.two-column .col-left > ol > li:last-child:nth-child(odd) {
   grid-column: 1 / -1;
 }
 
-.implementation-process-slide .col-left > ol > li::before {
+.two-column .col-left > ol > li::before {
   content: counter(cobalt-step, decimal-leading-zero);
   display: grid;
   place-items: center;
@@ -114,7 +114,7 @@
   font-weight: 800;
 }
 
-.implementation-process-slide .col-left > ol > li > strong {
+.two-column .col-left > ol > li > strong {
   display: block;
   margin-bottom: 0.5rem;
   color: #1f4788;
@@ -123,7 +123,7 @@
   line-height: 1.38;
 }
 
-.implementation-process-slide .col-left > ol > li > p {
+.two-column .col-left > ol > li > p {
   max-width: none;
   margin: 0;
   font-size: 0.92rem;
@@ -131,7 +131,7 @@
   overflow-wrap: anywhere;
 }
 
-.implementation-process-slide .col-left > p:last-child {
+.two-column .col-left > p:last-child {
   margin-top: 0.8rem;
   color: var(--cb-muted);
   font-size: 0.82rem;
@@ -139,7 +139,7 @@
   line-height: 1.5;
 }
 
-.implementation-process-slide .col-right > h2 {
+.two-column .col-right > h2 {
   margin: 0;
   padding: 0.9rem 1rem 0.2rem;
   background: rgba(31, 71, 136, 0.05);
@@ -150,9 +150,9 @@
   font-weight: 600;
 }
 
-.implementation-process-slide .col-right > h2 + p,
-.implementation-process-slide .col-right > h2 + ul,
-.implementation-process-slide .col-right > h2 + ol {
+.two-column .col-right > h2 + p,
+.two-column .col-right > h2 + ul,
+.two-column .col-right > h2 + ol {
   margin: 0 0 12px;
   padding: 0 1rem 0.9rem;
   background: rgba(31, 71, 136, 0.05);
@@ -162,94 +162,94 @@
   line-height: 1.58;
 }
 
-.implementation-process-slide .col-right > h2 + ul,
-.implementation-process-slide .col-right > h2 + ol {
+.two-column .col-right > h2 + ul,
+.two-column .col-right > h2 + ol {
   padding-left: calc(1rem + 1.2rem);
 }
 
-.implementation-process-slide .col-right > h2 + ul li + li,
-.implementation-process-slide .col-right > h2 + ol li + li {
+.two-column .col-right > h2 + ul li + li,
+.two-column .col-right > h2 + ol li + li {
   margin-top: 0.4rem;
 }
 
-.implementation-process-slide .col-right > h2:last-of-type + p,
-.implementation-process-slide .col-right > h2:last-of-type + ul,
-.implementation-process-slide .col-right > h2:last-of-type + ol {
+.two-column .col-right > h2:last-of-type + p,
+.two-column .col-right > h2:last-of-type + ul,
+.two-column .col-right > h2:last-of-type + ol {
   margin-bottom: 0;
 }
 
-.implementation-process-slide:has(.col-left > ol > li:nth-of-type(5)) .col-left > ol {
+.two-column:has(.col-left > ol > li:nth-of-type(5)) .col-left > ol {
   grid-auto-rows: minmax(0, 1fr);
   align-content: stretch;
   gap: 12px;
   height: 100%;
 }
 
-.implementation-process-slide:has(.col-left > ol > li:nth-of-type(5)) .col-left > ol > li {
+.two-column:has(.col-left > ol > li:nth-of-type(5)) .col-left > ol > li {
   min-height: 0;
   padding: 0.9rem 0.82rem 0.82rem;
   font-size: 0.86rem;
   line-height: 1.44;
 }
 
-.implementation-process-slide:has(.col-left > ol > li:nth-of-type(5)) .col-left > ol > li::before {
+.two-column:has(.col-left > ol > li:nth-of-type(5)) .col-left > ol > li::before {
   width: 2.3rem;
   height: 2.3rem;
   margin-bottom: 0.7rem;
   font-size: 0.86rem;
 }
 
-.implementation-process-slide:has(.col-left > ol > li:nth-of-type(5)) .col-left > ol > li > strong {
+.two-column:has(.col-left > ol > li:nth-of-type(5)) .col-left > ol > li > strong {
   margin-bottom: 0.4rem;
   font-size: 0.9rem;
   line-height: 1.28;
 }
 
-.implementation-process-slide:has(.col-left > ol > li:nth-of-type(5)) .col-left > ol > li > p {
+.two-column:has(.col-left > ol > li:nth-of-type(5)) .col-left > ol > li > p {
   font-size: 0.8rem;
   line-height: 1.34;
 }
 
-.implementation-process-slide:has(.col-left > ol > li:nth-of-type(6)) .col-left > ol {
+.two-column:has(.col-left > ol > li:nth-of-type(6)) .col-left > ol {
   grid-auto-rows: auto;
   align-content: center;
   gap: 10px;
   height: auto;
 }
 
-.implementation-process-slide:has(.col-left > ol > li:nth-of-type(6)) .col-left > ol > li {
+.two-column:has(.col-left > ol > li:nth-of-type(6)) .col-left > ol > li {
   min-height: 126px;
   padding: 0.78rem 0.72rem 0.72rem;
   font-size: 0.78rem;
   line-height: 1.32;
 }
 
-.implementation-process-slide:has(.col-left > ol > li:nth-of-type(6)) .col-left > ol > li::before {
+.two-column:has(.col-left > ol > li:nth-of-type(6)) .col-left > ol > li::before {
   width: 2.15rem;
   height: 2.15rem;
   margin-bottom: 0.6rem;
   font-size: 0.82rem;
 }
 
-.implementation-process-slide:has(.col-left > ol > li:nth-of-type(6)) .col-left > ol > li > strong {
+.two-column:has(.col-left > ol > li:nth-of-type(6)) .col-left > ol > li > strong {
   margin-bottom: 0.32rem;
   font-size: 0.82rem;
   line-height: 1.22;
 }
 
-.implementation-process-slide:has(.col-left > ol > li:nth-of-type(6)) .col-left > ol > li > p {
+.two-column:has(.col-left > ol > li:nth-of-type(6)) .col-left > ol > li > p {
   font-size: 0.72rem;
   line-height: 1.22;
 }
 
-.implementation-process-slide:has(.col-right > h2:nth-of-type(4)) .col-right > h2 {
+.two-column:has(.col-right > h2:nth-of-type(4)) .col-right > h2 {
   padding-top: 0.8rem;
   font-size: 1rem;
 }
 
-.implementation-process-slide:has(.col-right > h2:nth-of-type(4)) .col-right > h2 + p,
-.implementation-process-slide:has(.col-right > h2:nth-of-type(4)) .col-right > h2 + ul,
-.implementation-process-slide:has(.col-right > h2:nth-of-type(4)) .col-right > h2 + ol {
+.two-column:has(.col-right > h2:nth-of-type(4)) .col-right > h2 + p,
+.two-column:has(.col-right > h2:nth-of-type(4)) .col-right > h2 + ul,
+.two-column:has(.col-right > h2:nth-of-type(4)) .col-right > h2 + ol {
   margin-bottom: 10px;
   padding-bottom: 0.8rem;
   font-size: 0.9rem;

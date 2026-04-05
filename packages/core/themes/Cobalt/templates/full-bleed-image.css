@@ -1,0 +1,36 @@
+.slidev-layout.default.full-bleed-image,
+.slidev-layout.cover.full-bleed-image {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 100%;
+  padding: 0;
+  overflow: hidden;
+  background: #0f1720;
+}
+
+/* This template is image-only. Any accidental text content should be ignored. */
+.full-bleed-image > :not(img):not(p:has(> img)) {
+  display: none;
+}
+
+.full-bleed-image > img,
+.full-bleed-image > p:has(> img) {
+  position: absolute;
+  inset: 0;
+  display: block;
+  margin: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.full-bleed-image > img,
+.full-bleed-image > p:has(> img) > img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  border-radius: 0;
+  box-shadow: none;
+  object-fit: cover;
+}

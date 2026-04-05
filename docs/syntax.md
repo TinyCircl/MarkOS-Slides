@@ -50,7 +50,7 @@ After file frontmatter, put a page frontmatter block before a slide only when th
 ```md
 ---
 layout: cover
-class: slide-shell title-slide
+class: slide-shell title
 ---
 
 # Cover Slide
@@ -84,7 +84,7 @@ Use `layout: two-cols` and split content with `::right::`:
 ```md
 ---
 layout: two-cols
-layoutClass: slide-shell pricing-slide
+layoutClass: slide-shell two-column
 ---
 
 ## Left Column
@@ -124,7 +124,7 @@ Practical recommendation:
 
 For the higher-level reasoning behind these rules, also read:
 
-- [Developer Guide](./developer-guide.md#development-principles): why MarkOS favors content fidelity, README contracts, and lightweight authoring surfaces
+- [Developer Guide](./developer-guide.md#development-principles): why MarkOS favors content fidelity, shared doc contracts, and lightweight authoring surfaces
 
 If you are creating or refactoring a reusable shared theme, also read:
 

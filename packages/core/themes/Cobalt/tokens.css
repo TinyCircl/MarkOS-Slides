@@ -14,5 +14,5 @@
   --cb-shadow-soft: 0 10px 28px rgba(18, 55, 122, 0.08);
   --cb-shadow-card: 0 20px 48px rgba(18, 55, 122, 0.12);
   --cb-shadow-deep: 0 28px 60px rgba(18, 55, 122, 0.16);
-  --cb-radius-image: 10px;
+  --cb-radius-image: 6px;
 }

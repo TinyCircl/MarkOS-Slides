@@ -1,0 +1,107 @@
+.section-divider {
+  padding: 32px;
+  background: #1f4788;
+  color: #ffffff;
+  text-align: center !important;
+}
+
+.section-divider::before,
+.section-divider::after {
+  content: none;
+}
+
+.section-divider > .my-auto {
+  position: relative;
+  width: min(1120px, calc(100% - 32px));
+  min-height: 100%;
+  margin: 0;
+  padding: 88px 32px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  overflow: hidden;
+}
+
+.section-divider > .my-auto::before {
+  content: "";
+  width: 120px;
+  height: 8px;
+  margin-bottom: 56px;
+  border-radius: 999px;
+  background: #4a90e2;
+}
+
+.section-divider > .my-auto[data-markos-section-number]::after {
+  content: attr(data-markos-section-number);
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  margin: 0;
+  color: rgba(255, 255, 255, 0.1);
+  font-size: clamp(10rem, 19vw, 14rem);
+  line-height: 1;
+  font-weight: 800;
+  letter-spacing: -0.05em;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.section-divider > .my-auto > * {
+  position: relative;
+  z-index: 1;
+}
+
+.section-divider h1 {
+  margin: 0 0 16px;
+  color: #ffffff;
+  font-size: clamp(2.75rem, 5vw, 4rem);
+  line-height: 1.08;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+
+.section-divider h2,
+.section-divider h1 + p {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.82);
+  font-size: clamp(1.25rem, 2.2vw, 1.75rem);
+  line-height: 1.45;
+  font-weight: 400;
+  max-width: 28ch;
+}
+
+.section-divider h2 + p,
+.section-divider > .my-auto > p:last-of-type {
+  margin-top: 18px;
+  max-width: 42rem;
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 1rem;
+  line-height: 1.7;
+}
+
+.section-divider ul,
+.section-divider ol {
+  margin: 24px 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 10px;
+  justify-items: center;
+}
+
+.section-divider li {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 1rem;
+  line-height: 1.55;
+}
+
+.section-divider li::before {
+  content: none;
+}

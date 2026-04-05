@@ -58,7 +58,7 @@ npm run markos:theme -- apply Clay examples/tokyo3days
 Preview a built-in theme fixture through the real dev pipeline:
 
 ```bash
-npm run markos:theme-preview -- Cobalt comparison --port 3030
+npm run markos:theme-preview -- Cobalt image-text --port 3030
 ```
 
 Export the example deck:

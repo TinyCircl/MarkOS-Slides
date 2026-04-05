@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Presentation Overview</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
+        .slide-container {
+            width: 1280px;
+            min-height: 720px;
+            background-color: #f8f9fa;
+            font-family: 'Inter', sans-serif;
+            color: #333333;
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+        }
+        .slide-title {
+            color: #1f4788;
+            font-size: 42px;
+            font-weight: 700;
+            margin-bottom: 32px;
+            border-bottom: 2px solid #1f4788;
+            padding-bottom: 16px;
+        }
+        .toc-list {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            margin-top: 20px;
+        }
+        .toc-item {
+            display: flex;
+            align-items: center;
+            padding: 20px;
+            background: white;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            transition: transform 0.2s;
+        }
+        .toc-number {
+            background-color: #1f4788;
+            color: white;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            font-weight: 700;
+            margin-right: 24px;
+        }
+        .toc-text {
+            font-size: 24px;
+            font-weight: 400;
+            color: #333333;
+        }
+        .active-item {
+            border-left: 8px solid #1f4788;
+            background-color: #eef2f7;
+        }
+        .active-item .toc-text {
+            font-weight: 700;
+            color: #1f4788;
+        }
+    </style>
+</head>
+<body>
+    <div class="slide-container">
+        <h1 class="slide-title">Presentation Overview</h1>
+        
+        <div class="toc-list">
+            <div class="toc-item active-item">
+                <div class="toc-number">01</div>
+                <div class="toc-text">Introduction to Cobalt</div>
+            </div>
+            <div class="toc-item">
+                <div class="toc-number">02</div>
+                <div class="toc-text">Core Design Principles</div>
+            </div>
+            <div class="toc-item">
+                <div class="toc-number">03</div>
+                <div class="toc-text">Layout & Typography</div>
+            </div>
+            <div class="toc-item">
+                <div class="toc-number">04</div>
+                <div class="toc-text">Data Visualization</div>
+            </div>
+            <div class="toc-item">
+                <div class="toc-number">05</div>
+                <div class="toc-text">Conclusion & Next Steps</div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

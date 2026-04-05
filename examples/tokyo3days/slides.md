@@ -6,7 +6,7 @@ title: tokyo3days
 ---
 layout: cover
 background: '#f5f5f5'
-class: slide-shell title-slide text-left
+class: slide-shell title text-left
 ---
 
 `Tokyo`
@@ -19,7 +19,7 @@ Use this example to study theme wiring, slide hierarchy, and Markdown content sh
 
 ---
 layout: two-cols
-layoutClass: slide-shell overview-slide
+layoutClass: slide-shell overview
 ---
 
 # Trip Overview
@@ -42,7 +42,7 @@ Use trains as the default and keep long cross-city transfers to once per day.
 
 ---
 layout: two-cols
-layoutClass: slide-shell strengths-slide
+layoutClass: slide-shell strengths
 ---
 
 # Day 1: Historic Tokyo
@@ -70,7 +70,7 @@ layoutClass: slide-shell strengths-slide
 
 ---
 layout: two-cols
-layoutClass: slide-shell roadmap-slide
+layoutClass: slide-shell roadmap
 ---
 
 # Day 2: Modern City Flow
@@ -92,7 +92,7 @@ Move north through Harajuku and Omotesando on foot.
 Finish in Shinjuku for skyline views and dinner.
 
 ---
-class: slide-shell feature-slide
+class: slide-shell feature
 ---
 
 # Travel Notes
@@ -107,7 +107,7 @@ class: slide-shell feature-slide
 ---
 layout: cover
 background: '#f5f5f5'
-class: slide-shell title-slide text-left
+class: slide-shell title text-left
 ---
 
 `Clay`
@@ -116,4 +116,4 @@ class: slide-shell title-slide text-left
 
 ## The deck stays readable even without deck-local `slides.css`.
 
-For more rules, read the theme README and the theme authoring docs.
+For more rules, read the theme authoring docs.

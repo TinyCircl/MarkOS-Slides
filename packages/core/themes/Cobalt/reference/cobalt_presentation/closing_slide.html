@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thank You - Cobalt Design System</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700;800&display=swap');
+        
+        .slide-container {
+            width: 1280px;
+            min-height: 720px;
+            background: #f8f9fa;
+            margin: 0 auto;
+            position: relative;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+        }
+        
+        .header-bar {
+            height: 8px;
+            background: linear-gradient(90deg, #1f4788 0%, #4a90e2 50%, #87ceeb 100%);
+            width: 100%;
+        }
+        
+        .main-content {
+            padding: 120px 80px;
+            height: calc(100% - 8px);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        
+        .title-section {
+            margin-bottom: 60px;
+        }
+        
+        .primary-title {
+            font-size: 93px;
+            font-weight: 800;
+            color: #1f4788;
+            line-height: 0.9;
+            margin-bottom: 20px;
+            letter-spacing: -3px;
+        }
+        
+        .secondary-title {
+            font-size: 36px;
+            font-weight: 300;
+            color: #4a90e2;
+            line-height: 1.2;
+            margin-bottom: 40px;
+        }
+        
+        .tagline {
+            font-size: 20px;
+            font-weight: 400;
+            color: #666666;
+            max-width: 600px;
+        }
+        
+        .year-corner {
+            position: absolute;
+            bottom: 80px;
+            right: 80px;
+            font-size: 180px;
+            font-weight: 900;
+            color: rgba(31, 71, 136, 0.05);
+            line-height: 1;
+            pointer-events: none;
+        }
+        
+        .floating-elements {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            overflow: hidden;
+        }
+        
+        .float-circle {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(74, 144, 226, 0.06);
+        }
+        
+        .circle-1 { width: 120px; height: 120px; top: 15%; right: 20%; }
+        .circle-2 { width: 80px; height: 80px; top: 60%; right: 15%; background: rgba(135, 206, 235, 0.08); }
+        .circle-3 { width: 60px; height: 60px; top: 35%; right: 35%; background: rgba(31, 71, 136, 0.05); }
+        
+        .bottom-meta {
+            position: absolute;
+            bottom: 40px;
+            left: 80px;
+            color: #666666;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="slide-container">
+        <div class="header-bar"></div>
+        
+        <div class="floating-elements">
+            <div class="float-circle circle-1"></div>
+            <div class="float-circle circle-2"></div>
+            <div class="float-circle circle-3"></div>
+        </div>
+        
+        <div class="year-corner">2026</div>
+        
+        <div class="main-content">
+            <div class="title-section">
+                <h1 class="primary-title">Thank You</h1>
+                <h2 class="secondary-title">Questions & Next Steps</h2>
+                <p class="tagline">
+                    We appreciate your time. For further inquiries or to download the full design documentation, please contact us at info@manus.ai or visit our internal portal.
+                </p>
+            </div>
+        </div>
+        
+        <div class="bottom-meta">
+            Cobalt Design System • April 2026
+        </div>
+    </div>
+</body>
+</html>

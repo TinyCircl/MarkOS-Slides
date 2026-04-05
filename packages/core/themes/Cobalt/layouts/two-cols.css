@@ -94,9 +94,10 @@
 .slidev-layout.two-columns.slide-shell .col-right img {
   display: block;
   width: 100%;
-  min-height: 392px;
-  max-height: 392px;
-  object-fit: cover;
+  height: auto;
+  min-height: 0;
+  max-height: none;
+  object-fit: contain;
   border-radius: var(--cb-radius-image);
   box-shadow: var(--cb-shadow-deep);
   background: var(--cb-surface-soft);

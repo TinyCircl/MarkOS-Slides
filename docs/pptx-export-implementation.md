@@ -211,7 +211,7 @@ Current top-level shape:
     {
       "index": 0,
       "title": "Slide Title",
-      "template": "comparison-slide",
+      "template": "two-column",
       "backgroundColor": "rgb(255, 255, 255)",
       "nodes": []
     }

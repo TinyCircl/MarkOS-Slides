@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Section 02: Data Visualization</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800&display=swap');
+        .slide-container {
+            width: 1280px;
+            min-height: 720px;
+            background-color: #1f4788;
+            font-family: 'Inter', sans-serif;
+            color: white;
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+        .section-number {
+            font-size: 180px;
+            font-weight: 800;
+            opacity: 0.1;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            line-height: 1;
+        }
+        .section-title {
+            font-size: 64px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            position: relative;
+            z-index: 10;
+        }
+        .section-subtitle {
+            font-size: 28px;
+            font-weight: 400;
+            opacity: 0.8;
+            position: relative;
+            z-index: 10;
+        }
+        .accent-bar {
+            width: 120px;
+            height: 8px;
+            background-color: #4a90e2;
+            margin-bottom: 40px;
+            position: relative;
+            z-index: 10;
+        }
+    </style>
+</head>
+<body>
+    <div class="slide-container">
+        <div class="section-number">02</div>
+        <div class="accent-bar"></div>
+        <h1 class="section-title">02 Data Visualization</h1>
+        <p class="section-subtitle">Transforming Numbers into Insights</p>
+    </div>
+</body>
+</html>

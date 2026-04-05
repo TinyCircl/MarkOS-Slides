@@ -1,5 +1,4 @@
-.closing-slide,
-.q-and-a-slide {
+.closing {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -8,8 +7,7 @@
   text-align: center !important;
 }
 
-.closing-slide::before,
-.q-and-a-slide::before {
+.closing::before {
   content: "";
   position: absolute;
   top: 0;
@@ -26,13 +24,11 @@
   pointer-events: none;
 }
 
-.closing-slide::after,
-.q-and-a-slide::after {
+.closing::after {
   content: none;
 }
 
-.closing-slide > .my-auto,
-.q-and-a-slide > .my-auto {
+.closing > .my-auto {
   position: relative;
   z-index: 1;
   width: min(900px, 100%);
@@ -51,15 +47,19 @@
   text-align: center;
 }
 
-.closing-slide > .my-auto::before,
-.closing-slide > .my-auto::after,
-.q-and-a-slide > .my-auto::before,
-.q-and-a-slide > .my-auto::after {
+.closing > .my-auto::before,
+.closing > .my-auto::after {
   content: none;
 }
 
-.closing-slide > .my-auto > p:first-child,
-.q-and-a-slide > .my-auto > p:first-child {
+/* Closing pages are text-only. Do not use Markdown images in this template. */
+.closing img,
+.closing figure,
+.closing p:has(> img) {
+  display: none;
+}
+
+.closing > .my-auto > p:first-child {
   margin: 0 0 16px;
   padding: 0;
   background: transparent;
@@ -72,8 +72,7 @@
   text-transform: none;
 }
 
-.closing-slide h1,
-.q-and-a-slide h1 {
+.closing h1 {
   margin: 0 0 24px;
   color: #1f4788;
   font-size: 42px;
@@ -82,10 +81,8 @@
   letter-spacing: 0;
 }
 
-.closing-slide h2,
-.closing-slide h1 + p,
-.q-and-a-slide h2,
-.q-and-a-slide h1 + p {
+.closing h2,
+.closing h1 + p {
   margin: 0;
   color: var(--cb-muted);
   font-size: 18px;
@@ -93,16 +90,13 @@
   font-weight: 400;
 }
 
-.closing-slide h2 + p,
-.closing-slide > .my-auto > p:last-of-type,
-.q-and-a-slide h2 + p,
-.q-and-a-slide > .my-auto > p:last-of-type {
+.closing h2 + p,
+.closing > .my-auto > p:last-of-type {
   margin-top: 12px;
   max-width: 32rem;
 }
 
-.closing-slide ul,
-.q-and-a-slide ul {
+.closing ul {
   margin: 32px 0 0;
   padding: 0;
   list-style: none;
@@ -111,8 +105,7 @@
   justify-items: center;
 }
 
-.closing-slide li,
-.q-and-a-slide li {
+.closing li {
   margin: 0;
   padding: 0;
   color: #333333;
@@ -120,12 +113,10 @@
   line-height: 1.8;
 }
 
-.closing-slide li::before,
-.q-and-a-slide li::before {
+.closing li::before {
   content: none;
 }
 
-.closing-slide li strong,
-.q-and-a-slide li strong {
+.closing li strong {
   font-weight: 700;
 }

@@ -10,7 +10,6 @@ This document is the repo-wide standard for making CSS themes and page templates
 
 - A shared theme folder at `packages/core/themes/<ThemeName>/`
 - A `theme.css` implementation file inside that folder
-- A `README.md` manifest that explains the theme's public authoring API
 - A reusable visual system that can be applied across multiple decks
 - A documented set of page templates expressed through class names
 - A CSS layer that works with MarkOS Markdown output and built-in layouts
@@ -29,18 +28,16 @@ The standard shared theme layout is:
 ```text
 packages/core/themes/
   Clay/
-    README.md
     theme.css
     templates/
       panel-media.css
     fixtures/
-      comparison.md
-      process.md
+      body.md
+      two-column.md
 ```
 
 Use these files for different responsibilities:
 
-- `README.md`: theme manifest, implemented templates, authoring notes, and deviations
 - `theme.css`: tokens, shell styling, page templates, and contextual Markdown styling
 - `fixtures/*.md`: template validation decks built from real Markdown wiring and used as the primary acceptance surface
 
@@ -48,7 +45,7 @@ If a theme includes fixtures, prefer one fixture deck per template and put multi
 
 Treat fixture decks as pressure tests, not just happy-path examples.
 
-For example, `comparison.md` should usually contain several `comparison-slide` pages:
+For example, `two-column.md` should usually contain several `two-column` pages:
 
 - a happy-path case
 - a sparse case
@@ -73,10 +70,10 @@ The goal is to answer questions like:
 Use the real preview command when tuning a template:
 
 ```bash
-npm run markos:theme-preview -- Cobalt comparison --port 3030
+npm run markos:theme-preview -- <Theme> two-column --port 3030
 ```
 
-This renders `packages/core/themes/Cobalt/fixtures/comparison.md` through the actual MarkOS dev pipeline, so it is a better acceptance surface than hand-written HTML sketches.
+This renders `packages/core/themes/<Theme>/fixtures/two-column.md` through the actual MarkOS dev pipeline, so it is a better acceptance surface than hand-written HTML sketches.
 
 When a theme includes visual references or mockups, use them as style inspiration. Use fixture decks as the real validation surface.
 
@@ -98,85 +95,42 @@ This means:
 - third-party or historical layout studies
 - visual experiments for future templates
 
-Use `reference/` for inspiration and comparison only. Use `theme.css`, template files, theme `README.md`, and `fixtures/*.md` for actual authoring and validation.
+Use `reference/` for inspiration and comparison only. Use `theme.css`, template files, and `fixtures/*.md` for actual authoring and validation.
 
-## Theme README Standard
+## Theme-Level READMEs Are Optional
 
-The theme `README.md` is the primary public authoring contract for humans and AI.
+The fixed public page inventory is defined only by this document.
 
-When someone needs to understand, use, or modify a theme, they should read the theme `README.md` first and the `theme.css` second.
+Theme-level `README.md` files are optional and are not part of the public authoring contract.
 
-A good theme README should be sufficient to:
+If a theme keeps a local README for migration notes or maintainer context, treat it as non-normative support material.
 
-- choose the right template for a piece of content
-- understand what Markdown shape each template expects
-- preserve source content while adapting hierarchy and pagination
-- wire the template correctly without reverse-engineering CSS selectors
+The required authoring source of truth is:
 
-The recommended structure is:
+- `docs/theme-authoring.md` for the fixed eight public page roles
+- `packages/core/themes/<Theme>/theme.css` for the implementation
+- `packages/core/themes/<Theme>/fixtures/*.md` for runnable validation
 
-```md
-# ThemeName
-
-## Theme Summary
-
-## Authoring Rules
-
-## Template Catalog
-
-### title-slide
-
-### overview-slide
-
-## Template Selection Guide
-
-## Content Fidelity Guidance
-
-## Examples
-```
-
-The minimum required information is:
-
-- theme name
-- shell class name
-- implemented templates
-- theme-specific deviations or unsupported canonical templates when relevant
-- one-line purpose for each implemented template
-- wiring information for each implemented template
-
-Recommended additional information:
-
-- best-fit guidance for each template
-- anti-patterns or "avoid when" guidance for templates that are easy to misuse
-- expected Markdown shape for each template
-- one or two short content examples
-- explicit content-fidelity guidance for AI-assisted adaptation
-
-If a theme is intentionally very small, sections may stay short, but the README should still answer three practical questions:
-
-1. Which template should I pick?
-2. What Markdown shape should I feed it?
-3. What content changes are allowed during adaptation?
-
-These expectations follow the [Developer Guide](./developer-guide.md#development-principles): clear README contracts matter more than forcing every theme into identical names or identical template inventories.
+Do not put required template names, required wiring, or required authoring decisions into per-theme READMEs.
 
 ## Authoring Source Of Truth
 
 Use this precedence order when documenting and maintaining themes:
 
 1. `docs/theme-authoring.md` defines the global standard
-2. `packages/core/themes/<Theme>/README.md` defines that specific theme's public API
-3. `packages/core/themes/<Theme>/theme.css` implements the API
+2. `packages/core/themes/<Theme>/theme.css` implements the API
+3. `packages/core/themes/<Theme>/fixtures/*.md` validate the API with real Markdown
 
 This means:
 
 - shared rules belong in this document
-- theme-specific availability and deviations belong in the theme `README.md`
 - implementation details belong in the CSS
+- runnable examples and pressure tests belong in fixtures
+- optional theme-local notes should never redefine the public contract
 
-Avoid duplicating the full template contract in all three places.
+Avoid duplicating the full template contract across multiple theme-local files.
 
-For theme usage and content adaptation, prefer README-level rules over inferred CSS behavior. CSS should implement the contract, not define it implicitly.
+For theme usage and content adaptation, prefer this document over inferred CSS behavior. CSS should implement the contract, not define it implicitly.
 
 ## Runtime Contract
 
@@ -206,14 +160,14 @@ Practical examples:
 ```md
 ---
 layout: cover
-class: slide-shell title-slide
+class: slide-shell title
 ---
 ```
 
 ```md
 ---
 layout: two-cols
-layoutClass: slide-shell pricing-slide
+layoutClass: slide-shell two-column
 class: content-pane
 ---
 ```
@@ -283,7 +237,7 @@ Across themes, the preferred CSS organization is:
 4. shared layout helpers such as `two-cols` shell rules
 5. optional shared media helpers for Markdown images inside cards or panels
 6. optional shared template-family helpers
-7. concrete page-template blocks such as `.title-slide` or `.metrics-slide`
+7. concrete page-template blocks such as `.title` or `.two-column`
 8. export or responsive safety fixes when needed
 
 This is the pattern both existing themes broadly follow, even when the intermediate helper layers differ.
@@ -301,29 +255,30 @@ Theme authors do not need to use these exact section titles, but the file should
 ### 5. Page Types
 
 Page templates are represented by page-type classes such as:
-- `.title-slide`
-- `.overview-slide`
-- `.pricing-slide`
-- `.swot-slide`
-- `.roadmap-slide`
+- `.title`
+- `.toc`
+- `.two-column`
+- `.closing`
 
 Page-type classes should:
-- end with `-slide`
+- use the fixed suffix-free names from this document
 - describe slide role, not deck-specific content
 - be applied together with `slide-shell` unless the template intentionally opts out
-- use canonical names from this document whenever a standard role already exists
+- use only the required public names from this document
 
 Good names:
-- `.title-slide`
-- `.comparison-slide`
-- `.metrics-slide`
-- `.roadmap-slide`
+- `.title`
+- `.body`
+- `.image-text`
 
 Avoid:
 - `.page2`
 - `.big-table`
 - `.tokyo-day-three`
-- `.customer-alpha-slide`
+- `.customer-alpha`
+- `.metrics`
+- `.roadmap`
+- `.comparison`
 
 ### 6. Contextual Element Styling
 
@@ -332,11 +287,11 @@ Style Markdown output inside the shell or page type, not globally.
 Good:
 
 ```css
-.pricing-slide h2 {
+.two-column h2 {
   color: var(--mk-accent);
 }
 
-.pricing-slide table {
+.body table {
   width: 100%;
 }
 ```
@@ -353,40 +308,63 @@ table {
 }
 ```
 
-## Canonical Template Names
+## Required Public Template Inventory
 
-For reusable shared themes, canonical template names are the recommended shared vocabulary.
+For reusable shared themes, the public template inventory is fixed.
 
-If a template matches one of the standard slide roles below, prefer the canonical name instead of inventing a theme-local name.
+Every shared theme in this repository must expose exactly these eight author-facing template names:
 
-Themes do not need to implement every canonical template, and themes may keep distinct names when that improves author clarity. The key requirement is that the README makes the role, Markdown shape, and wiring obvious.
+- `title`
+- `toc`
+- `section-divider`
+- `body`
+- `two-column`
+- `image-text`
+- `full-bleed-image`
+- `closing`
 
-Canonical names:
+This rule is strict.
 
-- `title-slide`: cover, hero, opening title, or final closing page with title-driven composition
-- `section-slide`: section divider or interstitial page with a short heading and minimal supporting content
-- `summary-slide`: concise executive summary or high-level key-takeaways page
-- `overview-slide`: mixed summary page with structured data plus supporting notes or callouts
-- `comparison-slide`: side-by-side comparison of options, vendors, products, or strategic positions
-- `feature-slide`: full-width matrix, capability table, or feature breakdown
-- `metrics-slide`: KPI, scorecard, chart-adjacent metrics, or number-led insights page
-- `process-slide`: implementation process, methodology, phased workflow, or ordered execution steps
-- `swot-slide`: SWOT or other paired quadrant-style analysis
-- `roadmap-slide`: roadmap, next steps, staged plan, or timeline-oriented action page
-- `closing-slide`: ending page, thank-you page, or final recap page
+- shared themes should implement all eight
+- all eight page roles are mandatory, not optional
+- shared themes should not expose additional public template names
+- theme-local names such as `metrics`, `comparison`, `roadmap`, `pricing`, or `swot` should not be part of the public authoring surface and should not appear in new authoring examples
+- docs, examples, skills, and any optional theme-local notes should use only these eight names
 
-Naming rules:
+These names represent page roles, not visual sameness.
 
-- Prefer canonical names over theme-specific names when the role is effectively the same
-- Use a non-canonical name when the template role is materially different or the theme needs a clearer author-facing name
-- When a non-canonical name is used, document the role and content shape explicitly in the README
-- Public examples and docs should favor the clearest user-facing name for that theme
+Different themes may style the same page role differently, but the public page-type vocabulary must stay limited to these eight names.
 
-Examples:
+Role definitions:
 
-- prefer `comparison-slide` over `positioning-slide` when the page is fundamentally a side-by-side comparison
-- prefer `metrics-slide` over a theme-local KPI name when the page is mainly numbers, indicators, or chart support
-- prefer `roadmap-slide` over a theme-local next-steps name when the page is phased action planning
+- `title`: opening cover with title-led composition
+- `toc`: table of contents or chapter navigation page
+- `section-divider`: short transition page that introduces a new section
+- `body`: single-column general content page
+- `two-column`: two-column comparison or parallel-information page
+- `image-text`: image-plus-text page, either left-right or right-left
+- `full-bleed-image`: image-only full-page visual emphasis page
+- `closing`: ending page, thank-you page, CTA page, or Q&A page
+
+Reference table:
+
+| Template Name | Chinese Name | Purpose | Typical Content |
+| --- | --- | --- | --- |
+| `title` | 封面页 | The opening slide that sets the deck topic and visual tone | Large title, subtitle, author, date, logo |
+| `toc` | 目录页 | Section navigation for the overall deck structure | Numbered section list, optional current-section highlight |
+| `section-divider` | 章节分隔页 | Transition slide that marks the start of a new section | Section title, optional section number or icon |
+| `body` | 标题+正文页 | The most general single-column content page | Title, paragraphs, lists, tables, code blocks |
+| `two-column` | 双栏对比页 | Parallel or comparative information shown in two columns | Left and right headings with supporting content, optional comparison emphasis |
+| `image-text` | 图文页 | Narrative page that pairs an image with explanatory text | Image on one side, title and descriptive text on the other |
+| `full-bleed-image` | 全图页 | Pure image page that lets one image fill the full slide area | One full-page image without surrounding text |
+| `closing` | 结尾页 | Final page that closes the deck and prompts next action | Thank-you message, CTA, contact details, Q&A cue |
+
+Image support is also fixed at the public-contract level.
+
+- Only `body`, `two-column`, `image-text`, and `full-bleed-image` support Markdown images.
+- `title`, `toc`, `section-divider`, and `closing` are text-only templates.
+- For text-only templates, image content should be filtered even if an author or AI includes Markdown image syntax by mistake.
+- `image-text` is not a single-image fallback. If a page is image-only, use `full-bleed-image`.
 
 ## Page Template Standard
 
@@ -397,7 +375,11 @@ A page template is not a separate file. In MarkOS, a page template is the combin
 - a documented Markdown content shape
 - CSS selectors scoped to that shape
 
-Each page template in a shared theme should have a documented contract in the theme `README.md` with these fields:
+Each page template in a shared theme should follow the contract in this document and prove it through fixtures.
+
+When a template needs local explanation beyond the shared standard, keep that explanation close to the implementation with short CSS comments or clearly named fixture variants.
+
+Important fields to keep stable in the implementation:
 
 - `Name`: template class name
 - `Layout`: `default`, `cover`, or `two-cols`
@@ -412,27 +394,26 @@ Each page template in a shared theme should have a documented contract in the th
 Example template spec:
 
 ```md
-Name: pricing-slide
+Name: two-column
 Layout: two-cols
 Attach Point: layoutClass
-Purpose: side-by-side comparison of pricing or package details
+Purpose: side-by-side comparison or parallel information page
 Best For:
-- left-column table plus right-column notes
+- left-column basis plus right-column notes
 Avoid When:
-- purely narrative prose with no clear comparison structure
+- the content only needs one column
 Expected Markdown Shape:
 - left column starts with `#` or `##`
-- table appears in the left column
+- left column carries a structured basis, short note, blockquote, or image
 - right column contains `##` sections followed by lists or notes
 Wiring:
 - `layout: two-cols`
-- `layoutClass: slide-shell pricing-slide`
+- `layoutClass: slide-shell two-column`
 Notes:
-- theme styles tables and `h2 + ul`
-- avoid extra leading paragraphs before the first heading
+- title and subtitle may be promoted above the split columns
 ```
 
-If a theme relies on special ordering, document it explicitly. Do not make deck authors reverse-engineer the contract from CSS.
+If a theme relies on special ordering, document it explicitly with CSS comments or fixture naming. Do not make deck authors reverse-engineer the contract from CSS.
 
 ## Adaptivity First
 
@@ -463,6 +444,33 @@ Adaptive behavior may include:
 
 Treat these adaptive rules as part of the public template contract, not as optional polish.
 
+## Complex Templates Are Allowed
+
+Shared themes do not need to optimize for the simplest possible Markdown at the cost of visual quality.
+
+If a page template is visually strong only when it receives a more structured Markdown shape, that is acceptable.
+
+In practice this means:
+
+- a complex template may require stricter heading order or block order than a basic template
+- a complex template may rely on repeated `## + paragraph/list/table` groups to achieve the intended composition
+- a complex template may expect one column to carry a more specific Markdown shape than the other
+- a theme should not be flattened into a generic layout just to make the CSS feel more KISS if the result is visibly worse
+
+MarkOS deck authoring is primarily AI-assisted, so moderate Markdown control is an acceptable tradeoff when it materially improves the final slide design.
+
+The important boundary is:
+
+- do not invent new author-facing syntax beyond normal Markdown, frontmatter, and the fixed page-template classes
+- do allow a template to be stricter about how standard Markdown is arranged when that strictness is what makes the template work well
+
+When a template depends on a stricter Markdown shape, document that expectation in:
+
+- the fixture deck for that page type
+- short template-local CSS comments when the ordering requirement is easy to miss
+
+Prefer a good-looking template with clear Markdown expectations over a flatter template that is easier to implement but visually weak.
+
 ## Fixture Validation Strategy
 
 Each reusable page template should have a matching fixture deck when the theme is intended for real authoring work.
@@ -492,11 +500,13 @@ Do not treat the fixture as a brochure page whose only job is to look ideal. Its
 
 ## Panel Media Guidance
 
-When a template already provides a stable panel or card surface, images should be treated as content that fits inside that surface, not as a separate layout mode.
+Only `body`, `two-column`, and `image-text` should treat images as supported content forms.
+
+For those image-capable templates, when a template already provides a stable panel or card surface, images should be treated as content that fits inside that surface, not as a separate layout mode.
 
 Preferred rules:
 
-- deck authors use Markdown only, so image support must work through normal Markdown image syntax such as `![](...)`
+- deck authors use Markdown only, so images must be introduced with standard Markdown image syntax such as `![alt text](image-url)`; theme authoring must not require raw HTML for image placement
 - let the existing panel or card define the frame
 - crop media inside that frame with stable dimensions instead of letting raw image size decide the layout
 - use a shared theme token for image radius when the same image language appears across templates
@@ -514,13 +524,135 @@ In practice, a good shared theme should make these pairs interchangeable when th
 - quote panel or image-backed panel
 - metric card with only text or metric card with a supporting image
 
-The panel remains the contract. The image is only one valid content form inside that contract.
+The panel remains the contract. The image is only one valid content form inside that contract for `body`, `two-column`, and `image-text`.
+
+## PPTX Export-Aware Theme Design
+
+MarkOS now exports editable `pptx` through the real web render pipeline.
+
+That means theme CSS should not only look right in the browser. It should also keep the final DOM easy for the exporter to measure and rebuild as native PowerPoint objects.
+
+The current exporter is documented in [PPTX Export Architecture](./pptx-export-implementation.md).
+
+### What The Exporter Handles Best
+
+The current exporter is strongest when templates present content as:
+
+- real headings, paragraphs, lists, and table cells
+- real Markdown images that render to `img` elements
+- simple colored panels and blocks
+- simple borders that can be rebuilt as accent bars or rectangle outlines
+- stable header and column regions
+
+### Write Semantic Content As Real DOM
+
+If content needs to stay editable in PPTX, keep it as real text in the slide DOM.
+
+Prefer:
+
+- `#`, `##`, paragraphs, lists, tables, captions, and code blocks
+- Markdown images for exportable visuals
+
+Avoid for important content:
+
+- `::before` or `::after` generated text
+- CSS `content:` for labels, headings, or numbers the user needs to edit later
+- putting meaningful copy only inside decorative wrappers with no semantic text node
+
+If the browser can only see the content as a CSS trick, the PPTX exporter will usually not preserve it as editable text.
+
+### Prefer Real Images Over CSS Background Images
+
+If an image should survive as an editable/exportable PPTX image object, render it as a real image node through Markdown.
+
+Prefer:
+
+- `![](...)`
+- image inside a panel, card, blockquote, or dedicated image region
+
+Avoid for important visuals:
+
+- `background-image` as the only source of a meaningful photo or diagram
+- pseudo-element images used as the only carrier of content
+
+Decorative background imagery is fine for browser rendering, but it should not be the only place where the slide stores meaningful content.
+
+### Keep Shapes Simple When Editability Matters
+
+The exporter currently rebuilds simple panels and accents better than highly stylized browser effects.
+
+Prefer:
+
+- flat fills
+- simple borders
+- modest border radius
+- stable rectangular or elliptical blocks
+
+Use caution with:
+
+- heavy blur shadows
+- filters
+- masks
+- blend modes
+- complex layered decorative effects
+- rotation or transform-driven composition for important content
+
+These effects may still look fine in HTML, but PPTX export may approximate them or drop them.
+
+### Do Not Hide Important Content In Layout Tricks
+
+The exporter measures final browser geometry, but it still works best when important content is laid out plainly.
+
+Prefer:
+
+- stable header regions
+- stable left and right column regions
+- content that remains visible without depending on fragile clipping
+
+Avoid:
+
+- relying on overflow clipping to hide part of important text
+- stacking meaningful content underneath decorative layers
+- requiring exact z-index tricks for the slide to make sense
+
+Decorative layers are fine. Critical information should remain visually and structurally obvious in the final DOM.
+
+### Tables Are Allowed, But Native PPTX Table Semantics Are Still Limited
+
+Tables are valid authoring content and should continue to be supported in themes.
+
+But today the exporter is better at preserving:
+
+- table text
+- table geometry
+- surrounding panels
+
+than at rebuilding full native editable PowerPoint tables.
+
+So if PPTX editability is a priority, prefer layouts where the table can still be understood if it is rebuilt as positioned text and shapes rather than a rich native table object.
+
+### Exportability Should Be Tested Through Fixtures
+
+If a theme supports PPTX-facing pages, test them with real fixture decks and real export:
+
+```bash
+npm run markos:theme-preview -- <Theme> two-column --port 3030
+npm run markos:export -- <deck> --format pptx
+```
+
+During fixture review, check:
+
+- important text stays in real text nodes
+- images stay inside panel frames and export as images
+- titles and columns remain structurally obvious
+- dense pages still export without clipped text or collapsed geometry
+- decorative effects do not carry essential meaning
 
 ## Content Fidelity Guidance
 
-Theme READMEs should explicitly support content-preserving adaptation, especially when decks are being reshaped by AI.
+Shared themes should explicitly support content-preserving adaptation, especially when decks are being reshaped by AI.
 
-Document these principles in the theme README when the theme is intended for real authoring work:
+Document or enforce these principles through this shared standard, fixtures, and optional implementation comments:
 
 - preserve facts, names, dates, numbers, ordering, and claims
 - allow hierarchy changes such as turning prose into headings, bullets, tables, or multi-slide splits
@@ -528,57 +660,33 @@ Document these principles in the theme README when the theme is intended for rea
 - avoid inventing new supporting points, summaries, or decorative filler just to satisfy a template
 - note which templates are safe for light restructuring and which rely on stricter ordering
 
-Themes do not need to prescribe one universal rewriting style, but they should make clear that the public API is about fitting existing content into stable Markdown shapes, not about forcing authors to guess from CSS.
-
-## Theme Manifest
-
-When themes use canonical template names, one shared authoring standard can cover most usage.
-
-That means a full theme-specific guide is optional, not mandatory.
-
-Each shared theme should still provide a minimal manifest that tells authors and AI what that specific theme implements.
-
-The minimal manifest should live in the theme's `README.md`.
-
-CSS comments are optional support material, not the primary manifest.
-
-The manifest should include:
-- `Theme Summary`
-- `Shell`
-- authoring rules that differ from the repo-wide defaults
-- implemented canonical templates
-- unsupported canonical templates when that matters
-- non-canonical templates, if any
-- deviations from the standard contract, if any
-- a template catalog with content-shape guidance
-
-If a theme follows canonical names and has no unusual behavior, the guide can stay concise. The goal is not length; the goal is that authors and AI can pick a template and use it correctly without opening the CSS.
+Themes do not need to prescribe one universal rewriting style, but they should make clear through stable behavior that the public API is about fitting existing content into stable Markdown shapes, not about forcing authors to guess from CSS.
 
 ## AI Workflow
 
 When AI is asked to use or modify a theme, the recommended read order is:
 
 1. `docs/theme-authoring.md`
-2. `packages/core/themes/<Theme>/README.md`
+2. `packages/core/themes/<Theme>/fixtures/*.md`
 3. `packages/core/themes/<Theme>/theme.css`
 
 This gives the model:
 
 - the shared contract first
-- the theme-specific public API second
+- the real Markdown validation surface second
 - the implementation details last
 
 That order is usually better than asking the model to infer theme usage directly from CSS selectors.
 
 For content adaptation tasks:
 
-- use the theme README to choose templates
-- use the theme README to decide what Markdown hierarchy to emit
+- use `docs/theme-authoring.md` to choose templates
+- use fixtures to understand valid Markdown shape and density behavior
 - inspect `theme.css` only when debugging a mismatch, missing style, or selector-level bug
 
 ## Comment Standard
 
-Shared theme CSS may include lightweight comments, but the authoritative authoring surface should be the theme `README.md`.
+Shared theme CSS may include lightweight comments, and comments are now the preferred place for short template-local caveats.
 
 Use CSS comments to clarify implementation layers or unusual selector assumptions close to the code.
 
@@ -590,8 +698,8 @@ The header should include:
 - `Theme`
 - `Shell`
 - `Implemented templates`
-- `Unsupported templates` when relevant
-- `Aliases` or `Deviations` when relevant
+- `Migration status` when relevant
+- `Aliases` or `Deviations` when relevant during migration
 
 Example:
 
@@ -600,11 +708,13 @@ Example:
  * Theme: Cobalt
  * Shell: slide-shell
  * Implemented templates:
- * - title-slide
- * - summary-slide
- * - metrics-slide
- * Deviations:
- * - closing-slide is not implemented
+ * - title
+ * - toc
+ * - section-divider
+ * - body
+ * - two-column
+ * - image-text
+ * - closing
  */
 ```
 
@@ -629,14 +739,14 @@ Example:
 
 ### 3. Template Comments
 
-Add a template comment block when the template needs authoring guidance beyond the canonical standard.
+Add a template comment block when the template needs authoring guidance beyond the shared seven-page standard.
 
 Template comments are recommended for:
-- non-canonical templates
-- canonical templates with important ordering assumptions
-- canonical templates whose Markdown shape is unusually strict
+- templates with important ordering assumptions
+- templates whose Markdown shape is unusually strict
+- templates with dense adaptive behavior or media rules worth keeping close to the code
 
-Template comments are optional when a canonical template follows the shared contract without meaningful deviations.
+Template comments are optional when a template follows the shared contract without meaningful caveats.
 
 When you add a template comment, it should include:
 - `Template`
@@ -650,9 +760,9 @@ Example:
 
 ```css
 /*
- * Template: title-slide
+ * Template: title
  * Layout: cover
- * Attach: class="slide-shell title-slide"
+ * Attach: class="slide-shell title"
  * Purpose: editorial title or closing cover
  * Expected Markdown:
  * - optional short badge paragraph
@@ -677,7 +787,7 @@ Comments should not:
 - describe every selector line by line
 - become a long-form replacement for docs
 
-Use comments for fast in-file guidance and use the theme `README.md` plus this document for the shared standard. When canonical names are followed closely, comments may stay very short.
+Use comments for fast in-file guidance and use this document for the shared standard. When a template follows the shared standard closely, comments may stay very short.
 
 ## Class Wiring Rules
 
@@ -692,7 +802,7 @@ Example:
 ```md
 ---
 layout: cover
-class: slide-shell title-slide
+class: slide-shell title
 ---
 ```
 
@@ -707,7 +817,7 @@ Example:
 ```md
 ---
 layout: two-cols
-layoutClass: slide-shell roadmap-slide
+layoutClass: slide-shell two-column
 class: content-pane
 ---
 ```
@@ -726,11 +836,11 @@ class: content-pane
 Prefer selectors that follow the renderer contract and the page template contract.
 
 Good patterns:
-- `.title-slide h1`
-- `.metrics-slide .col-right h2`
-- `.comparison-slide table`
+- `.title h1`
+- `.two-column .col-right h2`
+- `.body table`
 - `.slide-shell blockquote`
-- `.roadmap-slide h2 + ul`
+- `.image-text h2 + p`
 
 These selectors are easy to read and easy to document.
 
@@ -807,66 +917,9 @@ Recommended file layout:
 ```text
 packages/core/themes/
   MyTheme/
-    README.md
     theme.css
-```
-
-Recommended README skeleton:
-
-```md
-# MyTheme
-
-MyTheme is a one-line summary of the visual direction and best use cases.
-
-## Theme Summary
-
-- Shell: `slide-shell`
-- Tone: editorial / analytic / minimal / etc.
-
-## Authoring Rules
-
-- Use the theme name `MyTheme` in file-level frontmatter
-- Use `class` for `cover` and `default`
-- Use `layoutClass` for `two-cols`
-
-## Template Catalog
-
-### title-slide
-
-- Layout: `cover`
-- Attach Point: `class`
-- Purpose: opening cover or title-led closing page
-- Best For: short framing copy, title, subtitle, CTA
-- Avoid When: dense tables or long bullet lists
-- Expected Markdown Shape:
-  - optional short badge paragraph
-  - `#` title
-  - `##` subtitle
-  - optional supporting paragraph
-- Wiring:
-  - `layout: cover`
-  - `class: slide-shell title-slide`
-
-### metrics-slide
-
-- Layout: `two-cols`
-- Attach Point: `layoutClass`
-- Purpose: KPI or scorecard page
-- Best For: numbers, metric-led bullets, chart-adjacent summaries
-- Avoid When: purely narrative storytelling
-
-## Template Selection Guide
-
-- Use `title-slide` for opening and closing pages
-- Use `metrics-slide` when numbers lead the story
-
-## Content Fidelity Guidance
-
-- Preserve facts and ordering
-- Allow headings, bullets, tables, and pagination changes
-- Do not invent new claims to make a template feel fuller
-
-## Examples
+    fixtures/
+      body.md
 ```
 
 ```css
@@ -901,40 +954,43 @@ MyTheme is a one-line summary of the visual direction and best use cases.
   z-index: -1;
 }
 
-.title-slide {
+.title {
   padding: 36px 60px;
 }
 
-.title-slide h1 {
+.title h1 {
   font-size: 3rem;
   line-height: 1.1;
 }
 
-.title-slide h2 {
+.title h2 {
   color: var(--mk-muted);
 }
 
-.metrics-slide {
+.two-column {
   grid-template-columns: 3fr 2fr;
   padding: 24px;
 }
 
-.metrics-slide .col-left,
-.metrics-slide .col-right {
+.two-column .col-left,
+.two-column .col-right {
   padding: 36px 40px;
 }
 
-.metrics-slide h2 {
+.two-column h2 {
   color: var(--mk-accent);
 }
 
-.metrics-slide table {
+.body table,
+.two-column table {
   width: 100%;
   border-collapse: collapse;
 }
 
-.metrics-slide th,
-.metrics-slide td {
+.body th,
+.body td,
+.two-column th,
+.two-column td {
   padding: 0.75rem 0.9rem;
   border-bottom: 1px solid var(--mk-border);
 }
@@ -950,7 +1006,7 @@ title: Theme Demo
 
 ---
 layout: cover
-class: slide-shell title-slide
+class: slide-shell title
 ---
 
 # Quarterly Review
@@ -959,7 +1015,7 @@ class: slide-shell title-slide
 
 ---
 layout: two-cols
-layoutClass: slide-shell metrics-slide
+layoutClass: slide-shell two-column
 class: content-pane
 ---
 
@@ -981,12 +1037,12 @@ class: content-pane
 
 1. Start with tokens in `:root`
 2. Build a single stable `.slide-shell`
-3. Map page roles to canonical template names before inventing new ones
-4. Add two or three page types before adding more
+3. Map every public page role to one of the fixed eight template names and do not invent new public names
+4. Keep the public page inventory limited to those eight names
 5. Test each page type with real Markdown, not placeholder HTML
 6. Verify the theme is usable without any deck-local `slides.css`
 7. Move only truly reusable patterns into the shared theme
-8. Publish a minimal theme manifest and document only real deviations
+8. Keep any optional theme-local notes minimal and never use them to redefine the public contract
 
 ## Review Checklist
 
@@ -996,15 +1052,15 @@ Before merging a new shared theme, check these points:
 - Theme works without requiring deck-local overrides for common slides
 - Tokens are centralized in `:root`
 - `.slide-shell` exists and acts as the shared outer surface
-- Canonical template names are used when applicable
-- Page-type classes end with `-slide`
+- The fixed eight public page names are the only author-facing template names
+- Page-type classes use the fixed suffix-free public names
 - `default`, `cover`, and `two-cols` wiring rules are followed
 - Markdown elements are styled contextually, not through unscoped global selectors
 - Ordering-based selectors are rare and documented
 - Theme does not depend on Tailwind, Chart.js, or page-level JavaScript
-- Theme README is sufficient to choose templates without reading CSS
-- Theme README documents expected Markdown shape and wiring for implemented templates
-- Theme README includes content-fidelity guidance for adaptation work
+- The theme is understandable from `theme-authoring.md`, fixtures, and CSS comments without relying on a theme README
+- Fixtures demonstrate expected Markdown shape and wiring for implemented templates
+- Content-fidelity expectations match the shared standard
 
 ## Relation To Existing Docs
 
@@ -1013,4 +1069,4 @@ Before merging a new shared theme, check these points:
 - Use [CSS Rules](./syntax-css.md) for the single-entry CSS model and class wiring basics
 - Use this document when creating or refactoring reusable shared themes
 
-[`packages/core/themes/Clay/theme.css`](../packages/core/themes/Clay/theme.css) and [`packages/core/themes/Clay/README.md`](../packages/core/themes/Clay/README.md) are the current reference implementation in this repo. This guide is the normative standard for future theme authoring work.
+[`packages/core/themes/Clay/theme.css`](../packages/core/themes/Clay/theme.css) is the current reference implementation in this repo. This guide is the normative standard for future theme authoring work.
