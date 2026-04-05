@@ -15,6 +15,7 @@ Cobalt is a cool analytic theme derived from the `cobalt` HTML mockups.
 - Use `layoutClass` for `two-cols` slides
 - Keep the deck Markdown-only; do not depend on Chart.js or page scripts
 - Prefer strong slide hierarchy over one-off layout hacks
+- Panels and cards can render Markdown images directly; use standard `![](...)` syntax in the relevant column or card content
 
 ## Template Catalog
 

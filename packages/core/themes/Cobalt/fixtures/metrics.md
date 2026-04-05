@@ -90,3 +90,31 @@ layoutClass: slide-shell metrics-slide
 ## 适合场景
 
 适合一页先把判断讲透，再在后面页展开解释。
+
+---
+layout: two-cols
+layoutClass: slide-shell metrics-slide
+---
+
+# 数字卡也要能带图
+
+这页用来测试左侧指标卡内部插入 Markdown 图片时，卡片是否还能保持统一节奏。
+
+- **夜游热度** `78%`
+  热门时段主要集中在傍晚后的两小时。
+
+  ![夜间街区人流](https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1400&q=80)
+- **内容停留** `42 分钟`
+  真正慢看的内容通常需要单独留出一段。
+- **预约依赖** `2 项`
+  热门馆和高峰时段都更依赖提前确认。
+
+::right::
+
+## 图片进入卡片
+
+只要还是 Markdown，这种 media card 也应该能稳定工作。
+
+## 这页在测什么
+
+它主要看列表卡片里的图片比例、卡片高度和右侧说明是否还能保持平衡。

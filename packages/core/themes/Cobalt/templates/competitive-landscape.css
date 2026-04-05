@@ -4,7 +4,7 @@
   grid-template-columns: minmax(0, 1.56fr) minmax(290px, 0.94fr);
   grid-template-rows: auto minmax(0, 1fr);
   column-gap: 40px;
-  row-gap: 18px;
+  row-gap: 10px;
   align-content: stretch;
   counter-reset: cb-takeaway;
 }
@@ -38,8 +38,8 @@
 }
 
 /* Title and subtitle live in a dedicated full-width header row instead of the left column. */
-.comparison-slide > .two-cols-header,
-.competitive-landscape-slide > .two-cols-header {
+.slidev-layout.two-columns.slide-shell.comparison-slide > .two-cols-header,
+.slidev-layout.two-columns.slide-shell.competitive-landscape-slide > .two-cols-header {
   grid-column: 1 / -1;
   grid-row: 1;
   width: 100%;
@@ -48,8 +48,8 @@
 }
 
 /* Header title uses the full available width before the page splits into two columns. */
-.comparison-slide > .two-cols-header > h1,
-.competitive-landscape-slide > .two-cols-header > h1 {
+.slidev-layout.two-columns.slide-shell.comparison-slide > .two-cols-header > h1,
+.slidev-layout.two-columns.slide-shell.competitive-landscape-slide > .two-cols-header > h1 {
   max-width: none;
   width: 100%;
   margin: 0;
@@ -61,20 +61,20 @@
 }
 
 /* Subtitle stays in the same header row and should not inherit body-column width constraints. */
-.comparison-slide > .two-cols-header > h1 + p,
-.comparison-slide > .two-cols-header > h1 + h2,
-.competitive-landscape-slide > .two-cols-header > h1 + p,
-.competitive-landscape-slide > .two-cols-header > h1 + h2 {
+.slidev-layout.two-columns.slide-shell.comparison-slide > .two-cols-header > h1 + p,
+.slidev-layout.two-columns.slide-shell.comparison-slide > .two-cols-header > h1 + h2,
+.slidev-layout.two-columns.slide-shell.competitive-landscape-slide > .two-cols-header > h1 + p,
+.slidev-layout.two-columns.slide-shell.competitive-landscape-slide > .two-cols-header > h1 + h2 {
   width: 100%;
-  margin: 0.5rem 0 0;
+  margin: 0.35rem 0 0;
   max-width: none;
   color: #666666;
   font-size: 1.04rem;
   line-height: 1.6;
 }
 
-.comparison-slide > .two-cols-header > h1 + h2,
-.competitive-landscape-slide > .two-cols-header > h1 + h2 {
+.slidev-layout.two-columns.slide-shell.comparison-slide > .two-cols-header > h1 + h2,
+.slidev-layout.two-columns.slide-shell.competitive-landscape-slide > .two-cols-header > h1 + h2 {
   font-size: 1.12rem;
   font-weight: 500;
 }
@@ -207,7 +207,7 @@
 .competitive-landscape-slide .col-left > img {
   min-height: 404px;
   max-height: 404px;
-  border-radius: 8px;
+  border-radius: var(--cb-radius-image);
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
 }
 

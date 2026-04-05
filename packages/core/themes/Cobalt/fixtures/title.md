@@ -50,3 +50,18 @@ class: slide-shell title-slide
 ## 用最少的信息开场
 
 这页用来测试更稀疏的封面内容，只保留标签、标题、副标题和一段说明。
+
+---
+layout: cover
+class: slide-shell title-slide
+---
+
+视觉测试
+
+# 封面也应该能吃 Markdown 图片
+
+## 图片只是内容的一部分，不应该把封面结构弄乱
+
+这页用来测试 cover 卡片里直接放一张 Unsplash 图片时，宽度、圆角和节奏是否稳定。
+
+![夜间城市街区](https://images.unsplash.com/photo-1467269204594-9661b134dd2b?auto=format&fit=crop&w=1400&q=80)

@@ -85,3 +85,28 @@ layoutClass: slide-shell summary-slide
 ## 最稳做法
 
 先决定每天只看哪一个区域，再决定上午和傍晚分别放什么。
+
+---
+layout: two-cols
+layoutClass: slide-shell summary-slide
+---
+
+# 图片版总览
+
+这一页用来测试左侧 blockquote panel 里加入远程图片时，文字和图片能否一起稳定落位。
+
+> 老城夜景
+>
+> 三天节奏还是先远后近
+>
+> ![西安夜间街区](https://images.unsplash.com/photo-1467269204594-9661b134dd2b?auto=format&fit=crop&w=1400&q=80)
+
+::right::
+
+## 图片作为 panel 内容
+
+图片不应该要求自定义 HTML，直接用 Markdown 语法就能工作。
+
+## 这页在测什么
+
+它主要看 blockquote 内部的留白、圆角和图片比例会不会把文字节奏冲掉。

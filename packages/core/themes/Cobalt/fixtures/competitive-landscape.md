@@ -152,3 +152,28 @@ The stronger opportunity is not everywhere at once. It is in the channels where 
 ## Strategic Implications
 
 Use the left panel to hold structured basis points, then let the right side interpret what they mean.
+
+---
+layout: two-cols
+layoutClass: slide-shell competitive-landscape-slide
+---
+
+# Competitive Landscape Comparison
+
+This image case checks whether the left panel can become a media-first comparison surface without custom HTML.
+
+![City movement across transport channels](https://images.unsplash.com/photo-1467269204594-9661b134dd2b?auto=format&fit=crop&w=1400&q=80)
+
+::right::
+
+## Visual Basis
+
+The left side can be a direct image when the comparison starts from a single scene, network, or category snapshot.
+
+## Planning Value
+
+The right side still needs to stay vertically centered and readable while the panel becomes media-led.
+
+## What This Tests
+
+This slide checks top-level image panels, column balance, and whether the title-to-body spacing stays stable.

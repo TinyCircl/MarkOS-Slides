@@ -87,3 +87,28 @@ layoutClass: slide-shell comparison-slide
 ## 核心判断
 
 先决定你想把哪一条线当主轴，再决定住宿点，不要反过来。
+
+---
+layout: two-cols
+layoutClass: slide-shell comparison-slide
+---
+
+# 图片 panel 版对比页
+
+这一页用来测试左侧直接使用 Markdown 图片时，comparison 的主 panel 是否还能保持稳定。
+
+![城墙与城市夜色](https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1400&q=80)
+
+::right::
+
+## 图片作为结构基底
+
+左侧如果本来就是一张图，就不该再要求作者额外画 panel。
+
+## 版面目标
+
+图片要有固定比例、固定圆角和稳定阴影，同时不把右侧说明挤散。
+
+## 这页在测什么
+
+它主要测试 top-level Markdown image 在两栏模板里能不能直接变成主 panel。

@@ -31,6 +31,8 @@ packages/core/themes/
   Clay/
     README.md
     theme.css
+    templates/
+      panel-media.css
     fixtures/
       comparison.md
       process.md
@@ -54,6 +56,7 @@ For example, `comparison.md` should usually contain several `comparison-slide` p
 - a denser case
 - a long-title case
 - a long-paragraph or many-items case when that template is sensitive to content volume
+- an image case when the template is expected to support media inside a panel or card
 - optionally an alternate-shape case when the template supports more than one valid Markdown shape
 
 This keeps template tuning focused on real adaptation behavior instead of a single polished demo.
@@ -65,6 +68,7 @@ The goal is to answer questions like:
 - do 2, 3, or 4 right-column sections still feel balanced
 - does a minimal page still look intentional
 - does a dense page stay readable without manual one-off fixes
+- does a Markdown image stay inside the panel frame instead of escaping the layout
 
 Use the real preview command when tuning a template:
 
@@ -174,6 +178,7 @@ theme: Clay
 - For `two-cols`, outer container classes are attached with `layoutClass`
 - For `two-cols`, repeated pane classes are attached with `class`
 - `two-cols` exposes `.col-left` and `.col-right` for pane-specific styling
+- When a theme promotes title content into a `two-cols` header row, only title and supporting text should be lifted there; media should remain in the body column it belongs to
 - Theme CSS should target Markdown output such as headings, paragraphs, lists, tables, blockquotes, links, and code
 
 Practical examples:
@@ -207,6 +212,7 @@ Use tokens for:
 - text and muted text colors
 - borders and shadows
 - spacing or radius values when reused
+- shared media values such as image radius or media height clamps when the theme supports images inside panels
 
 Example:
 
@@ -255,9 +261,10 @@ Across themes, the preferred CSS organization is:
 2. `.slidev-layout` base typography and shared text defaults
 3. `.slide-shell` shared outer surface
 4. shared layout helpers such as `two-cols` shell rules
-5. optional shared template-family helpers
-6. concrete page-template blocks such as `.title-slide` or `.metrics-slide`
-7. export or responsive safety fixes when needed
+5. optional shared media helpers for Markdown images inside cards or panels
+6. optional shared template-family helpers
+7. concrete page-template blocks such as `.title-slide` or `.metrics-slide`
+8. export or responsive safety fixes when needed
 
 This is the pattern both existing themes broadly follow, even when the intermediate helper layers differ.
 
@@ -428,9 +435,37 @@ Common stress cases:
 - dense content
 - few list items
 - many list items
+- image inside a top-level panel
+- image inside a blockquote or card when the template supports those surfaces
 - alternate valid Markdown shape when the template supports it
 
 Do not treat the fixture as a brochure page whose only job is to look ideal. Its main job is to reveal where the template breaks, feels empty, or becomes visually unbalanced.
+
+## Panel Media Guidance
+
+When a template already provides a stable panel or card surface, images should be treated as content that fits inside that surface, not as a separate layout mode.
+
+Preferred rules:
+
+- deck authors use Markdown only, so image support must work through normal Markdown image syntax such as `![](...)`
+- let the existing panel or card define the frame
+- crop media inside that frame with stable dimensions instead of letting raw image size decide the layout
+- use a shared theme token for image radius when the same image language appears across templates
+- keep image radius modest by default so media does not visually overpower the surrounding panel system
+
+Avoid:
+
+- making image support depend on raw HTML or any author-written HTML escape hatch
+- letting a large source image redefine the height of a panel that is meant to stay structurally stable
+- inventing a second visual system where text panels and image panels have unrelated shapes
+
+In practice, a good shared theme should make these pairs interchangeable when the content role is the same:
+
+- narrative panel or image panel
+- quote panel or image-backed panel
+- metric card with only text or metric card with a supporting image
+
+The panel remains the contract. The image is only one valid content form inside that contract.
 
 ## Content Fidelity Guidance
 

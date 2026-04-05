@@ -50,6 +50,12 @@ function renderMarkdownTokens(tokens) {
     return Array.isArray(tokens) && tokens.length > 0 ? marked.parser(tokens) : "";
 }
 
+function paragraphContainsImage(token) {
+    return token?.type === "paragraph"
+        && typeof token.raw === "string"
+        && (token.raw.includes("![") || token.raw.includes("<img"));
+}
+
 function splitTwoColsHeader(content) {
     const tokens = marked.lexer(content);
     let index = 0;
@@ -76,7 +82,13 @@ function splitTwoColsHeader(content) {
             continue;
         }
 
-        if (token.type === "paragraph" || (token.type === "heading" && token.depth <= 2)) {
+        if (token.type === "paragraph" && !paragraphContainsImage(token)) {
+            headerTokens.push(token);
+            index += 1;
+            continue;
+        }
+
+        if (token.type === "heading" && token.depth <= 2) {
             headerTokens.push(token);
             index += 1;
             continue;

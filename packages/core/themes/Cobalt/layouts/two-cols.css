@@ -97,7 +97,7 @@
   min-height: 392px;
   max-height: 392px;
   object-fit: cover;
-  border-radius: 24px;
+  border-radius: var(--cb-radius-image);
   box-shadow: var(--cb-shadow-deep);
   background: var(--cb-surface-soft);
 }

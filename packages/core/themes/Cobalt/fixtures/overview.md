@@ -95,3 +95,34 @@ layoutClass: slide-shell overview-slide
 > 再决定景点
 
 这一页用来测试更长说明文本时，左边的块状结构是否还能读得清楚。
+
+---
+layout: two-cols
+layoutClass: slide-shell overview-slide
+---
+
+# 总览也要能放图
+
+左边继续放结构块，右边 panel 改成带图片的 Markdown 内容。
+
+## 推荐天数
+
+### 3 天
+
+先抓老城，再留一天给远郊和预约制内容。
+
+## 先确认什么
+
+### 2 个节点
+
+兵马俑预约和夜景段落应该优先锁定。
+
+::right::
+
+> 先看城市气质
+>
+> 再看具体节奏
+>
+> ![城市天际线](https://images.unsplash.com/photo-1493246507139-91e8fad9978e?auto=format&fit=crop&w=1400&q=80)
+
+右侧 panel 里的图片应该只是内容扩展，不应该破坏整个总览页的稳定感。

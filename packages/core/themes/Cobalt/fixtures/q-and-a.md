@@ -88,3 +88,18 @@ Use this page to check whether more rows with different text lengths still maint
 - Website / LinkedIn
 - WeChat / Contact Form
 - Office Hours / Follow-up Window
+
+---
+layout: cover
+class: slide-shell q-and-a-slide
+---
+
+Thank You
+
+# Questions & Discussion
+
+## Image-in-card stress case
+
+This slide checks whether a remote Markdown image can sit inside the centered closing card without pushing the rhythm off balance.
+
+![Audience leaving the venue](https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1400&q=80)
