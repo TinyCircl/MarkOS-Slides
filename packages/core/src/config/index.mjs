@@ -108,6 +108,7 @@ export function getCliRuntimeOptions(overrides = {}) {
         port: parseNumber(overrides.port, MARKOS_DEFAULT_DEV_PORT),
         projectRoot: overrides.projectRoot || null,
         title: overrides.title || "",
+        open: overrides.open ?? null,
         sourceMode: MARKOS_DEFAULT_AUTHORING_MODE,
     };
 }

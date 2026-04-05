@@ -19,6 +19,7 @@
     "markos:build": "node src/cli.mjs build",
     "markos:dev": "node src/cli.mjs dev",
     "markos:theme": "node src/cli.mjs theme",
+    "markos:theme-preview": "node src/cli.mjs theme preview",
     "check": "npm test && npm run check:fixtures && npm run check:examples",
     "check:examples": "node scripts/check-examples.mjs",
     "check:fixtures": "node scripts/check-fixtures.mjs",

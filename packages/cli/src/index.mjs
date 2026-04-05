@@ -1,6 +1,8 @@
+import {spawn} from "node:child_process";
 import {watch} from "node:fs";
-import {rm} from "node:fs/promises";
-import {basename, dirname, resolve} from "node:path";
+import {mkdir, mkdtemp, readFile, rm, writeFile} from "node:fs/promises";
+import os from "node:os";
+import {basename, dirname, join, resolve} from "node:path";
 import {
     buildStaticSiteFromInput,
     createLocalProjectInput,
@@ -9,12 +11,13 @@ import {startManifestSiteServer} from "@tinycircl/markos-slides-core/dev-server"
 import {
     MARKOS_DEFAULT_BUILD_OUT_DIRNAME,
     MARKOS_DEFAULT_DECK_DIR,
+    MARKOS_DEFAULT_ENTRY,
     MARKOS_DEFAULT_WORK_ROOT_DIRNAME,
     getCliRuntimeOptions,
     resolveCliPaths,
 } from "@tinycircl/markos-slides-core/config";
 import {getPathKind, isPathWithin} from "@tinycircl/markos-slides-core/deck-utils";
-import {applyThemeToDeck, getThemesRoot, injectDeckThemeSource} from "./theme.mjs";
+import {applyThemeToDeck, getThemesRoot, injectDeckThemeSource, resolveThemeFixtureSource} from "./theme.mjs";
 
 export function parseCliArgs(argv) {
     const [command = "help", ...rest] = argv;
@@ -28,6 +31,7 @@ export function parseCliArgs(argv) {
         port: null,
         projectRoot: null,
         title: "",
+        open: null,
     };
 
     for (let index = 0; index < rest.length; index += 1) {
@@ -69,12 +73,50 @@ export function parseCliArgs(argv) {
             index += 1;
             continue;
         }
+        if (arg === "--open") {
+            options.open = true;
+            continue;
+        }
+        if (arg === "--no-open") {
+            options.open = false;
+            continue;
+        }
         if (!arg.startsWith("-") && options.entry === MARKOS_DEFAULT_DECK_DIR) {
             options.entry = arg;
         }
     }
 
     return options;
+}
+
+export function openUrlInBrowser(url) {
+    return new Promise((resolvePromise, rejectPromise) => {
+        let command = "";
+        let args = [];
+
+        if (process.platform === "darwin") {
+            command = "open";
+            args = [url];
+        } else if (process.platform === "win32") {
+            command = "cmd";
+            args = ["/c", "start", "", url];
+        } else {
+            command = "xdg-open";
+            args = [url];
+        }
+
+        const child = spawn(command, args, {
+            detached: true,
+            stdio: "ignore",
+            windowsHide: true,
+        });
+
+        child.once("error", rejectPromise);
+        child.once("spawn", () => {
+            child.unref();
+            resolvePromise();
+        });
+    });
 }
 
 async function cleanupWorkDir(workDir) {
@@ -98,13 +140,15 @@ function printHelp() {
         "",
         "Usage:",
         "  markos build [deck] [--out-dir dist] [--base /] [--project-root dir] [--title name]",
-        "  markos dev [deck] [--out-dir .markos-dev] [--base /] [--host 127.0.0.1] [--port 3030]",
+        "  markos dev [deck] [--out-dir .markos-dev] [--base /] [--host 127.0.0.1] [--port 3030] [--no-open]",
         "  markos theme apply <theme> [deck]",
+        "  markos theme preview <theme> <fixture> [--host 127.0.0.1] [--port 3030] [--no-open]",
         "  markos export [deck]",
         "",
         "Notes:",
         "  deck must be a directory containing slides.md.",
         `  theme apply writes theme: <theme> into slides.md and keeps slides.css for local overrides.`,
+        "  theme preview renders packages/core/themes/<theme>/fixtures/<fixture>.md through the real MarkOS dev pipeline.",
         "  export is reserved for future non-web artifacts and is not available yet.",
         "",
         "Examples:",
@@ -112,11 +156,85 @@ function printHelp() {
         "  markos build examples/tokyo3days",
         "  markos build talks/intro --out-dir dist",
         "  markos dev examples/tokyo3days --port 4000",
+        "  markos dev examples/tokyo3days",
+        "  markos dev examples/tokyo3days --no-open",
         "  markos theme apply Clay examples/tokyo3days",
+        "  markos theme preview Cobalt comparison --port 3030",
     ].join("\n"));
 }
 
-async function runThemeCommand(argv) {
+function parseThemePreviewArgs(argv) {
+    const [themeName = "", fixtureName = "", ...rest] = argv;
+    const parsed = parseCliArgs(["dev", MARKOS_DEFAULT_DECK_DIR, ...rest]);
+    return {
+        ...parsed,
+        themeName,
+        fixtureName,
+    };
+}
+
+async function runThemePreviewCommand(argv, runtime = {}) {
+    const parsed = parseThemePreviewArgs(argv);
+    const themesRoot = getThemesRoot(null);
+    const {
+        themeName,
+        fixtureName,
+        themeDirectoryPath,
+        themeFilePath,
+        fixtureFilePath,
+    } = await resolveThemeFixtureSource(parsed.themeName, parsed.fixtureName, {themesRoot});
+
+    const previewRoot = await mkdtemp(resolve(join(os.tmpdir(), "markos-theme-preview-")));
+    const previewDeckRoot = resolve(join(previewRoot, themeName, fixtureName));
+    const syncFixtureDeck = async () => {
+        await mkdir(previewDeckRoot, {recursive: true});
+        const markdown = await readFile(fixtureFilePath, "utf8");
+        await writeFile(resolve(join(previewDeckRoot, MARKOS_DEFAULT_ENTRY)), markdown, "utf8");
+    };
+
+    try {
+        await syncFixtureDeck();
+        const devResult = await runDevCommand({
+            ...parsed,
+            command: "dev",
+            entry: previewDeckRoot,
+        }, {
+            openUrl: runtime.openUrlInBrowser,
+            beforeRebuild: syncFixtureDeck,
+            watchRoots: [themeDirectoryPath],
+            resultCommand: "theme-preview",
+        });
+
+        console.log(`theme:   ${themeName}`);
+        console.log(`fixture: ${fixtureName}`);
+        console.log(`source:  ${fixtureFilePath}`);
+
+        const stop = async () => {
+            await devResult.stop?.();
+            await rm(previewRoot, {recursive: true, force: true}).catch(() => {
+            });
+        };
+
+        return {
+            ...devResult,
+            command: "theme",
+            action: "preview",
+            themeName,
+            fixtureName,
+            themeDirectoryPath,
+            themeFilePath,
+            fixtureFilePath,
+            previewDeckRoot,
+            stop,
+        };
+    } catch (error) {
+        await rm(previewRoot, {recursive: true, force: true}).catch(() => {
+        });
+        throw error;
+    }
+}
+
+async function runThemeCommand(argv, runtime = {}) {
     const [action = "", themeName = "", deckPath = MARKOS_DEFAULT_DECK_DIR] = argv;
 
     if (action === "help" || action === "--help" || action === "-h" || !action) {
@@ -141,6 +259,10 @@ async function runThemeCommand(argv) {
             action: "apply",
             ...result,
         };
+    }
+
+    if (action === "preview") {
+        return runThemePreviewCommand(argv.slice(1), runtime);
     }
 
     throw new Error(`Unsupported theme command: ${action}`);
@@ -217,7 +339,12 @@ async function runBuildCommand(rawOptions) {
     };
 }
 
-async function runDevCommand(rawOptions) {
+async function runDevCommand(rawOptions, {
+    openUrl = openUrlInBrowser,
+    beforeRebuild = null,
+    watchRoots: explicitWatchRoots = null,
+    resultCommand = "dev",
+} = {}) {
     const {
         entryFilePath,
         projectRoot,
@@ -228,6 +355,7 @@ async function runDevCommand(rawOptions) {
         port,
         title,
         sourceMode,
+        open,
     } = resolveCliPaths(rawOptions);
     const themesRoot = getThemesRoot(null);
     const defaultBuildOutDir = resolve(projectRoot, MARKOS_DEFAULT_BUILD_OUT_DIRNAME);
@@ -254,6 +382,9 @@ async function runDevCommand(rawOptions) {
 
         rebuilding = true;
         try {
+            if (beforeRebuild) {
+                await beforeRebuild();
+            }
             await buildLocalAuthoringSite({
                 entryFilePath,
                 projectRoot,
@@ -290,9 +421,12 @@ async function runDevCommand(rawOptions) {
         port,
     });
 
-    const watchRoots = [projectRoot];
+    const watchRoots = explicitWatchRoots?.length
+        ? [...new Set(explicitWatchRoots.map((rootPath) => resolve(rootPath)))]
+        : [projectRoot];
     if (
-        await getPathKind(themesRoot) === "directory"
+        !explicitWatchRoots
+        && await getPathKind(themesRoot) === "directory"
         && !watchRoots.some((rootPath) => isPathWithin(rootPath, themesRoot) || isPathWithin(themesRoot, rootPath))
     ) {
         watchRoots.push(themesRoot);
@@ -328,6 +462,12 @@ async function runDevCommand(rawOptions) {
     console.log(`base:    ${basePath}`);
     console.log(`dev:     ${devServer.url}`);
 
+    if (open !== false) {
+        await openUrl(devServer.url).catch((error) => {
+            console.warn(`[markos] failed to open browser: ${error.message || String(error)}`);
+        });
+    }
+
     const stop = async () => {
         stopping = true;
         if (rebuildTimer) {
@@ -343,7 +483,7 @@ async function runDevCommand(rawOptions) {
 
     return {
         ok: true,
-        command: "dev",
+        command: resultCommand,
         entryFilePath,
         projectRoot,
         outDir,
@@ -353,10 +493,10 @@ async function runDevCommand(rawOptions) {
     };
 }
 
-export async function runCli(argv) {
+export async function runCli(argv, runtime = {}) {
     const [command = "help"] = argv;
     if (command === "theme") {
-        return runThemeCommand(argv.slice(1));
+        return runThemeCommand(argv.slice(1), runtime);
     }
 
     const parsed = parseCliArgs(argv);
@@ -372,7 +512,7 @@ export async function runCli(argv) {
     }
 
     if (options.command === "dev") {
-        return runDevCommand(parsed);
+        return runDevCommand(parsed, {openUrl: runtime.openUrlInBrowser});
     }
 
     if (options.command === "export") {

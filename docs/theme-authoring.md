@@ -31,12 +31,35 @@ packages/core/themes/
   Clay/
     README.md
     theme.css
+    fixtures/
+      comparison.md
+      process.md
 ```
 
 Use these files for different responsibilities:
 
 - `README.md`: theme manifest, implemented templates, authoring notes, and deviations
 - `theme.css`: tokens, shell styling, page templates, and contextual Markdown styling
+- `fixtures/*.md`: template validation decks built from real Markdown wiring
+
+If a theme includes fixtures, prefer one fixture deck per template and put multiple content-density variants into that same file.
+
+For example, `comparison.md` should usually contain several `comparison-slide` pages:
+
+- a sparse case
+- a standard case
+- a denser case
+- optionally a long-title or alternate-shape case
+
+This keeps template tuning focused on real adaptation behavior instead of a single happy-path example.
+
+Use the real preview command when tuning a template:
+
+```bash
+npm run markos:theme-preview -- Cobalt comparison --port 3030
+```
+
+This renders `packages/core/themes/Cobalt/fixtures/comparison.md` through the actual MarkOS dev pipeline, so it is a better acceptance surface than hand-written HTML sketches.
 
 ## Theme README Standard
 

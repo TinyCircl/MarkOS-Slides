@@ -52,6 +52,12 @@ Apply the shared Clay theme into the example deck:
 npm run markos:theme -- apply Clay examples/tokyo3days
 ```
 
+Preview a built-in theme fixture through the real dev pipeline:
+
+```bash
+npm run markos:theme-preview -- Cobalt comparison --port 3030
+```
+
 Run the full check suite:
 
 ```bash

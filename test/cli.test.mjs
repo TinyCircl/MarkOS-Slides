@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import os from "node:os";
 import {mkdir, mkdtemp, readFile, rm, stat, writeFile} from "node:fs/promises";
 import {join} from "node:path";
-import {runCli} from "../src/cli.mjs";
+import {parseCliArgs, runCli} from "../src/cli.mjs";
 import {getBundledThemesRoot} from "../packages/core/src/config/index.mjs";
 import {MARKOS_THEME_ENTRY_FILENAME} from "../packages/cli/src/theme.mjs";
 
@@ -130,6 +130,83 @@ test("CLI build supports UTF-8 BOM in slides.md and still applies file-level the
         assert.match(html, /BOM Deck/);
         assert.match(html, /Hello BOM/);
         assert.match(html, /\.bom-theme \{ color: blue; \}/);
+    } finally {
+        await rm(themeDirPath, {recursive: true, force: true}).catch(() => {
+        });
+        await rm(tempRoot, {recursive: true, force: true});
+    }
+});
+
+test("CLI build bundles local @import files from a split bundled theme", async () => {
+    const tempRoot = await mkdtemp(join(os.tmpdir(), "markos-cli-split-theme-"));
+    const projectRoot = join(tempRoot, "project");
+    const outDir = join(projectRoot, "dist");
+    const themesRoot = getBundledThemesRoot();
+    const themeName = `split-theme-${Date.now()}`;
+    const themeDirPath = join(themesRoot, themeName);
+
+    try {
+        await mkdir(projectRoot, {recursive: true});
+        await mkdir(themeDirPath, {recursive: true});
+
+        await writeFile(
+            join(projectRoot, "slides.md"),
+            [
+                "---",
+                `theme: ${themeName}`,
+                "title: Split Theme Deck",
+                "---",
+                "",
+                "# Hello Split Theme",
+            ].join("\n"),
+            "utf8",
+        );
+        await writeFile(
+            join(themeDirPath, "theme.css"),
+            [
+                '@import "./tokens.css";',
+                '@import "./base.css";',
+                '@import "./shell.css";',
+                "",
+            ].join("\n"),
+            "utf8",
+        );
+        await writeFile(
+            join(themeDirPath, "tokens.css"),
+            ":root { --split-theme-accent: #0a7a4b; }\n",
+            "utf8",
+        );
+        await writeFile(
+            join(themeDirPath, "base.css"),
+            ".slidev-layout { letter-spacing: 0.01em; }\n",
+            "utf8",
+        );
+        await writeFile(
+            join(themeDirPath, "shell.css"),
+            ".slidev-layout h1 { color: var(--split-theme-accent); }\n",
+            "utf8",
+        );
+        await writeFile(
+            join(themeDirPath, "README.md"),
+            `# ${themeName}\n\n- Shell: slide-shell\n`,
+            "utf8",
+        );
+
+        const result = await runCli([
+            "build",
+            projectRoot,
+            "--out-dir",
+            outDir,
+        ]);
+
+        const html = await readFile(join(outDir, "index.html"), "utf8");
+
+        assert.equal(result.ok, true);
+        assert.match(html, /Split Theme Deck/);
+        assert.match(html, /Hello Split Theme/);
+        assert.match(html, /--split-theme-accent: #0a7a4b;/);
+        assert.match(html, /\.slidev-layout h1 \{ color: var\(--split-theme-accent\); \}/);
+        assert.doesNotMatch(html, /@import "\.\/tokens\.css"/);
     } finally {
         await rm(themeDirPath, {recursive: true, force: true}).catch(() => {
         });
@@ -264,7 +341,10 @@ test("CLI dev command serves the generated static site locally", async () => {
             "/deck/",
             "--port",
             "0",
-        ]);
+        ], {
+            openUrlInBrowser: async () => {
+            },
+        });
 
         const slidesHtml = await fetch(`${result.url}?slide=1`).then((response) => response.text());
         const presenterHtml = await fetch(`${result.url}presenter/?slide=1`).then((response) => response.text());
@@ -292,6 +372,123 @@ test("CLI dev command serves the generated static site locally", async () => {
         await result?.stop?.().catch(() => {
         });
         await rm(themeDirPath, {recursive: true, force: true}).catch(() => {
+        });
+        await rm(tempRoot, {recursive: true, force: true});
+    }
+});
+
+test("CLI parseCliArgs accepts --open for dev", () => {
+    const parsed = parseCliArgs([
+        "dev",
+        "examples/tokyo3days",
+        "--port",
+        "0",
+        "--open",
+    ]);
+
+    assert.equal(parsed.command, "dev");
+    assert.equal(parsed.entry, "examples/tokyo3days");
+    assert.equal(parsed.port, 0);
+    assert.equal(parsed.open, true);
+});
+
+test("CLI parseCliArgs accepts --no-open for dev", () => {
+    const parsed = parseCliArgs([
+        "dev",
+        "examples/tokyo3days",
+        "--no-open",
+    ]);
+
+    assert.equal(parsed.command, "dev");
+    assert.equal(parsed.entry, "examples/tokyo3days");
+    assert.equal(parsed.open, false);
+});
+
+test("CLI dev opens the browser by default", async () => {
+    const tempRoot = await mkdtemp(join(os.tmpdir(), "markos-cli-dev-open-"));
+    const projectRoot = join(tempRoot, "project");
+    const outDir = join(projectRoot, ".markos-dev");
+    let result = null;
+    let openedUrl = "";
+
+    try {
+        await mkdir(projectRoot, {recursive: true});
+        await writeFile(
+            join(projectRoot, "slides.md"),
+            [
+                "---",
+                "theme: Clay",
+                "title: CLI Open Deck",
+                "---",
+                "",
+                "# Hello Open",
+            ].join("\n"),
+            "utf8",
+        );
+
+        result = await runCli([
+            "dev",
+            projectRoot,
+            "--out-dir",
+            outDir,
+            "--port",
+            "0",
+        ], {
+            openUrlInBrowser: async (url) => {
+                openedUrl = url;
+            },
+        });
+
+        assert.equal(result.ok, true);
+        assert.equal(result.command, "dev");
+        assert.equal(openedUrl, result.url);
+    } finally {
+        await result?.stop?.().catch(() => {
+        });
+        await rm(tempRoot, {recursive: true, force: true});
+    }
+});
+
+test("CLI dev skips opening the browser with --no-open", async () => {
+    const tempRoot = await mkdtemp(join(os.tmpdir(), "markos-cli-dev-no-open-"));
+    const projectRoot = join(tempRoot, "project");
+    const outDir = join(projectRoot, ".markos-dev");
+    let result = null;
+    let opened = false;
+
+    try {
+        await mkdir(projectRoot, {recursive: true});
+        await writeFile(
+            join(projectRoot, "slides.md"),
+            [
+                "---",
+                "theme: Clay",
+                "title: CLI No Open Deck",
+                "---",
+                "",
+                "# Hello No Open",
+            ].join("\n"),
+            "utf8",
+        );
+
+        result = await runCli([
+            "dev",
+            projectRoot,
+            "--out-dir",
+            outDir,
+            "--port",
+            "0",
+            "--no-open",
+        ], {
+            openUrlInBrowser: async () => {
+                opened = true;
+            },
+        });
+
+        assert.equal(result.ok, true);
+        assert.equal(opened, false);
+    } finally {
+        await result?.stop?.().catch(() => {
         });
         await rm(tempRoot, {recursive: true, force: true});
     }
@@ -331,7 +528,10 @@ test("CLI dev rebuilds when a bundled theme source file changes", async () => {
             outDir,
             "--port",
             "0",
-        ]);
+        ], {
+            openUrlInBrowser: async () => {
+            },
+        });
 
         const firstHtml = await fetch(result.url).then((response) => response.text());
         assert.match(firstHtml, /\.theme-version-a \{ color: blue; \}/);
@@ -577,5 +777,110 @@ test("CLI theme apply resolves bundled themes even when run from the deck cwd", 
     } finally {
         process.chdir(originalCwd);
         await rm(tempRoot, {recursive: true, force: true});
+    }
+});
+
+test("CLI theme preview serves a theme fixture through the real dev pipeline", async () => {
+    const themesRoot = getBundledThemesRoot();
+    const themeName = `preview-theme-${process.pid}-${Date.now()}`;
+    const themeDirPath = join(themesRoot, themeName);
+    const fixtureDirPath = join(themeDirPath, "fixtures");
+    const fixtureFilePath = join(fixtureDirPath, "comparison.md");
+    let result = null;
+    let opened = false;
+
+    try {
+        await mkdir(fixtureDirPath, {recursive: true});
+        await writeDirectoryTheme(themesRoot, themeName, ".preview-theme { color: blue; }\n");
+        await writeFile(
+            fixtureFilePath,
+            [
+                "---",
+                `theme: ${themeName}`,
+                "title: Theme Preview Fixture",
+                "---",
+                "",
+                "---",
+                "layout: two-cols",
+                "layoutClass: slide-shell comparison-slide",
+                "---",
+                "",
+                "# Fixture Heading",
+                "",
+                "> Left Panel",
+                "",
+                "::right::",
+                "",
+                "## Right Panel",
+                "",
+                "Fixture body.",
+            ].join("\n"),
+            "utf8",
+        );
+
+        result = await runCli([
+            "theme",
+            "preview",
+            themeName,
+            "comparison",
+            "--port",
+            "0",
+            "--no-open",
+        ], {
+            openUrlInBrowser: async () => {
+                opened = true;
+            },
+        });
+
+        const firstHtml = await fetch(`${result.url}?slide=1`).then((response) => response.text());
+
+        assert.equal(result.ok, true);
+        assert.equal(result.command, "theme");
+        assert.equal(result.action, "preview");
+        assert.equal(result.themeName, themeName);
+        assert.equal(result.fixtureName, "comparison");
+        assert.equal(opened, false);
+        assert.match(firstHtml, /Fixture Heading/);
+        assert.match(firstHtml, /Right Panel/);
+        assert.match(firstHtml, /\.preview-theme \{ color: blue; \}/);
+
+        await writeFile(
+            fixtureFilePath,
+            [
+                "---",
+                `theme: ${themeName}`,
+                "title: Theme Preview Fixture",
+                "---",
+                "",
+                "---",
+                "layout: two-cols",
+                "layoutClass: slide-shell comparison-slide",
+                "---",
+                "",
+                "# Updated Fixture Heading",
+                "",
+                "> Left Panel",
+                "",
+                "::right::",
+                "",
+                "## Right Panel",
+                "",
+                "Updated fixture body.",
+            ].join("\n"),
+            "utf8",
+        );
+
+        const updatedHtml = await waitForHtml(
+            `${result.url}?slide=1`,
+            (html) => html.includes("Updated Fixture Heading"),
+        );
+
+        assert.match(updatedHtml, /Updated Fixture Heading/);
+        assert.match(updatedHtml, /Updated fixture body\./);
+    } finally {
+        await result?.stop?.().catch(() => {
+        });
+        await rm(themeDirPath, {recursive: true, force: true}).catch(() => {
+        });
     }
 });

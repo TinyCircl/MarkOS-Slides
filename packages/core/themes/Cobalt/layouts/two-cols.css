@@ -1,0 +1,95 @@
+.slidev-layout.two-columns.slide-shell {
+  gap: 34px;
+  padding: 30px 24px 24px;
+}
+
+.slidev-layout.two-columns.slide-shell .col-left,
+.slidev-layout.two-columns.slide-shell .col-right {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.slidev-layout.two-columns.slide-shell .col-right {
+  gap: 14px;
+  padding-top: 4.9rem;
+}
+
+.slidev-layout.two-columns.slide-shell h1 {
+  margin: 0;
+  color: var(--cb-primary);
+  font-size: 2.7rem;
+  line-height: 1.08;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+.slidev-layout.two-columns.slide-shell .col-left > h1 + p {
+  margin: 1rem 0 1.9rem;
+  max-width: 36rem;
+  color: var(--cb-muted);
+  font-size: 1.08rem;
+  line-height: 1.65;
+}
+
+.slidev-layout.two-columns.slide-shell h2 {
+  margin: 0;
+  color: var(--cb-primary);
+  font-size: 1.22rem;
+  line-height: 1.3;
+  font-weight: 700;
+}
+
+.slidev-layout.two-columns.slide-shell h3 {
+  margin: 0;
+  color: var(--cb-primary);
+  font-size: 2.15rem;
+  line-height: 1;
+  font-weight: 800;
+}
+
+.slidev-layout.two-columns.slide-shell p,
+.slidev-layout.two-columns.slide-shell li {
+  color: var(--cb-text);
+  line-height: 1.65;
+}
+
+.slidev-layout.two-columns.slide-shell ul,
+.slidev-layout.two-columns.slide-shell ol {
+  margin: 0;
+}
+
+.slidev-layout.two-columns.slide-shell table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.96);
+  border-radius: 18px;
+  box-shadow: var(--cb-shadow-soft);
+}
+
+.slidev-layout.two-columns.slide-shell th,
+.slidev-layout.two-columns.slide-shell td {
+  padding: 0.95rem 1rem;
+  font-size: 0.94rem;
+  line-height: 1.55;
+}
+
+.slidev-layout.two-columns.slide-shell th {
+  color: var(--cb-primary);
+  font-weight: 700;
+  background: rgba(61, 139, 193, 0.06);
+}
+
+.slidev-layout.two-columns.slide-shell .col-left img,
+.slidev-layout.two-columns.slide-shell .col-right img {
+  display: block;
+  width: 100%;
+  min-height: 392px;
+  max-height: 392px;
+  object-fit: cover;
+  border-radius: 24px;
+  box-shadow: var(--cb-shadow-deep);
+  background: var(--cb-surface-soft);
+}

@@ -1,0 +1,24 @@
+.slide-shell {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background: var(--cb-bg);
+}
+
+.slide-shell::before {
+  content: none;
+}
+
+.slide-shell a {
+  color: var(--cb-primary);
+  text-decoration: none;
+}
+
+.slide-shell p,
+.slide-shell blockquote p {
+  margin: 0;
+}
+
+.slide-shell blockquote {
+  margin: 0;
+}

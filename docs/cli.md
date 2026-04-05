@@ -1,6 +1,6 @@
 # CLI Reference
 
-MarkOS currently supports two local-authoring commands: `build` and `dev`.
+MarkOS currently supports local-authoring commands for decks and for theme fixture preview.
 
 MarkOS recommends a flat local deck layout:
 
@@ -85,8 +85,9 @@ Important output note:
 ## Command Summary
 
 - `markos build [deck] [--out-dir dir] [--work-dir dir] [--base /] [--project-root dir] [--title name]`
-- `markos dev [deck] [--out-dir dir] [--work-dir dir] [--base /] [--host 127.0.0.1] [--port 3030] [--project-root dir] [--title name]`
+- `markos dev [deck] [--out-dir dir] [--work-dir dir] [--base /] [--host 127.0.0.1] [--port 3030] [--no-open] [--project-root dir] [--title name]`
 - `markos theme apply <theme> [deck]`
+- `markos theme preview <theme> <fixture> [--host 127.0.0.1] [--port 3030] [--no-open]`
 - `markos export [deck]`
 
 `markos export` is reserved for future non-web artifacts and currently exits with an error.
@@ -132,6 +133,7 @@ Examples:
 ```bash
 markos dev examples/tokyo3days
 markos dev examples/tokyo3days --port 4000
+markos dev examples/tokyo3days --no-open
 markos dev examples/tokyo3days --base /deck/
 ```
 
@@ -142,12 +144,14 @@ Options:
 - `--base`: local site base path. Default: `/`
 - `--host`: dev server host. Default: `127.0.0.1`
 - `--port`: dev server port. Default: `3030`. Use `0` to let the OS choose an available port
+- `--no-open`: do not open the local dev URL in the system default browser after the server starts
 - `--project-root`: directory used to watch deck files. Default: the entry file directory
 - `--title`: fallback document title when the source does not provide one
 
 Behavior:
 - performs an initial build before the server starts
 - serves the generated output through the local manifest site server
+- opens the local dev URL in the system default browser by default
 - watches the project root recursively and rebuilds on file changes
 - ignores the output and work directories while watching
 
@@ -168,6 +172,26 @@ Behavior:
 - writes `theme: <theme>` into the top-level frontmatter of `slides.md`
 - creates `slides.css` only when the deck does not already have one
 - keeps the runtime contract explicit: shared theme first, `slides.css` second, optional `overrides.css` last
+
+## `markos theme preview`
+
+Run a theme fixture through the real MarkOS dev pipeline.
+
+Examples:
+
+```bash
+markos theme preview Cobalt comparison
+markos theme preview Cobalt comparison --port 3030
+npm run markos:theme-preview -- Cobalt comparison --port 3030
+```
+
+Behavior:
+- verifies that `packages/core/themes/<theme>/theme.css` exists
+- verifies that `packages/core/themes/<theme>/fixtures/<fixture>.md` exists
+- copies the fixture into a temporary deck and renders it through the normal `markos dev` path
+- opens the preview URL in the system browser by default
+- watches the theme directory, so CSS and fixture edits rebuild the preview
+- uses real Markdown rendering, so fixture preview is the primary theme validation surface
 
 ## Validation
 

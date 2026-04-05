@@ -1,5 +1,5 @@
 import {mkdir, readFile, writeFile} from "node:fs/promises";
-import {basename, dirname, join, resolve} from "node:path";
+import {basename, dirname, join, relative, resolve} from "node:path";
 import {
     MARKOS_DEFAULT_DECK_DIR,
     MARKOS_DEFAULT_ENTRY,
@@ -21,6 +21,8 @@ export {MARKOS_THEMES_DIRNAME} from "@tinycircl/markos-slides-core/config";
 export const MARKOS_THEME_ENTRY_FILENAME = "theme.css";
 
 const THEME_NAME_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._-]*$/;
+const THEME_FIXTURE_NAME_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._-]*$/;
+const LOCAL_CSS_IMPORT_PATTERN = /@import\s+(?:url\()?['"]([^'"]+)['"]\)?\s*;/g;
 
 function sanitizeThemeName(themeName) {
     const normalizedThemeName = themeName?.trim();
@@ -36,6 +38,14 @@ function sanitizeThemeName(themeName) {
     return normalizedThemeName;
 }
 
+function sanitizeThemeFixtureName(fixtureName) {
+    const normalizedFixtureName = fixtureName?.trim().replace(/\.md$/i, "");
+    if (!normalizedFixtureName || !THEME_FIXTURE_NAME_PATTERN.test(normalizedFixtureName)) {
+        throw new Error("Fixture name is required and may contain only letters, numbers, dot, underscore, and dash.");
+    }
+    return normalizedFixtureName;
+}
+
 export function getThemesRoot(rootDir = null) {
     if (!rootDir) {
         return getBundledThemesRoot();
@@ -47,22 +57,96 @@ export function getThemesRoot(rootDir = null) {
         : join(resolvedRoot, MARKOS_THEMES_DIRNAME);
 }
 
-async function resolveThemeSource(themeName, {
+function isLocalCssImport(value) {
+    return value && !/^(https?:|data:|blob:|\/)/i.test(value);
+}
+
+function toPosixPath(value) {
+    return String(value).replaceAll("\\", "/");
+}
+
+function isWithinDirectory(rootDir, targetPath) {
+    const normalizedRoot = resolve(rootDir);
+    const normalizedTarget = resolve(targetPath);
+    const relativePath = relative(normalizedRoot, normalizedTarget);
+    return relativePath === ""
+        || (!relativePath.startsWith("..") && !relativePath.includes(":"));
+}
+
+export async function resolveThemeSource(themeName, {
     themesRoot = getThemesRoot(),
 } = {}) {
+    const normalizedThemeName = sanitizeThemeName(themeName);
     const resolvedThemesRoot = resolve(themesRoot);
-    const themeDirectoryPath = join(resolvedThemesRoot, themeName);
+    const themeDirectoryPath = join(resolvedThemesRoot, normalizedThemeName);
     const themeFilePath = join(themeDirectoryPath, MARKOS_THEME_ENTRY_FILENAME);
 
     if (await getPathKind(themeFilePath) === "file") {
         return {
-            themeName,
+            themeName: normalizedThemeName,
             themeDirectoryPath,
             themeFilePath,
         };
     }
 
-    throw new Error(`Theme not found: ${themeName}`);
+    throw new Error(`Theme not found: ${normalizedThemeName}`);
+}
+
+export async function resolveThemeFixtureSource(themeName, fixtureName, {
+    themesRoot = getThemesRoot(),
+} = {}) {
+    const normalizedFixtureName = sanitizeThemeFixtureName(fixtureName);
+    const themeSource = await resolveThemeSource(themeName, {themesRoot});
+    const fixtureFilePath = join(themeSource.themeDirectoryPath, "fixtures", `${normalizedFixtureName}.md`);
+
+    if (await getPathKind(fixtureFilePath) !== "file") {
+        throw new Error(`Theme fixture not found: ${themeSource.themeName}/${normalizedFixtureName}`);
+    }
+
+    return {
+        ...themeSource,
+        fixtureName: normalizedFixtureName,
+        fixtureFilePath,
+    };
+}
+
+async function collectThemeSourceFiles(filePath, {
+    themeName,
+    themeDirectoryPath,
+    seen = new Set(),
+} = {}) {
+    const normalizedFilePath = resolve(filePath);
+    if (seen.has(normalizedFilePath)) {
+        return [];
+    }
+    seen.add(normalizedFilePath);
+
+    const content = await readFile(normalizedFilePath, "utf8");
+    const relativeThemePath = toPosixPath(relative(themeDirectoryPath, normalizedFilePath));
+    const workPath = relativeThemePath === MARKOS_THEME_ENTRY_FILENAME
+        ? `${MARKOS_THEME_WORK_DIRNAME}/${themeName}.css`
+        : `${MARKOS_THEME_WORK_DIRNAME}/${relativeThemePath}`;
+    const files = [{path: workPath, content}];
+
+    for (const match of content.matchAll(LOCAL_CSS_IMPORT_PATTERN)) {
+        const importTarget = match[1];
+        if (!isLocalCssImport(importTarget)) {
+            continue;
+        }
+
+        const importedFilePath = resolve(dirname(normalizedFilePath), importTarget);
+        if (!isWithinDirectory(themeDirectoryPath, importedFilePath)) {
+            throw new Error(`Theme import must stay inside the theme directory: ${importTarget}`);
+        }
+
+        files.push(...await collectThemeSourceFiles(importedFilePath, {
+            themeName,
+            themeDirectoryPath,
+            seen,
+        }));
+    }
+
+    return files;
 }
 
 function withDeckThemeFrontmatter(markdown, themeName) {
@@ -141,18 +225,19 @@ export async function injectDeckThemeSource(input, {
         return input;
     }
 
-    const {themeFilePath} = await resolveThemeSource(themeName, {themesRoot});
-    const themeWorkPath = `${MARKOS_THEME_WORK_DIRNAME}/${themeName}.css`;
-    const existingThemeFile = sourceFiles.find((file) => file.path === themeWorkPath);
-    const themeContent = await readFile(themeFilePath, "utf8");
+    const {themeDirectoryPath, themeFilePath} = await resolveThemeSource(themeName, {themesRoot});
+    const themeSourceFiles = await collectThemeSourceFiles(themeFilePath, {
+        themeName,
+        themeDirectoryPath,
+    });
 
-    if (existingThemeFile) {
-        existingThemeFile.content = themeContent;
-    } else {
-        sourceFiles.push({
-            path: themeWorkPath,
-            content: themeContent,
-        });
+    for (const themeSourceFile of themeSourceFiles) {
+        const existingThemeFile = sourceFiles.find((file) => file.path === themeSourceFile.path);
+        if (existingThemeFile) {
+            existingThemeFile.content = themeSourceFile.content;
+        } else {
+            sourceFiles.push(themeSourceFile);
+        }
     }
 
     return input;
