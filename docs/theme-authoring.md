@@ -80,6 +80,26 @@ This renders `packages/core/themes/Cobalt/fixtures/comparison.md` through the ac
 
 When a theme includes visual references or mockups, use them as style inspiration. Use fixture decks as the real validation surface.
 
+## Reference Directory
+
+If a theme includes a `reference/` directory, treat it as a free-form reference repository.
+
+This means:
+
+- `reference/` does not define the runtime contract
+- `reference/` is not part of the active theme surface
+- files inside `reference/` do not need to match the active template inventory
+- files inside `reference/` should not be deleted just because they are not imported or directly cited elsewhere
+
+`reference/` may contain:
+
+- HTML mockups
+- abandoned explorations
+- third-party or historical layout studies
+- visual experiments for future templates
+
+Use `reference/` for inspiration and comparison only. Use `theme.css`, template files, theme `README.md`, and `fixtures/*.md` for actual authoring and validation.
+
 ## Theme README Standard
 
 The theme `README.md` is the primary public authoring contract for humans and AI.

@@ -3,17 +3,7 @@
 @import "./shell.css";
 @import "./layouts/two-cols.css";
 @import "./templates/title.css";
-@import "./templates/summary.css";
-@import "./templates/overview.css";
-@import "./templates/project-overview.css";
 @import "./templates/competitive-landscape.css";
-@import "./templates/market-trends.css";
 @import "./templates/conclusion-outlook.css";
-@import "./templates/metrics.css";
-@import "./templates/strategic-goals.css";
-@import "./templates/strategic-recommendations.css";
-@import "./templates/success-metrics.css";
-@import "./templates/process.css";
 @import "./templates/implementation-process.css";
 @import "./templates/q-and-a.css";
-@import "./templates/panel-media.css";
