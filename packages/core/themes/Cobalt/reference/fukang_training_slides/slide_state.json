@@ -1,0 +1,156 @@
+{
+  "project_info": {
+    "title": "阜康通源加气站 - 培训的目的",
+    "created": 1775312039.3338742,
+    "last_updated": 1775312236.4146407,
+    "total_slides": 12
+  },
+  "slides": [
+    {
+      "id": "title_slide",
+      "state": "edited",
+      "pageNum": 1
+    },
+    {
+      "id": "standards_basis",
+      "state": "edited",
+      "pageNum": 2
+    },
+    {
+      "id": "gb_standards",
+      "state": "edited",
+      "pageNum": 3
+    },
+    {
+      "id": "process_flow_1",
+      "state": "edited",
+      "pageNum": 4
+    },
+    {
+      "id": "separators",
+      "state": "edited",
+      "pageNum": 5
+    },
+    {
+      "id": "compressor_dehydration",
+      "state": "edited",
+      "pageNum": 6
+    },
+    {
+      "id": "odorization_cng",
+      "state": "edited",
+      "pageNum": 7
+    },
+    {
+      "id": "control_storage",
+      "state": "edited",
+      "pageNum": 8
+    },
+    {
+      "id": "dispenser_pillar",
+      "state": "edited",
+      "pageNum": 9
+    },
+    {
+      "id": "tech_mod_1",
+      "state": "edited",
+      "pageNum": 10
+    },
+    {
+      "id": "tech_mod_2",
+      "state": "edited",
+      "pageNum": 11
+    },
+    {
+      "id": "summary_closing",
+      "state": "edited",
+      "pageNum": 12
+    }
+  ],
+  "outline": [
+    {
+      "id": "title_slide",
+      "title": "阜康通源加气站 - 培训的目的",
+      "summary": "介绍培训的主要目标，包括了解标准、掌握设备作用及联动关系。",
+      "image_plan": "Use a suitable image if needed",
+      "slide_template_key": "slide_1"
+    },
+    {
+      "id": "standards_basis",
+      "title": "处理装置的目的和依据",
+      "summary": "阐述煤层气、天然气处理的法规依据，重点提及GB50028-2020。",
+      "image_plan": "Use a suitable image if needed",
+      "slide_template_key": "slide_3"
+    },
+    {
+      "id": "gb_standards",
+      "title": "GB17820 及 GB18047 标准要求",
+      "summary": "详细说明天然气技术指标及车用压缩天然气的质量标准。",
+      "image_plan": "Use a suitable image if needed",
+      "slide_template_key": "slide_3"
+    },
+    {
+      "id": "process_flow_1",
+      "title": "煤层气及充装工艺流程概览",
+      "summary": "梳理从进站分离到加气机的全工艺链条及充装流程。",
+      "image_plan": "Use a suitable image if needed",
+      "slide_template_key": "slide_2"
+    },
+    {
+      "id": "separators",
+      "title": "进站分离器与过滤分离器",
+      "summary": "对比介绍两种分离器的原理、精度及处理能力。",
+      "image_plan": "Use a suitable image if needed",
+      "slide_template_key": "slide_10"
+    },
+    {
+      "id": "compressor_dehydration",
+      "title": "螺杆压缩机与分子筛脱水撬",
+      "summary": "讲解低压增压设备与深度脱水工艺的关键参数。",
+      "image_plan": "Use a suitable image if needed",
+      "slide_template_key": "slide_10"
+    },
+    {
+      "id": "odorization_cng",
+      "title": "加臭撬与 CNG 压缩机",
+      "summary": "介绍加臭工艺要求及高压往复式压缩机的运行参数。",
+      "image_plan": "Use a suitable image if needed",
+      "slide_template_key": "slide_10"
+    },
+    {
+      "id": "control_storage",
+      "title": "程序控制盘与储气瓶组",
+      "summary": "解析分段充压逻辑及储气设施的安全配置。",
+      "image_plan": "Use a suitable image if needed",
+      "slide_template_key": "slide_10"
+    },
+    {
+      "id": "dispenser_pillar",
+      "title": "加气机与充气柱控制参数",
+      "summary": "明确加气终端的压力、流速及自动停止控制逻辑。",
+      "image_plan": "Use a suitable image if needed",
+      "slide_template_key": "slide_10"
+    },
+    {
+      "id": "tech_mod_1",
+      "title": "历年技改项目（一）",
+      "summary": "回顾排污管线、放散管及气液分离器的优化改造。",
+      "image_plan": "Use a suitable image if needed",
+      "slide_template_key": "slide_3"
+    },
+    {
+      "id": "tech_mod_2",
+      "title": "历年技改项目（二）",
+      "summary": "分析分子筛排污及进气管线改造的原因与效果。",
+      "image_plan": "Use a suitable image if needed",
+      "slide_template_key": "slide_3"
+    },
+    {
+      "id": "summary_closing",
+      "title": "本次培训考核要点及结语",
+      "summary": "总结必须掌握的核心知识点并结束培训。",
+      "image_plan": "Use a suitable image if needed",
+      "slide_template_key": "slide_3"
+    }
+  ]
+}

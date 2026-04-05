@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Critical Success Metrics (KPIs)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+            background-color: #f8f9fa;
+        }
+        .slide-container {
+            width: 1280px;
+            min-height: 720px;
+            padding: 40px;
+            display: grid;
+            grid-template-rows: auto auto 1fr;
+            background-color: #f8f9fa;
+        }
+        .slide-title {
+            color: #1f4788;
+            font-size: 36px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        .slide-subtitle {
+            color: #666666;
+            font-size: 20px;
+            margin-bottom: 32px;
+        }
+        .content-container {
+            display: grid;
+            grid-template-columns: 3fr 2fr;
+            gap: 40px;
+        }
+        .chart-container {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+        }
+        .insights-container {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+        .insight-item {
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+        }
+        .insight-title {
+            color: #1f4788;
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        .insight-text {
+            color: #333333;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        .chart-legend {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-top: 24px;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .legend-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 2px;
+        }
+        .legend-text {
+            color: #666666;
+            font-size: 12px;
+        }
+        .data-source {
+            color: #666666;
+            font-size: 12px;
+            font-style: italic;
+            margin-top: 20px;
+            text-align: center;
+            grid-column: 1 / -1;
+        }
+    </style>
+</head>
+<body>
+    <div class="slide-container">
+        <h1 class="slide-title">Critical Success Metrics (KPIs)</h1>
+        <h2 class="slide-subtitle">Key performance indicators and target benchmarks for project success</h2>
+        
+        <div class="content-container">
+            <div class="chart-container">
+                <div style="height: 320px; width: 320px;">
+                    <canvas id="kpiChart"></canvas>
+                </div>
+                
+                <div class="chart-legend">
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: #1f4788;"></div>
+                        <div class="legend-text">Revenue Growth (35%)</div>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: #4a90e2;"></div>
+                        <div class="legend-text">Operational Efficiency (25%)</div>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: #87ceeb;"></div>
+                        <div class="legend-text">Customer Retention (20%)</div>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: #ced4da;"></div>
+                        <div class="legend-text">Market Penetration (20%)</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="insights-container">
+                <div class="insight-item">
+                    <div class="insight-title">Primary KPI: Revenue Impact</div>
+                    <div class="insight-text">
+                        Targeting a 35% increase in digital-driven revenue through optimized conversion funnels and AI-powered cross-selling strategies.
+                    </div>
+                </div>
+                
+                <div class="insight-item">
+                    <div class="insight-title">Efficiency Benchmark</div>
+                    <div class="insight-text">
+                        Aiming for a 25% reduction in operational costs by automating supply chain logistics and inventory management processes.
+                    </div>
+                </div>
+                
+                <div class="insight-item">
+                    <div class="insight-title">Customer Loyalty</div>
+                    <div class="insight-text">
+                        Focusing on a 20% improvement in customer lifetime value (CLV) through personalized engagement and loyalty program integration.
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="data-source">
+            Source: [Enter Strategic Planning Document Reference]
+        </div>
+    </div>
+    
+    <script>
+        window.addEventListener('load', function() {
+            const ctx = document.getElementById('kpiChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Revenue Growth', 'Operational Efficiency', 'Customer Retention', 'Market Penetration'],
+                    datasets: [{
+                        data: [35, 25, 20, 20],
+                        backgroundColor: ['#1f4788', '#4a90e2', '#87ceeb', '#ced4da'],
+                        borderWidth: 0,
+                        cutout: '70%'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { enabled: true }
+                    }
+                },
+                plugins: [{
+                    id: 'centerText',
+                    beforeDraw: function(chart) {
+                        const ctx = chart.ctx;
+                        const centerX = (chart.chartArea.left + chart.chartArea.right) / 2;
+                        const centerY = (chart.chartArea.top + chart.chartArea.bottom) / 2;
+                        ctx.save();
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        ctx.font = 'bold 20px Inter, sans-serif';
+                        ctx.fillStyle = '#1f4788';
+                        ctx.fillText('KPI Targets', centerX, centerY);
+                        ctx.restore();
+                    }
+                }]
+            });
+        });
+    </script>
+</body>
+</html>

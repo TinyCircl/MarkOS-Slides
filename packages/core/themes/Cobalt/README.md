@@ -141,6 +141,22 @@ Cobalt is a cool analytic theme derived from the `cobalt` HTML mockups.
 - Use `metrics-slide` when numbers are the story.
 - Use `process-slide` when the left side is sequential.
 
+## Additional Reference Templates
+
+These extra template files are added from the `reference/cobalt` mockup names. They leave the original template files untouched and give authors more page-level names to target directly.
+
+- `executive-summary-slide`: executive framing page in the `summary` family
+- `project-overview-slide`: context-plus-visual page in the `overview` family
+- `competitive-landscape-slide`: comparison page for market or side-by-side analysis
+- `detailed-findings-slide`: evidence-heavy comparison page
+- `market-trends-slide`: chart-or-trend comparison page
+- `conclusion-outlook-slide`: closing comparison page with forward-looking notes
+- `strategic-goals-slide`: goal-card page in the `metrics` family
+- `strategic-recommendations-slide`: action-card page in the `metrics` family
+- `success-metrics-slide`: KPI-led page in the `metrics` family
+- `implementation-process-slide`: implementation sequence page in the `process` family
+- `q-and-a-slide`: Q&A cover page in the `closing` family
+
 ## Content Fidelity Guidance
 
 - Preserve facts, names, dates, numbers, ordering, and intent.
@@ -152,7 +168,26 @@ Cobalt is a cool analytic theme derived from the `cobalt` HTML mockups.
 
 Reference files:
 
-- `fixtures/*.md` are runnable multi-slide template decks. Each file focuses on one template and includes sparse, standard, and denser content variants so theme authors can tune adaptation rules in one place.
+- `fixtures/*.md` are runnable multi-slide template pressure decks. Each file focuses on one template and includes happy-path, sparse, standard, denser, and other stress variants so theme authors can tune adaptation rules in one place.
+- `reference/cobalt/*.html` contains visual reference mockups aligned to both the base templates and the added reference-derived template names:
+  - `title-slide.html`
+  - `closing-slide.html`
+  - `summary-slide.html`
+  - `overview-slide.html`
+  - `comparison-slide.html`
+  - `metrics-slide.html`
+  - `process-slide.html`
+  - `executive_summary.html`
+  - `project_overview.html`
+  - `competitive_landscape.html`
+  - `detailed_findings.html`
+  - `market_trends.html`
+  - `conclusion_outlook.html`
+  - `strategic_goals.html`
+  - `strategic_recommendations.html`
+  - `success_metrics.html`
+  - `implementation_process.html`
+  - `q_and_a.html`
 
 Closing wiring:
 

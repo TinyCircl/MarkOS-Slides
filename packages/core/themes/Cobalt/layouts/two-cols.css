@@ -1,6 +1,13 @@
 .slidev-layout.two-columns.slide-shell {
-  gap: 34px;
+  column-gap: 34px;
+  row-gap: 18px;
   padding: 30px 24px 24px;
+}
+
+.slidev-layout.two-columns.slide-shell .two-cols-header {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
 }
 
 .slidev-layout.two-columns.slide-shell .col-left,
@@ -10,12 +17,7 @@
   min-width: 0;
 }
 
-.slidev-layout.two-columns.slide-shell .col-right {
-  gap: 14px;
-  padding-top: 4.9rem;
-}
-
-.slidev-layout.two-columns.slide-shell h1 {
+.slidev-layout.two-columns.slide-shell .two-cols-header h1 {
   margin: 0;
   color: var(--cb-primary);
   font-size: 2.7rem;
@@ -24,12 +26,18 @@
   letter-spacing: -0.03em;
 }
 
+.slidev-layout.two-columns.slide-shell .two-cols-header > h1 + p,
+.slidev-layout.two-columns.slide-shell .two-cols-header > h1 + h2,
 .slidev-layout.two-columns.slide-shell .col-left > h1 + p {
   margin: 1rem 0 1.9rem;
   max-width: 36rem;
   color: var(--cb-muted);
   font-size: 1.08rem;
   line-height: 1.65;
+}
+
+.slidev-layout.two-columns.slide-shell .two-cols-header > h1 + h2 {
+  font-weight: 500;
 }
 
 .slidev-layout.two-columns.slide-shell h2 {

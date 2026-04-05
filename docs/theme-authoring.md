@@ -40,18 +40,31 @@ Use these files for different responsibilities:
 
 - `README.md`: theme manifest, implemented templates, authoring notes, and deviations
 - `theme.css`: tokens, shell styling, page templates, and contextual Markdown styling
-- `fixtures/*.md`: template validation decks built from real Markdown wiring
+- `fixtures/*.md`: template validation decks built from real Markdown wiring and used as the primary acceptance surface
 
 If a theme includes fixtures, prefer one fixture deck per template and put multiple content-density variants into that same file.
 
+Treat fixture decks as pressure tests, not just happy-path examples.
+
 For example, `comparison.md` should usually contain several `comparison-slide` pages:
 
+- a happy-path case
 - a sparse case
 - a standard case
 - a denser case
-- optionally a long-title or alternate-shape case
+- a long-title case
+- a long-paragraph or many-items case when that template is sensitive to content volume
+- optionally an alternate-shape case when the template supports more than one valid Markdown shape
 
-This keeps template tuning focused on real adaptation behavior instead of a single happy-path example.
+This keeps template tuning focused on real adaptation behavior instead of a single polished demo.
+
+The goal is to answer questions like:
+
+- does the title wrap too early
+- does the card overflow vertically
+- do 2, 3, or 4 right-column sections still feel balanced
+- does a minimal page still look intentional
+- does a dense page stay readable without manual one-off fixes
 
 Use the real preview command when tuning a template:
 
@@ -60,6 +73,8 @@ npm run markos:theme-preview -- Cobalt comparison --port 3030
 ```
 
 This renders `packages/core/themes/Cobalt/fixtures/comparison.md` through the actual MarkOS dev pipeline, so it is a better acceptance surface than hand-written HTML sketches.
+
+When a theme includes visual references or mockups, use them as style inspiration. Use fixture decks as the real validation surface.
 
 ## Theme README Standard
 
@@ -391,6 +406,31 @@ Notes:
 ```
 
 If a theme relies on special ordering, document it explicitly. Do not make deck authors reverse-engineer the contract from CSS.
+
+## Fixture Validation Strategy
+
+Each reusable page template should have a matching fixture deck when the theme is intended for real authoring work.
+
+Recommended approach:
+
+- one fixture file per template
+- one file contains several pages for that template
+- each page stresses a different content condition
+- the fixture is rendered through the real `markos:theme-preview` or build pipeline
+
+Common stress cases:
+
+- short title
+- long title
+- short supporting copy
+- long supporting copy
+- sparse content
+- dense content
+- few list items
+- many list items
+- alternate valid Markdown shape when the template supports it
+
+Do not treat the fixture as a brochure page whose only job is to look ideal. Its main job is to reveal where the template breaks, feels empty, or becomes visually unbalanced.
 
 ## Content Fidelity Guidance
 

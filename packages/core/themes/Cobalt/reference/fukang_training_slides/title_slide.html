@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>阜康通源加气站培训课件</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        .slide-container {
+            width: 1280px;
+            min-height: 720px;
+            background: #F2F9FC;
+            margin: 0 auto;
+            position: relative;
+            padding: 0;
+        }
+        
+        .header-bar {
+            height: 8px;
+            background: linear-gradient(90deg, #12377A 0%, #3D8BC1 50%, #6BAFD3 100%);
+            width: 100%;
+        }
+        
+        .main-content {
+            padding: 120px 80px;
+            height: calc(100% - 8px);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        
+        .title-section {
+            margin-bottom: 60px;
+        }
+        
+        .primary-title {
+            font-family: 'Inter', 'Source Han Sans CN', sans-serif;
+            font-size: 80px;
+            font-weight: 800;
+            color: #12377A;
+            line-height: 1.1;
+            margin-bottom: 20px;
+            letter-spacing: -2px;
+        }
+        
+        .secondary-title {
+            font-family: 'Inter', 'Source Han Sans CN', sans-serif;
+            font-size: 42px;
+            font-weight: 300;
+            color: #3D8BC1;
+            line-height: 1.2;
+            margin-bottom: 40px;
+        }
+        
+        .tagline {
+            font-family: 'Inter', 'Source Han Sans CN', sans-serif;
+            font-size: 22px;
+            font-weight: 400;
+            color: #666666;
+            max-width: 800px;
+            line-height: 1.6;
+        }
+        
+        .year-corner {
+            position: absolute;
+            bottom: 80px;
+            right: 80px;
+            font-family: 'Inter', sans-serif;
+            font-size: 180px;
+            font-weight: 900;
+            color: rgba(18, 55, 122, 0.08);
+            line-height: 1;
+            pointer-events: none;
+        }
+        
+        .floating-elements {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            overflow: hidden;
+        }
+        
+        .float-circle {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(107, 175, 211, 0.06);
+        }
+        
+        .circle-1 { width: 120px; height: 120px; top: 15%; right: 20%; }
+        .circle-2 { width: 80px; height: 80px; top: 60%; right: 15%; background: rgba(168, 213, 229, 0.08); }
+        .circle-3 { width: 60px; height: 60px; top: 35%; right: 35%; background: rgba(61, 139, 193, 0.05); }
+        
+        .bottom-meta {
+            position: absolute;
+            bottom: 40px;
+            left: 80px;
+            font-family: 'Inter', 'Source Han Sans CN', sans-serif;
+            color: #858481;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+    <div class="slide-container">
+        <div class="header-bar"></div>
+        <div class="floating-elements">
+            <div class="float-circle circle-1"></div>
+            <div class="float-circle circle-2"></div>
+            <div class="float-circle circle-3"></div>
+        </div>
+        <div class="year-corner">2026</div>
+        <div class="main-content">
+            <div class="title-section">
+                <h1 class="primary-title">阜康通源加气站</h1>
+                <h2 class="secondary-title">员工岗位技能培训课件</h2>
+                <div class="tagline">
+                    本培训旨在帮助员工深入了解商品天然气标准、掌握工艺流程设备作用及其联动关系，并分析历年工艺变更原因。
+                </div>
+            </div>
+        </div>
+        <div class="bottom-meta">
+            内部培训资料 • 2026年4月
+        </div>
+    </div>
+</body>
+</html>

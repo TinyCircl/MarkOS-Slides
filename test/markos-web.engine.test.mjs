@@ -116,6 +116,65 @@ test("markos-web does not load a shared theme when no file-level theme is declar
     }
 });
 
+test("markos-web lifts two-cols title and subtitle into a full-width header region", async () => {
+    const tempRoot = await mkdtemp(join(os.tmpdir(), "markos-two-cols-header-"));
+    const workDir = join(tempRoot, "work");
+    const outDir = join(tempRoot, "out");
+
+    try {
+        await mkdir(join(workDir, ".markos-theme"), {recursive: true});
+        await writeFile(
+            join(workDir, "slides.md"),
+            [
+                "---",
+                "title: Header Deck",
+                "theme: Cobalt",
+                "---",
+                "",
+                "---",
+                "layout: two-cols",
+                "layoutClass: slide-shell comparison-slide",
+                "---",
+                "",
+                "# Comparison Header",
+                "",
+                "Subtitle line stays above the split columns.",
+                "",
+                "> Left panel",
+                ">",
+                "> Basis text",
+                "",
+                "::right::",
+                "",
+                "## Right Insight",
+                "",
+                "Supporting note.",
+            ].join("\n"),
+            "utf8",
+        );
+        await writeFile(join(workDir, ".markos-theme", "Cobalt.css"), ".two-cols-header { outline: none; }\n", "utf8");
+
+        await markosWebRenderEngine.buildStaticSite({
+            entryFilePath: join(workDir, "slides.md"),
+            outputDir: outDir,
+            basePath: "/",
+            cwd: workDir,
+        });
+
+        const html = await readFile(join(outDir, "index.html"), "utf8");
+        const payloadMatch = html.match(/<script id="__MARKOS_DECK__" type="application\/json">([\s\S]*?)<\/script>/);
+        assert.ok(payloadMatch);
+        const deckPayload = JSON.parse(payloadMatch[1]);
+        const slideHtml = deckPayload.slides[0].html;
+
+        assert.match(slideHtml, /two-cols-header/);
+        assert.match(slideHtml, /<div class="two-cols-header"><h1>Comparison Header<\/h1>\s*<p>Subtitle line stays above the split columns\.<\/p>\s*<\/div>/);
+        assert.match(slideHtml, /<div class="col-left"><blockquote>/);
+    } finally {
+        await rm(tempRoot, {recursive: true, force: true});
+    }
+});
+
 test("markos-web rejects file-level theme names that include a .css suffix", async () => {
     const tempRoot = await mkdtemp(join(os.tmpdir(), "markos-engine-theme-suffix-"));
     const workDir = join(tempRoot, "work");

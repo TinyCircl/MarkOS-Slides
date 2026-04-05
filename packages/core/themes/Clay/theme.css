@@ -670,6 +670,7 @@
   flex-direction: column;
 }
 
+.swot-slide > .two-cols-header > h1,
 .swot-slide .col-left > h1 {
   margin: 0 0 1.6rem;
   font-size: 2rem;

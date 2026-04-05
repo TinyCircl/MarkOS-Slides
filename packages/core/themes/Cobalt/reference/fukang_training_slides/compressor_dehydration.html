@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>螺杆压缩机与分子筛脱水撬</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1"></script>
+    <style>
+        .slide-container {
+            width: 1280px;
+            min-height: 720px;
+            background: #F2F9FC;
+            margin: 0 auto;
+            /* keep top padding (title spacing) unchanged, reduce bottom padding */
+            padding: 40px 60px 20px;
+            display: grid;
+            grid-template-rows: auto auto 1fr;
+        }
+        
+        .slide-title {
+            font-family: 'Inter', 'Source Han Sans CN', sans-serif;
+            color: #12377A;
+            font-size: 42px;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+        
+        .slide-subtitle {
+            font-family: 'Inter', 'Source Han Sans CN', sans-serif;
+            color: #3D8BC1;
+            font-size: 22px;
+            margin-bottom: 30px;
+            font-weight: 400;
+        }
+        
+        .content-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+        }
+        
+        .gauges-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            /* reduce gaps and inner padding to save vertical space */
+            gap: 16px;
+            background: white;
+            padding: 16px;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(18, 55, 122, 0.05);
+        }
+        
+        .gauge-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .gauge-title {
+            font-family: 'Inter', 'Source Han Sans CN', sans-serif;
+            color: #12377A;
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            text-align: center;
+        }
+        
+        .insights-container {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        
+        .insight-item {
+            /* shrink padding to reduce height while keeping content */
+            padding: 12px;
+            background: rgba(18, 55, 122, 0.05);
+            border-left: 6px solid #12377A;
+            border-radius: 4px;
+            margin-bottom: 12px;
+        }
+        
+        .insight-title {
+            font-family: 'Inter', 'Source Han Sans CN', sans-serif;
+            color: #12377A;
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        
+        .insight-text {
+            font-family: 'Inter', 'Source Han Sans CN', sans-serif;
+            color: #666666;
+            font-size: 17px;
+            line-height: 1.5;
+        }
+        
+        .data-source {
+            font-family: 'Inter', sans-serif;
+            color: #858481;
+            font-size: 14px;
+            margin-top: 16px;
+            text-align: right;
+            grid-column: 1 / -1;
+        }
+    </style>
+</head>
+<body>
+    <div class="slide-container">
+        <h1 class="slide-title">螺杆压缩机与分子筛脱水撬</h1>
+        <h2 class="slide-subtitle">低压增压设备与深度脱水工艺的核心技术参数</h2>
+        
+        <div class="content-container">
+            <div class="gauges-container">
+                <div class="gauge-item">
+                    <div class="gauge-title">螺杆机排气压力</div>
+                    <div style="height: 140px; width: 140px;">
+                        <canvas id="pressureGauge"></canvas>
+                    </div>
+                </div>
+                
+                <div class="gauge-item">
+                    <div class="gauge-title">螺杆机电机功率</div>
+                    <div style="height: 140px; width: 140px;">
+                        <canvas id="powerGauge"></canvas>
+                    </div>
+                </div>
+                
+                <div class="gauge-item">
+                    <div class="gauge-title">分子筛出口水露点</div>
+                    <div style="height: 140px; width: 140px;">
+                        <canvas id="dewpointGauge"></canvas>
+                    </div>
+                </div>
+                
+                <div class="gauge-item">
+                    <div class="gauge-title">装置处理能力</div>
+                    <div style="height: 140px; width: 140px;">
+                        <canvas id="capacityGauge"></canvas>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="insights-container">
+                <div class="insight-item">
+                    <div class="insight-title">螺杆压缩机作用</div>
+                    <div class="insight-text">
+                        主要负责将进站低压气体（0.045~0.22 MPa）增压至最高 1.35 MPa，为后续脱水及高压压缩环节提供稳定的气源压力。
+                    </div>
+                </div>
+                
+                <div class="insight-item">
+                    <div class="insight-title">分子筛脱水原理</div>
+                    <div class="insight-text">
+                        利用分子筛的物理吸附特性，在常温高压下吸附分子态水，并通过高温再生过程将水分离，实现气体的深度脱水。
+                    </div>
+                </div>
+                
+                <div class="insight-item">
+                    <div class="insight-title">脱水运行工况</div>
+                    <div class="insight-text">
+                        入口压力需控制在 1.4 MPa 以下，入口温度不高于 40 ℃，以确保分子筛吸附效率及使用寿命，保证水露点达标。
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="data-source">
+            阜康通源加气站设备运行手册 • 2026
+        </div>
+    </div>
+    
+    <script>
+        window.addEventListener('load', function() {
+            function createGaugeChart(canvasId, value, maxValue, color, unit, label) {
+                const ctx = document.getElementById(canvasId).getContext('2d');
+                new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        datasets: [{
+                            data: [value, Math.max(0, maxValue - value)],
+                            backgroundColor: [color, 'rgba(18, 55, 122, 0.1)'],
+                            borderWidth: 0,
+                            cutout: '75%'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: { enabled: false }
+                        }
+                    },
+                    plugins: [{
+                        id: 'centerText',
+                        beforeDraw: function(chart) {
+                            const ctx = chart.ctx;
+                            const centerX = (chart.chartArea.left + chart.chartArea.right) / 2;
+                            const centerY = (chart.chartArea.top + chart.chartArea.bottom) / 2;
+                            ctx.save();
+                            ctx.textAlign = 'center';
+                            ctx.textBaseline = 'middle';
+                            ctx.font = 'bold 22px Inter, sans-serif';
+                            ctx.fillStyle = '#12377A';
+                            ctx.fillText(value + unit, centerX, centerY - 5);
+                            ctx.font = '12px Inter, sans-serif';
+                            ctx.fillStyle = '#858481';
+                            ctx.fillText(label, centerX, centerY + 15);
+                            ctx.restore();
+                        }
+                    }]
+                });
+            }
+            
+            createGaugeChart('pressureGauge', 1.35, 2.0, '#12377A', ' MPa', 'Max Output');
+            createGaugeChart('powerGauge', 500, 600, '#3D8BC1', ' kW', 'Motor Power');
+            createGaugeChart('dewpointGauge', -55, 0, '#6BAFD3', ' ℃', 'Water Dewpoint');
+            createGaugeChart('capacityGauge', 4200, 5000, '#A8D5E5', ' Nm³/h', 'Flow Rate');
+        });
+    </script>
+</body>
+</html>

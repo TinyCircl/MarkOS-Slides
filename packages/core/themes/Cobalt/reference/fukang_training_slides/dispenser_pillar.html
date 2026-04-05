@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>加气机与充气柱控制参数</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1"></script>
+    <style>
+        .slide-container {
+            width: 1280px;
+            min-height: 720px;
+            background: #F2F9FC;
+            margin: 0 auto;
+            padding: 40px 40px; /* keep top padding 40px (title upper padding unchanged) */
+            display: grid;
+            grid-template-rows: auto auto 1fr;
+        }
+        
+        .slide-title {
+            font-family: 'Inter', 'Source Han Sans CN', sans-serif;
+            color: #12377A;
+            font-size: 42px;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+        
+        .slide-subtitle {
+            font-family: 'Inter', 'Source Han Sans CN', sans-serif;
+            color: #3D8BC1;
+            font-size: 24px;
+            margin-bottom: 30px;
+            font-weight: 400;
+        }
+        
+        .content-container {
+            display: grid;
+            grid-template-columns: 1fr 1.2fr;
+            gap: 24px; /* slightly reduced gap to tighten layout */
+            align-items: center;
+        }
+        
+        .gauges-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            background: white;
+            padding: 20px; /* reduced padding to save vertical space */
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(18, 55, 122, 0.05);
+        }
+        
+        .gauge-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .gauge-title {
+            font-family: 'Inter', 'Source Han Sans CN', sans-serif;
+            color: #12377A;
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 12px; /* slightly reduced spacing */
+            text-align: center;
+        }
+        
+        .insights-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px; /* reduced gap between insights */
+        }
+        
+        .insight-item {
+            padding: 12px; /* reduced padding to compact content */
+            background: rgba(18, 55, 122, 0.05);
+            border-left: 6px solid #12377A;
+            border-radius: 4px;
+        }
+        
+        .insight-title {
+            font-family: 'Inter', 'Source Han Sans CN', sans-serif;
+            color: #12377A;
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+        
+        .insight-text {
+            font-family: 'Inter', 'Source Han Sans CN', sans-serif;
+            color: #666666;
+            font-size: 17px;
+            line-height: 1.5;
+        }
+        
+        .data-source {
+            font-family: 'Inter', sans-serif;
+            color: #858481;
+            font-size: 14px;
+            margin-top: 16px;
+            text-align: right;
+            grid-column: 1 / -1;
+        }
+    </style>
+</head>
+<body>
+    <div class="slide-container">
+        <h1 class="slide-title">加气机与充气柱控制参数</h1>
+        <h2 class="slide-subtitle">明确加气终端的压力、流速及自动停止控制逻辑</h2>
+        
+        <div class="content-container">
+            <div class="gauges-container">
+                <div class="gauge-item">
+                    <div class="gauge-title">加气机额定压力</div>
+                    <div style="height: 120px; width: 120px;"> <!-- reduced canvas size -->
+                        <canvas id="dispenserPressureGauge"></canvas>
+                    </div>
+                </div>
+                
+                <div class="gauge-item">
+                    <div class="gauge-title">加气流速上限</div>
+                    <div style="height: 120px; width: 120px;"> <!-- reduced canvas size -->
+                        <canvas id="dispenserFlowGauge"></canvas>
+                    </div>
+                </div>
+                
+                <div class="gauge-item">
+                    <div class="gauge-title">充气柱设计压力</div>
+                    <div style="height: 120px; width: 120px;"> <!-- reduced canvas size -->
+                        <canvas id="pillarPressureGauge"></canvas>
+                    </div>
+                </div>
+                
+                <div class="gauge-item">
+                    <div class="gauge-title">充气柱流速上限</div>
+                    <div style="height: 120px; width: 120px;"> <!-- reduced canvas size -->
+                        <canvas id="pillarFlowGauge"></canvas>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="insights-container">
+                <div class="insight-item">
+                    <div class="insight-title">加气机停止逻辑</div>
+                    <div class="insight-text">
+                        系统设定双重停止触发条件：当加气压力达到 20 MPa 或加气流速降低至 1 kg/min 时，加气机将自动切断充装。
+                    </div>
+                </div>
+                
+                <div class="insight-item">
+                    <div class="insight-title">充气柱控制参数</div>
+                    <div class="insight-text">
+                        充装设计压力为 20 MPa。充气柱主要用于大流量充装，其计量范围宽达 3～70 kg/min，满足不同车型需求。
+                    </div>
+                </div>
+                
+                <div class="insight-item">
+                    <div class="insight-title">安全联锁机制</div>
+                    <div class="insight-text">
+                        终端设备与站内 PLC 系统实时联动。一旦检测到压力异常或紧急停机信号，系统将立即关闭气源，确保充装安全。
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="data-source">
+            数据来源：阜康通源加气站终端设备操作手册
+        </div>
+    </div>
+    
+    <script>
+        window.addEventListener('load', function() {
+            function createGaugeChart(canvasId, value, maxValue, color, unit) {
+                const ctx = document.getElementById(canvasId).getContext('2d');
+                new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        datasets: [{
+                            data: [value, Math.max(0, maxValue - value)],
+                            backgroundColor: [color, 'rgba(18, 55, 122, 0.1)'],
+                            borderWidth: 0,
+                            cutout: '75%'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: { enabled: false }
+                        }
+                    },
+                    plugins: [{
+                        id: 'centerText',
+                        beforeDraw: function(chart) {
+                            const ctx = chart.ctx;
+                            const centerX = (chart.chartArea.left + chart.chartArea.right) / 2;
+                            const centerY = (chart.chartArea.top + chart.chartArea.bottom) / 2;
+                            ctx.save();
+                            ctx.textAlign = 'center';
+                            ctx.textBaseline = 'middle';
+                            ctx.font = 'bold 22px Inter, sans-serif';
+                            ctx.fillStyle = '#12377A';
+                            ctx.fillText(value, centerX, centerY - 5);
+                            ctx.font = '12px Inter, sans-serif';
+                            ctx.fillStyle = '#858481';
+                            ctx.fillText(unit, centerX, centerY + 15);
+                            ctx.restore();
+                        }
+                    }]
+                });
+            }
+            
+            createGaugeChart('dispenserPressureGauge', 20, 25, '#12377A', 'MPa');
+            createGaugeChart('dispenserFlowGauge', 30, 50, '#3D8BC1', 'kg/min');
+            createGaugeChart('pillarPressureGauge', 20, 25, '#6BAFD3', 'MPa');
+            createGaugeChart('pillarFlowGauge', 70, 100, '#A8D5E5', 'kg/min');
+        });
+    </script>
+</body>
+</html>

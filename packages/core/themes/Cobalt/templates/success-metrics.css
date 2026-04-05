@@ -1,0 +1,131 @@
+.success-metrics-slide {
+  grid-template-columns: 1fr 1fr;
+}
+
+.success-metrics-slide .col-right {
+  justify-content: center;
+  gap: 0;
+  padding-top: 0;
+  min-width: 0;
+}
+
+.success-metrics-slide .col-right h2 {
+  display: flex;
+  align-items: center;
+  min-height: 2.5rem;
+  margin: 0 0 0.35rem;
+  padding: 0 0 0 3.6rem;
+  background: transparent;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.success-metrics-slide .col-right h2::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 2.25rem;
+  height: 2.25rem;
+  transform: translateY(-50%);
+  border-radius: 999px;
+  background: var(--cb-primary);
+  box-shadow: none;
+}
+
+.success-metrics-slide .col-right h2 + p,
+.success-metrics-slide .col-right h2 + ul,
+.success-metrics-slide .col-right h2 + ol {
+  margin: 0 0 1.65rem;
+  padding: 0 0 0 3.6rem;
+  background: transparent;
+  border-radius: 0;
+  box-shadow: none;
+  color: var(--cb-muted);
+  line-height: 1.55;
+}
+
+.success-metrics-slide .col-right h2 + ul,
+.success-metrics-slide .col-right h2 + ol {
+  list-style: none;
+}
+
+.success-metrics-slide .col-right h2 + ul li,
+.success-metrics-slide .col-right h2 + ol li {
+  position: relative;
+  padding-left: 1.2rem;
+}
+
+.success-metrics-slide .col-right h2 + ul li + li,
+.success-metrics-slide .col-right h2 + ol li + li {
+  margin-top: 0.75rem;
+}
+
+.success-metrics-slide .col-right h2 + ul li::before,
+.success-metrics-slide .col-right h2 + ol li::before {
+  content: "";
+  position: absolute;
+  top: 0.68rem;
+  left: 0;
+  width: 0.42rem;
+  height: 0.42rem;
+  border-radius: 999px;
+  background: var(--cb-accent);
+}
+
+.success-metrics-slide .col-right h2 + p:last-child,
+.success-metrics-slide .col-right h2 + ul:last-child,
+.success-metrics-slide .col-right h2 + ol:last-child {
+  margin-bottom: 0;
+}
+
+.success-metrics-slide .col-right > p:last-child {
+  margin-top: 0.5rem;
+  color: var(--cb-muted);
+  font-size: 0.8rem;
+  font-style: italic;
+  line-height: 1.5;
+}
+
+.success-metrics-slide .col-left ul {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+  margin-top: 1rem;
+  padding: 0;
+  list-style: none;
+}
+
+.success-metrics-slide .col-left li {
+  margin: 0;
+  padding: 1.1rem 1rem 1rem;
+  background: rgba(255, 255, 255, 0.98);
+  border-radius: 18px;
+  box-shadow: var(--cb-shadow-soft);
+  min-height: 166px;
+  line-height: 1.58;
+}
+
+.success-metrics-slide .col-left li strong {
+  display: block;
+  color: var(--cb-primary);
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.45;
+}
+
+.success-metrics-slide .col-left li code {
+  display: block;
+  margin: 0.7rem 0 0.7rem;
+  padding: 0;
+  background: transparent;
+  color: var(--cb-primary);
+  font-family: inherit;
+  font-size: 2.15rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.success-metrics-slide .col-left table {
+  margin-top: 1rem;
+}

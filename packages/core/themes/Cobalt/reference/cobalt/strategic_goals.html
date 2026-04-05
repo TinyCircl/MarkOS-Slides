@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Strategic Goals and Objectives</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+            background-color: #f8f9fa;
+        }
+        .slide-container {
+            width: 1280px;
+            min-height: 720px;
+            padding: 40px;
+            display: grid;
+            grid-template-rows: auto auto 1fr;
+            background-color: #f8f9fa;
+        }
+        .slide-title {
+            color: #1f4788;
+            font-size: 36px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        .slide-subtitle {
+            color: #666666;
+            font-size: 20px;
+            margin-bottom: 32px;
+        }
+        .content-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+        }
+        .gauges-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+        .gauge-item {
+            background: white;
+            padding: 16px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .gauge-title {
+            color: #1f4788;
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            text-align: center;
+        }
+        .insights-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .insight-item {
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+        }
+        .insight-title {
+            color: #1f4788;
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        .insight-text {
+            color: #333333;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        .data-source {
+            color: #666666;
+            font-size: 12px;
+            font-style: italic;
+            margin-top: 20px;
+            text-align: center;
+            grid-column: 1 / -1;
+        }
+    </style>
+</head>
+<body>
+    <div class="slide-container">
+        <h1 class="slide-title">Strategic Goals and Objectives</h1>
+        <h2 class="slide-subtitle">Primary goals and milestones for the project</h2>
+        
+        <div class="content-container">
+            <div class="gauges-container">
+                <div class="gauge-item">
+                    <div class="gauge-title">Market Share Target</div>
+                    <div style="height: 144px; width: 144px;">
+                        <canvas id="goalGauge1"></canvas>
+                    </div>
+                </div>
+                
+                <div class="gauge-item">
+                    <div class="gauge-title">Efficiency Gain</div>
+                    <div style="height: 144px; width: 144px;">
+                        <canvas id="goalGauge2"></canvas>
+                    </div>
+                </div>
+                
+                <div class="gauge-item">
+                    <div class="gauge-title">Customer Satisfaction</div>
+                    <div style="height: 144px; width: 144px;">
+                        <canvas id="goalGauge3"></canvas>
+                    </div>
+                </div>
+                
+                <div class="gauge-item">
+                    <div class="gauge-title">Revenue Growth</div>
+                    <div style="height: 144px; width: 144px;">
+                        <canvas id="goalGauge4"></canvas>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="insights-container">
+                <div class="insight-item">
+                    <div class="insight-title">Strategic Pillar 1: Innovation</div>
+                    <div class="insight-text">
+                        [Describe the first strategic goal, focusing on how it drives long-term value and competitive advantage.]
+                    </div>
+                </div>
+                
+                <div class="insight-item">
+                    <div class="insight-title">Strategic Pillar 2: Operational Excellence</div>
+                    <div class="insight-text">
+                        [Outline the objectives related to streamlining processes and improving internal efficiencies.]
+                    </div>
+                </div>
+                
+                <div class="insight-item">
+                    <div class="insight-title">Strategic Pillar 3: Customer Centricity</div>
+                    <div class="insight-text">
+                        [Detail the goals aimed at enhancing the customer experience and building brand loyalty.]
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="data-source">
+            Source: [Enter Strategic Planning Document Reference]
+        </div>
+    </div>
+    
+    <script>
+        window.addEventListener('load', function() {
+            function createGoalGauge(canvasId, value, color) {
+                const ctx = document.getElementById(canvasId).getContext('2d');
+                new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        datasets: [{
+                            data: [value, 100 - value],
+                            backgroundColor: [color, '#e9ecef'],
+                            borderWidth: 0,
+                            cutout: '75%'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: { enabled: false }
+                        }
+                    },
+                    plugins: [{
+                        id: 'centerText',
+                        beforeDraw: function(chart) {
+                            const ctx = chart.ctx;
+                            const centerX = (chart.chartArea.left + chart.chartArea.right) / 2;
+                            const centerY = (chart.chartArea.top + chart.chartArea.bottom) / 2;
+                            ctx.save();
+                            ctx.textAlign = 'center';
+                            ctx.textBaseline = 'middle';
+                            ctx.font = 'bold 24px Inter, sans-serif';
+                            ctx.fillStyle = color;
+                            ctx.fillText(value + '%', centerX, centerY);
+                            ctx.restore();
+                        }
+                    }]
+                });
+            }
+            
+            createGoalGauge('goalGauge1', 75, '#1f4788');
+            createGoalGauge('goalGauge2', 60, '#4a90e2');
+            createGoalGauge('goalGauge3', 90, '#1f4788');
+            createGoalGauge('goalGauge4', 45, '#4a90e2');
+        });
+    </script>
+</body>
+</html>

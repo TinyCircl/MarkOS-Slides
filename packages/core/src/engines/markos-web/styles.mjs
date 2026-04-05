@@ -149,11 +149,22 @@ a { color: inherit; }
   width: 100%;
   min-height: 720px;
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-content: start;
+}
+.slidev-layout.two-columns .two-cols-header {
+  grid-column: 1 / -1;
+  min-width: 0;
 }
 .slidev-layout.two-columns .col-left,
 .slidev-layout.two-columns .col-right {
   min-width: 0;
+}
+.slidev-layout.two-columns .col-left {
+  grid-column: 1;
+}
+.slidev-layout.two-columns .col-right {
+  grid-column: 2;
 }
 .empty-state {
   display: flex;

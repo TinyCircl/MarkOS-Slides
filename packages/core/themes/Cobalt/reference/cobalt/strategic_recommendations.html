@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Proposed Actions and Next Steps</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+            background-color: #f8f9fa;
+        }
+        .slide-container {
+            width: 1280px;
+            min-height: 720px;
+            padding: 40px;
+            display: grid;
+            grid-template-rows: auto auto 1fr;
+            background-color: #f8f9fa;
+        }
+        .slide-title {
+            color: #1f4788;
+            font-size: 36px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        .slide-subtitle {
+            color: #666666;
+            font-size: 20px;
+            margin-bottom: 24px;
+        }
+        .content-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+        }
+        .gauges-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+        .gauge-item {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .gauge-title {
+            color: #1f4788;
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            text-align: center;
+        }
+        .insights-container {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        .insight-item {
+            padding: 16px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+        }
+        .insight-title {
+            color: #1f4788;
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        .insight-text {
+            color: #333333;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        .data-source {
+            color: #666666;
+            font-size: 12px;
+            font-style: italic;
+            margin-top: 20px;
+            text-align: center;
+            grid-column: 1 / -1;
+        }
+    </style>
+</head>
+<body>
+    <div class="slide-container">
+        <h1 class="slide-title">Proposed Actions and Next Steps</h1>
+        <h2 class="slide-subtitle">Recommended strategy and immediate actions for project success</h2>
+        
+        <div class="content-container">
+            <div class="gauges-container">
+                <div class="gauge-item">
+                    <div class="gauge-title">Implementation Readiness</div>
+                    <div style="height: 150px; width: 150px;">
+                        <canvas id="recGauge1"></canvas>
+                    </div>
+                </div>
+                
+                <div class="gauge-item">
+                    <div class="gauge-title">Resource Allocation</div>
+                    <div style="height: 150px; width: 150px;">
+                        <canvas id="recGauge2"></canvas>
+                    </div>
+                </div>
+                
+                <div class="gauge-item">
+                    <div class="gauge-title">Risk Mitigation</div>
+                    <div style="height: 150px; width: 150px;">
+                        <canvas id="recGauge3"></canvas>
+                    </div>
+                </div>
+                
+                <div class="gauge-item">
+                    <div class="gauge-title">Timeline Adherence</div>
+                    <div style="height: 150px; width: 150px;">
+                        <canvas id="recGauge4"></canvas>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="insights-container">
+                <div class="insight-item">
+                    <div class="insight-title">Phase 1: Immediate Actions</div>
+                    <div class="insight-text">
+                        [Detail the critical steps to be taken within the first 30 days to ensure project momentum and alignment.]
+                    </div>
+                </div>
+                
+                <div class="insight-item">
+                    <div class="insight-title">Phase 2: Strategic Integration</div>
+                    <div class="insight-text">
+                        [Outline the mid-term actions focused on integrating new processes and technologies into the existing ecosystem.]
+                    </div>
+                </div>
+                
+                <div class="insight-item">
+                    <div class="insight-title">Phase 3: Scaling & Optimization</div>
+                    <div class="insight-text">
+                        [Describe the long-term plan for scaling successful initiatives and continuously optimizing performance.]
+                    </div>
+                </div>
+                
+                <div class="insight-item">
+                    <div class="insight-title">Monitoring & Evaluation</div>
+                    <div class="insight-text">
+                        [Establish a framework for regular performance reviews and adjustments based on real-time data.]
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="data-source">
+            Source: [Enter Strategic Planning Document Reference]
+        </div>
+    </div>
+    
+    <script>
+        window.addEventListener('load', function() {
+            function createRecGauge(canvasId, value, color) {
+                const ctx = document.getElementById(canvasId).getContext('2d');
+                new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        datasets: [{
+                            data: [value, 100 - value],
+                            backgroundColor: [color, '#e9ecef'],
+                            borderWidth: 0,
+                            cutout: '75%'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: { enabled: false }
+                        }
+                    },
+                    plugins: [{
+                        id: 'centerText',
+                        beforeDraw: function(chart) {
+                            const ctx = chart.ctx;
+                            const centerX = (chart.chartArea.left + chart.chartArea.right) / 2;
+                            const centerY = (chart.chartArea.top + chart.chartArea.bottom) / 2;
+                            ctx.save();
+                            ctx.textAlign = 'center';
+                            ctx.textBaseline = 'middle';
+                            ctx.font = 'bold 24px Inter, sans-serif';
+                            ctx.fillStyle = color;
+                            ctx.fillText(value + '%', centerX, centerY);
+                            ctx.restore();
+                        }
+                    }]
+                });
+            }
+            
+            createRecGauge('recGauge1', 85, '#1f4788');
+            createRecGauge('recGauge2', 70, '#4a90e2');
+            createRecGauge('recGauge3', 95, '#1f4788');
+            createRecGauge('recGauge4', 60, '#4a90e2');
+        });
+    </script>
+</body>
+</html>

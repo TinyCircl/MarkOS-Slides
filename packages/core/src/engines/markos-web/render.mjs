@@ -46,6 +46,51 @@ function renderMarkdown(content) {
     return marked.parse(content);
 }
 
+function renderMarkdownTokens(tokens) {
+    return Array.isArray(tokens) && tokens.length > 0 ? marked.parser(tokens) : "";
+}
+
+function splitTwoColsHeader(content) {
+    const tokens = marked.lexer(content);
+    let index = 0;
+
+    while (tokens[index]?.type === "space") {
+        index += 1;
+    }
+
+    const firstToken = tokens[index];
+    if (!firstToken || firstToken.type !== "heading" || firstToken.depth !== 1) {
+        return {
+            header: "",
+            body: renderMarkdown(content),
+        };
+    }
+
+    const headerTokens = [firstToken];
+    index += 1;
+
+    while (index < tokens.length) {
+        const token = tokens[index];
+        if (token.type === "space") {
+            index += 1;
+            continue;
+        }
+
+        if (token.type === "paragraph" || (token.type === "heading" && token.depth <= 2)) {
+            headerTokens.push(token);
+            index += 1;
+            continue;
+        }
+
+        break;
+    }
+
+    return {
+        header: renderMarkdownTokens(headerTokens),
+        body: renderMarkdownTokens(tokens.slice(index)),
+    };
+}
+
 function toClassName(...values) {
     return values.filter(Boolean).join(" ");
 }
@@ -63,13 +108,15 @@ function renderSlideHtml(slide) {
 
     if (layout === "two-cols") {
         const sections = splitTwoCols(slide.content);
+        const leftSection = splitTwoColsHeader(sections.left);
         const className = toClassName(
             "slidev-layout two-columns w-full h-full grid grid-cols-2",
             typeof slide.frontmatter.layoutClass === "string" ? slide.frontmatter.layoutClass : undefined,
         );
         return [
             `<div class="${className}">`,
-            `<div class="${toClassName("col-left", slideClass)}">${renderMarkdown(sections.left)}</div>`,
+            leftSection.header ? `<div class="two-cols-header">${leftSection.header}</div>` : "",
+            `<div class="${toClassName("col-left", slideClass)}">${leftSection.body}</div>`,
             `<div class="${toClassName("col-right", slideClass)}">${renderMarkdown(sections.right)}</div>`,
             "</div>",
         ].join("");

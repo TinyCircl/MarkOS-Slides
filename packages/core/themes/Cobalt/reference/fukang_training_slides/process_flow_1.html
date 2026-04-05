@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>煤层气及充装工艺流程概览</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        .slide-container {
+            width: 1280px;
+            min-height: 720px;
+            background: #F2F9FC;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            padding: 50px 80px;
+        }
+        
+        .slide-title {
+            font-family: 'Inter', 'Source Han Sans CN', sans-serif;
+            color: #12377A;
+            font-size: 42px;
+            font-weight: 700;
+            margin-bottom: 30px;
+            border-bottom: 4px solid #12377A;
+            padding-bottom: 10px;
+            display: inline-block;
+        }
+        
+        .content-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            flex: 1;
+        }
+        
+        .left-column {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        
+        .process-box {
+            background: white;
+            border-left: 6px solid #12377A;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 12px rgba(18, 55, 122, 0.05);
+        }
+        
+        .box-title {
+            color: #12377A;
+            font-size: 22px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        
+        .box-desc {
+            color: #666666;
+            font-size: 16px;
+            line-height: 1.5;
+        }
+        
+        .right-column {
+            background: rgba(18, 55, 122, 0.03);
+            border-radius: 12px;
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        
+        .flow-step {
+            display: flex;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        
+        .step-number {
+            background: #3D8BC1;
+            color: white;
+            width: 28px;
+            height: 28px;
+            border-radius: 4px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 14px;
+            font-weight: 700;
+            margin-right: 15px;
+            flex-shrink: 0;
+        }
+        
+        .step-text {
+            color: #12377A;
+            font-size: 18px;
+            font-weight: 500;
+        }
+        
+        .flow-arrow {
+            height: 15px;
+            margin-left: 14px;
+            border-left: 2px dashed #3D8BC1;
+            margin-bottom: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="slide-container">
+        <h1 class="slide-title">煤层气及充装工艺流程概览</h1>
+        
+        <div class="content-container">
+            <div class="left-column">
+                <div class="process-box">
+                    <div class="box-title">前端预处理阶段</div>
+                    <div class="box-desc">进站气首先通过分离器去除大颗粒杂质与液滴，随后进入分子筛脱水撬进行深度脱水，确保气质干燥。</div>
+                </div>
+                
+                <div class="process-box">
+                    <div class="box-title">多级增压阶段</div>
+                    <div class="box-desc">采用螺杆压缩机进行初级增压，再由CNG压缩机进行往复式三级压缩，最终达到25MPa的充装压力。</div>
+                </div>
+                
+                <div class="process-box">
+                    <div class="box-title">存储与分配阶段</div>
+                    <div class="box-desc">通过顺序控制盘实现高、中压瓶组的分时充压，最后经加臭处理后由加气机或充气柱对外输出。</div>
+                </div>
+            </div>
+            
+            <div class="right-column">
+                <div class="flow-step"><div class="step-number">01</div><div class="step-text">进站分离器 / 计量撬</div></div>
+                <div class="flow-arrow"></div>
+                <div class="flow-step"><div class="step-number">02</div><div class="step-text">分子筛脱水撬 (1#/2#)</div></div>
+                <div class="flow-arrow"></div>
+                <div class="flow-step"><div class="step-number">03</div><div class="step-text">螺杆压缩机 (低压增压)</div></div>
+                <div class="flow-arrow"></div>
+                <div class="flow-step"><div class="step-number">04</div><div class="step-text">CNG 压缩机 (高压增压)</div></div>
+                <div class="flow-arrow"></div>
+                <div class="flow-step"><div class="step-number">05</div><div class="step-text">顺序控制盘 & 储气瓶组</div></div>
+                <div class="flow-arrow"></div>
+                <div class="flow-step"><div class="step-number">06</div><div class="step-text">加气机 / 充气柱 / 加臭撬</div></div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

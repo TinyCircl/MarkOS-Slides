@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project Overview & Context</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+            background-color: #f8f9fa;
+        }
+        .slide-container {
+            width: 1280px;
+            min-height: 720px;
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+        }
+        .title {
+            color: #1f4788;
+            font-size: 36px;
+            font-weight: 700;
+            margin-bottom: 32px;
+        }
+        .content-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px; /* reduced gap to save vertical space */
+            flex-grow: 1;
+        }
+        .left-column {
+            display: flex;
+            flex-direction: column;
+            gap: 16px; /* consistent vertical spacing between blocks */
+        }
+        .info-block {
+            background: white;
+            padding: 12px; /* reduced inner padding */
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+        }
+        .block-title {
+            color: #1f4788;
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        .block-value {
+            color: #1f4788;
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        .block-text {
+            color: #333333;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        .visual-container {
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start; /* align to top to reduce total height */
+            align-items: center;
+        }
+        .visual-placeholder {
+            background-color: #e9ecef;
+            border: 2px dashed #ced4da;
+            border-radius: 8px;
+            width: 100%;
+            height: 330px; /* reduced height from 400 to 330 */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #6c757d;
+            font-size: 18px;
+        }
+        .source-text {
+            color: #666666;
+            font-size: 12px;
+            margin-top: 8px; /* slightly reduced */
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div class="slide-container">
+        <h1 class="title">Project Overview & Context</h1>
+        <div class="content-grid">
+            <div class="left-column">
+                <div class="info-block">
+                    <div class="block-title">Market Context</div>
+                    <div class="block-value">[Metric Value]</div>
+                    <div class="block-text">[Explain the background, current situation, and the purpose of this presentation.]</div>
+                </div>
+                <div class="info-block">
+                    <div class="block-title">Growth Potential</div>
+                    <div class="block-value">[Metric Value]</div>
+                    <div class="block-text">[Detail the opportunities and growth drivers relevant to the project context.]</div>
+                </div>
+                <div class="info-block">
+                    <div class="block-title">Strategic Alignment</div>
+                    <div class="block-value">[Metric Value]</div>
+                    <div class="block-text">[Describe how this project aligns with broader organizational or market goals.]</div>
+                </div>
+            </div>
+            <div class="visual-container">
+                <div class="visual-placeholder">
+                    [Visual Element Placeholder: Context Graphic / Value Chain]
+                </div>
+                <div class="source-text">Source: [Enter Data Source Here]</div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

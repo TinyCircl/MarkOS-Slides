@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>程序控制盘与储气瓶组</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        .slide-container {
+            width: 1280px;
+            min-height: 720px; /* keep as required */
+            background: #F2F9FC;
+            margin: 0 auto;
+            padding: 40px 40px 20px; /* keep top padding, reduce bottom */
+            display: grid;
+            grid-template-rows: auto auto 1fr;
+        }
+        
+        .slide-title {
+            font-family: 'Inter', 'Source Han Sans CN', sans-serif;
+            color: #12377A;
+            font-size: 42px;
+            font-weight: 700;
+            margin-bottom: 10px; /* keep title spacing */
+        }
+        
+        .slide-subtitle {
+            font-family: 'Inter', 'Source Han Sans CN', sans-serif;
+            color: #3D8BC1;
+            font-size: 24px;
+            margin-bottom: 20px; /* reduced */
+            font-weight: 400;
+        }
+        
+        .content-container {
+            display: grid;
+            grid-template-columns: 1fr 1.2fr;
+            gap: 28px;
+            align-items: start;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px; /* reduced */
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 18px; /* reduced */
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(18, 55, 122, 0.05);
+            text-align: center;
+            border-top: 4px solid #12377A;
+        }
+        
+        .stat-label {
+            color: #666666;
+            font-size: 16px;
+            margin-bottom: 8px; /* reduced */
+        }
+        
+        .stat-value {
+            color: #12377A;
+            font-size: 32px;
+            font-weight: 800;
+        }
+        
+        .stat-unit {
+            font-size: 18px;
+            font-weight: 400;
+            margin-left: 4px;
+        }
+        
+        .insights-container {
+            display: grid; /* reorganized to two columns to reduce vertical space */
+            grid-template-columns: 1fr 1fr;
+            gap: 12px; /* reduced */
+        }
+        
+        .insight-item {
+            padding: 12px; /* reduced */
+            background: rgba(18, 55, 122, 0.05);
+            border-radius: 10px;
+            border-left: 6px solid #3D8BC1;
+        }
+        
+        .insight-title {
+            font-family: 'Inter', 'Source Han Sans CN', sans-serif;
+            color: #12377A;
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        
+        .insight-text {
+            font-family: 'Inter', 'Source Han Sans CN', sans-serif;
+            color: #444444;
+            font-size: 17px;
+            line-height: 1.5;
+        }
+        
+        .footer-note {
+            font-family: 'Inter', 'Source Han Sans CN', sans-serif;
+            color: #858481;
+            font-size: 14px;
+            margin-top: 12px; /* reduced */
+            text-align: right;
+        }
+    </style>
+</head>
+<body>
+    <div class="slide-container">
+        <h1 class="slide-title">程序控制盘与储气瓶组</h1>
+        <h2 class="slide-subtitle">解析分段充压逻辑及储气设施的安全配置</h2>
+        
+        <div class="content-container">
+            <!-- Left Column: Storage Stats -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-label">单瓶水容积</div>
+                    <div class="stat-value">1.13<span class="stat-unit">m³</span></div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">设计压力</div>
+                    <div class="stat-value">25<span class="stat-unit">MPa</span></div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">高压瓶组容积</div>
+                    <div class="stat-value">4.52<span class="stat-unit">m³</span></div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">中压瓶组容积</div>
+                    <div class="stat-value">9.04<span class="stat-unit">m³</span></div>
+                </div>
+            </div>
+            
+            <!-- Right Column: Control & Safety Insights (now two-column grid) -->
+            <div class="insights-container">
+                <div class="insight-item">
+                    <div class="insight-title">顺序控制盘作用</div>
+                    <div class="insight-text">
+                        核心逻辑是对储气瓶组的高、中压瓶组进行分时、分段充压，优化压缩机运行效率并保障加气高峰期的压力稳定。
+                    </div>
+                </div>
+                
+                <div class="insight-item">
+                    <div class="insight-title">控制参数设定</div>
+                    <div class="insight-text">
+                        CNG 压缩机来气后，顺序控制盘压力阀开启压力设定为 17 MPa，确保系统在预设压力下有序切换充压路径。
+                    </div>
+                </div>
+                
+                <div class="insight-item">
+                    <div class="insight-title">安全泄放设施</div>
+                    <div class="insight-text">
+                        配备高精度安全阀，整定压力为 27.2 MPa；压力表量程 0～40 MPa，实时监控系统运行状态。
+                    </div>
+                </div>
+                
+                <div class="insight-item">
+                    <div class="insight-title">紧急切断系统</div>
+                    <div class="insight-text">
+                        全站共配置 12 个紧急切断阀，分布于关键管路节点，确保在异常情况下能够迅速隔离储气区域。
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="footer-note">
+            * 数据来源：阜康通源加气站设备技术手册
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Implementation Process and Methodology</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+        body { margin: 0; padding: 0; font-family: 'Inter', sans-serif; background-color: #f8f9fa; }
+        .slide-container {
+            width: 1280px;
+            min-height: 720px; /* keep as required */
+            padding: 40px 40px 24px; /* keep top padding for title, reduce bottom to save height */
+            display: flex;
+            flex-direction: column;
+        }
+        .title { color: #1f4788; font-size: 36px; font-weight: 700; margin-bottom: 8px; }
+        .subtitle { color: #666666; font-size: 20px; margin-bottom: 24px; }
+        .content-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 36px; flex-grow: 1; }
+        .methodology-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .step-card {
+            background: white;
+            padding: 18px; /* shrink inner padding to reduce height */
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+            display: flex; flex-direction: column; align-items: center; text-align: center;
+        }
+        .step-number { width: 40px; height: 40px; background-color: #1f4788; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; margin-bottom: 12px; }
+        .step-title { color: #1f4788; font-size: 18px; font-weight: 600; margin-bottom: 8px; }
+        .step-text { color: #333333; font-size: 14px; line-height: 1.5; }
+        .insights-container { display: flex; flex-direction: column; gap: 8px; }
+        .insight-item { background: rgba(31, 71, 136, 0.05); padding: 12px; border-radius: 8px; }
+        .insight-title { color: #1f4788; font-size: 18px; font-weight: 600; margin-bottom: 4px; }
+        .insight-text { color: #333333; font-size: 14px; line-height: 1.6; }
+        .data-source { color: #666666; font-size: 12px; margin-top: 20px; font-style: italic; text-align: center; }
+    </style>
+</head>
+<body>
+    <div class="slide-container">
+        <h1 class="title">Implementation Process and Methodology</h1>
+        <h2 class="subtitle">Structured approach to project execution and delivery</h2>
+        
+        <div class="content-grid">
+            <div class="methodology-grid">
+                <div class="step-card">
+                    <div class="step-number">01</div>
+                    <div class="step-title">Discovery &amp; Audit</div>
+                    <div class="step-text">Comprehensive assessment of current state, data infrastructure, and business requirements.</div>
+                </div>
+                <div class="step-card">
+                    <div class="step-number">02</div>
+                    <div class="step-title">Strategy Design</div>
+                    <div class="step-text">Defining the roadmap, selecting technology stacks, and establishing success metrics.</div>
+                </div>
+                <div class="step-card">
+                    <div class="step-number">03</div>
+                    <div class="step-title">Development</div>
+                    <div class="step-text">Iterative building of solutions with continuous testing and stakeholder feedback loops.</div>
+                </div>
+                <div class="step-card">
+                    <div class="step-number">04</div>
+                    <div class="step-title">Deployment</div>
+                    <div class="step-text">Full-scale rollout, user training, and transition to operational maintenance.</div>
+                </div>
+            </div>
+            
+            <div class="insights-container">
+                <div class="insight-item">
+                    <div class="insight-title">Agile Framework</div>
+                    <div class="insight-text">Utilizing agile methodologies to ensure flexibility and rapid response to changing market conditions.</div>
+                </div>
+                <div class="insight-item">
+                    <div class="insight-title">Data Governance</div>
+                    <div class="insight-text">Strict adherence to data security and privacy standards throughout the implementation lifecycle.</div>
+                </div>
+                <div class="insight-item">
+                    <div class="insight-title">Stakeholder Alignment</div>
+                    <div class="insight-text">Regular synchronization with key business units to ensure strategic objectives are met.</div>
+                </div>
+                <div class="insight-item">
+                    <div class="insight-title">Continuous Optimization</div>
+                    <div class="insight-text">Post-deployment monitoring and refinement based on real-world performance data.</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="data-source">Methodology based on industry best practices for digital transformation.</div>
+    </div>
+</body>
+</html>

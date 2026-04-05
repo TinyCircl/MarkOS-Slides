@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Competitive Landscape Comparison</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+            background-color: #f8f9fa;
+        }
+        .slide-container {
+            width: 1280px;
+            min-height: 720px;
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+        }
+        .title {
+            color: #1f4788;
+            font-size: 36px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        .subtitle {
+            color: #666666;
+            font-size: 20px;
+            font-weight: 400;
+            margin-bottom: 32px;
+        }
+        .content-container {
+            display: flex;
+            gap: 40px;
+            flex-grow: 1;
+        }
+        .chart-section {
+            flex: 3;
+            background: white;
+            padding: 24px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+            display: flex;
+            flex-direction: column;
+        }
+        .insights-section {
+            flex: 2;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+        .insight-block {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+        }
+        .insight-title {
+            color: #1f4788;
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        .insight-text {
+            color: #333333;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        .data-source {
+            color: #666666;
+            font-size: 12px;
+            margin-top: 16px;
+            font-style: italic;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="slide-container">
+        <h1 class="title">Competitive Landscape Comparison</h1>
+        <p class="subtitle">Comparing market position and performance across channels (2019 vs 2025)</p>
+        
+        <div class="content-container">
+            <div class="chart-section">
+                <div style="height: 400px;">
+                    <canvas id="comparisonChart"></canvas>
+                </div>
+                <p class="data-source">Source: [Enter Data Source Here]</p>
+            </div>
+            
+            <div class="insights-section">
+                <div class="insight-block">
+                    <div class="insight-title">Market Shift Analysis</div>
+                    <div class="insight-text">[Compare different entities, strategies, or time periods. Highlight the most significant changes in the competitive landscape.]</div>
+                </div>
+                <div class="insight-block">
+                    <div class="insight-title">Channel Performance</div>
+                    <div class="insight-text">[Detail how specific channels have evolved and which ones are currently leading the market in terms of growth or frequency.]</div>
+                </div>
+                <div class="insight-block">
+                    <div class="insight-title">Strategic Implications</div>
+                    <div class="insight-text">[Outline the key takeaways for competitors and what these trends mean for future strategic planning.]</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        window.addEventListener('load', function() {
+            const ctx = document.getElementById('comparisonChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Channel A', 'Channel B', 'Channel C', 'Channel D', 'Channel E'],
+                    datasets: [
+                        {
+                            label: '2019 Performance',
+                            data: [65, 45, 75, 50, 30],
+                            backgroundColor: '#4a90e2',
+                        },
+                        {
+                            label: '2025 Performance',
+                            data: [80, 70, 60, 85, 55],
+                            backgroundColor: '#1f4788',
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: {
+                                font: { family: 'Inter', size: 14 }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: '#f0f0f0' },
+                            ticks: { font: { family: 'Inter' } }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: { font: { family: 'Inter' } }
+                        }
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>
