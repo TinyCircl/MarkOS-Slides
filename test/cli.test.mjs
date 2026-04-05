@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import os from "node:os";
-import {mkdir, mkdtemp, readFile, rm, stat, writeFile} from "node:fs/promises";
+import {chmod, mkdir, mkdtemp, readFile, rm, stat, writeFile} from "node:fs/promises";
 import {join} from "node:path";
 import {parseCliArgs, runCli} from "../src/cli.mjs";
 import {getBundledThemesRoot} from "../packages/core/src/config/index.mjs";
@@ -34,6 +34,27 @@ async function writeDirectoryTheme(themesRoot, themeName, css = "") {
         "utf8",
     );
     return themeDir;
+}
+
+async function writeFakePdfBrowser(scriptPath) {
+    await writeFile(
+        scriptPath,
+        [
+            "#!/bin/sh",
+            "pdf_path=\"\"",
+            "for arg in \"$@\"; do",
+            "  case \"$arg\" in",
+            "    --print-to-pdf=*) pdf_path=\"${arg#--print-to-pdf=}\" ;;",
+            "  esac",
+            "done",
+            "if [ -n \"$MARKOS_TEST_PDF_BROWSER_LOG\" ]; then",
+            "  printf '%s\\n' \"$@\" > \"$MARKOS_TEST_PDF_BROWSER_LOG\"",
+            "fi",
+            "printf '%s\\n' '%PDF-1.4' '%%EOF' > \"$pdf_path\"",
+        ].join("\n"),
+        "utf8",
+    );
+    await chmod(scriptPath, 0o755);
 }
 
 test("CLI build command generates a static site from a local project", async () => {
@@ -554,11 +575,79 @@ test("CLI dev rebuilds when a bundled theme source file changes", async () => {
     }
 });
 
-test("CLI export command fails with a clear unsupported message", async () => {
-    await assert.rejects(
-        () => runCli(["export", "."]),
-        /not available yet/,
-    );
+test("CLI export command generates a PDF artifact through the real export pipeline", async () => {
+    const tempRoot = await mkdtemp(join(os.tmpdir(), "markos-cli-export-"));
+    const projectRoot = join(tempRoot, "project");
+    const outDir = join(tempRoot, "pdf");
+    const fakeBrowserPath = join(tempRoot, "fake-pdf-browser");
+    const browserLogPath = join(tempRoot, "browser.log");
+    const previousBrowser = process.env.MARKOS_PDF_BROWSER;
+    const previousBrowserLog = process.env.MARKOS_TEST_PDF_BROWSER_LOG;
+
+    try {
+        await mkdir(projectRoot, {recursive: true});
+        await writeFile(
+            join(projectRoot, "slides.md"),
+            [
+                "---",
+                "title: Export Deck",
+                "---",
+                "",
+                "# Hello Export",
+                "",
+                "## Summary",
+                "",
+                "- One",
+                "- Two",
+            ].join("\n"),
+            "utf8",
+        );
+        await writeFakePdfBrowser(fakeBrowserPath);
+        process.env.MARKOS_PDF_BROWSER = fakeBrowserPath;
+        process.env.MARKOS_TEST_PDF_BROWSER_LOG = browserLogPath;
+
+        const result = await runCli([
+            "export",
+            projectRoot,
+            "--format",
+            "pdf",
+            "--out-dir",
+            outDir,
+            "--file-name",
+            "export-deck",
+        ]);
+
+        const artifactContents = await readFile(result.artifactFilePath, "utf8");
+        const browserLog = await readFile(browserLogPath, "utf8");
+
+        assert.equal(result.ok, true);
+        assert.equal(result.command, "export");
+        assert.equal(result.format, "pdf");
+        assert.equal(result.fileName, "export-deck.pdf");
+        assert.match(artifactContents, /%PDF-1.4/);
+        assert.match(browserLog, /--print-to-pdf=/);
+        assert.match(browserLog, /\/export\/$/m);
+        await assert.rejects(
+            () => stat(join(outDir, "__markos-export-site__")),
+            /ENOENT/,
+        );
+        await assert.rejects(
+            () => stat(join(projectRoot, ".markos-work")),
+            /ENOENT/,
+        );
+    } finally {
+        if (previousBrowser == null) {
+            delete process.env.MARKOS_PDF_BROWSER;
+        } else {
+            process.env.MARKOS_PDF_BROWSER = previousBrowser;
+        }
+        if (previousBrowserLog == null) {
+            delete process.env.MARKOS_TEST_PDF_BROWSER_LOG;
+        } else {
+            process.env.MARKOS_TEST_PDF_BROWSER_LOG = previousBrowserLog;
+        }
+        await rm(tempRoot, {recursive: true, force: true});
+    }
 });
 
 test("CLI theme apply writes file-level theme metadata and preserves deck-local overrides", async () => {

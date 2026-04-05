@@ -88,9 +88,9 @@ Important output note:
 - `markos dev [deck] [--out-dir dir] [--work-dir dir] [--base /] [--host 127.0.0.1] [--port 3030] [--no-open] [--project-root dir] [--title name]`
 - `markos theme apply <theme> [deck]`
 - `markos theme preview <theme> <fixture> [--host 127.0.0.1] [--port 3030] [--no-open]`
-- `markos export [deck]`
+- `markos export [deck] [--format pdf] [--out-dir dir] [--work-dir dir] [--project-root dir] [--title name] [--file-name name]`
 
-`markos export` is reserved for future non-web artifacts and currently exits with an error.
+`markos export` currently supports `pdf`.
 
 `deck` must be a directory that contains `slides.md`.
 
@@ -153,6 +153,35 @@ Behavior:
 - serves the generated output through the local manifest site server
 - opens the local dev URL in the system default browser by default
 - watches the project root recursively and rebuilds on file changes
+
+## `markos export`
+
+Export a local deck into a file artifact.
+
+Examples:
+
+```bash
+markos export examples/tokyo3days
+markos export examples/tokyo3days --format pdf
+markos export examples/tokyo3days --out-dir build/pdf --file-name tokyo-itinerary
+```
+
+Options:
+- `deck`: deck directory. Default: the current directory
+- `--format`: export format. Current supported value: `pdf`
+- `--out-dir`: output directory. Default: `dist/` next to the entry file
+- `--work-dir`: work directory used during export. Default: `.markos-work/<out-dir-name>/` next to the entry file
+- `--project-root`: directory containing the deck files. Default: the entry file directory
+- `--title`: fallback document title when the source does not provide one
+- `--file-name`: output file name. The `.pdf` suffix is added automatically when omitted
+
+Behavior:
+- resolves `slides.md` from the given deck directory
+- reuses the same local project input collection as `markos build`
+- renders through the real MarkOS export view so themes and deck-local CSS are preserved
+- uses a local Chrome / Chromium executable for PDF export
+- honors `MARKOS_PDF_BROWSER` when you want to point MarkOS at a specific browser binary
+- removes the temporary work directory after the export completes
 - ignores the output and work directories while watching
 
 ## `markos theme apply`

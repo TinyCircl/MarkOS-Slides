@@ -382,6 +382,32 @@ export function renderMarkosDocument({title, basePath, viewport, renderedSlides,
   width: ${viewport.canvasWidth}px;
   height: ${viewport.canvasHeight}px;
 }
+.slide-page {
+  width: ${viewport.canvasWidth}px;
+  min-height: ${viewport.canvasHeight}px;
+}
+.presentation.is-export {
+  gap: 0;
+  padding: 0;
+}
+.presentation.is-export .slide-page {
+  margin: 0;
+}
+@media print {
+  @page {
+    size: ${viewport.canvasWidth}px ${viewport.canvasHeight}px;
+    margin: 0;
+  }
+  html,
+  body {
+    background: #fff;
+  }
+  .presentation.is-export,
+  .presentation.is-export * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}
 `;
     const iconHref = buildAssetHref(basePath, "assets/markdos-icon.svg");
 

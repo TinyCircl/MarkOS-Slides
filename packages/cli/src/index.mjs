@@ -4,6 +4,8 @@ import {mkdir, mkdtemp, readFile, rm, writeFile} from "node:fs/promises";
 import os from "node:os";
 import {basename, dirname, join, resolve} from "node:path";
 import {
+    buildArtifactFromInput,
+    buildRenderOutputMetadata,
     buildStaticSiteFromInput,
     createLocalProjectInput,
 } from "@tinycircl/markos-slides-core";
@@ -32,6 +34,8 @@ export function parseCliArgs(argv) {
         projectRoot: null,
         title: "",
         open: null,
+        format: "",
+        fileName: "",
     };
 
     for (let index = 0; index < rest.length; index += 1) {
@@ -70,6 +74,16 @@ export function parseCliArgs(argv) {
         }
         if (arg === "--title" && next) {
             options.title = next;
+            index += 1;
+            continue;
+        }
+        if (arg === "--format" && next) {
+            options.format = next;
+            index += 1;
+            continue;
+        }
+        if (arg === "--file-name" && next) {
+            options.fileName = next;
             index += 1;
             continue;
         }
@@ -143,13 +157,13 @@ function printHelp() {
         "  markos dev [deck] [--out-dir .markos-dev] [--base /] [--host 127.0.0.1] [--port 3030] [--no-open]",
         "  markos theme apply <theme> [deck]",
         "  markos theme preview <theme> <fixture> [--host 127.0.0.1] [--port 3030] [--no-open]",
-        "  markos export [deck]",
+        "  markos export [deck] [--format pdf] [--out-dir dist] [--file-name name]",
         "",
         "Notes:",
         "  deck must be a directory containing slides.md.",
         `  theme apply writes theme: <theme> into slides.md and keeps slides.css for local overrides.`,
         "  theme preview renders packages/core/themes/<theme>/fixtures/<fixture>.md through the real MarkOS dev pipeline.",
-        "  export is reserved for future non-web artifacts and is not available yet.",
+        "  export currently supports pdf.",
         "",
         "Examples:",
         "  markos build .",
@@ -160,6 +174,7 @@ function printHelp() {
         "  markos dev examples/tokyo3days --no-open",
         "  markos theme apply Clay examples/tokyo3days",
         "  markos theme preview Cobalt comparison --port 3030",
+        "  markos export examples/tokyo3days --format pdf",
     ].join("\n"));
 }
 
@@ -336,6 +351,69 @@ async function runBuildCommand(rawOptions) {
         projectRoot,
         outDir,
         basePath,
+    };
+}
+
+async function runExportCommand(rawOptions) {
+    const format = String(rawOptions.format || "pdf").trim().toLowerCase() || "pdf";
+    if (format !== "pdf") {
+        throw new Error(`markos export currently supports only pdf. Received: ${format}`);
+    }
+
+    const {
+        entryFilePath,
+        projectRoot,
+        outDir,
+        workDir,
+        title,
+        sourceMode,
+    } = resolveCliPaths(rawOptions);
+    const themesRoot = getThemesRoot(null);
+    const input = await createLocalProjectInput({
+        entryFilePath,
+        projectRoot,
+        title,
+        ignoredPaths: [outDir, workDir],
+    });
+    await injectDeckThemeSource(input, {themesRoot});
+
+    const requestedBaseName = String(rawOptions.fileName || "").trim();
+    const outputFileName = requestedBaseName
+        ? (requestedBaseName.toLowerCase().endsWith(".pdf") ? requestedBaseName : `${requestedBaseName}.pdf`)
+        : buildRenderOutputMetadata({
+            ...input,
+            format,
+        }).outputFileName;
+
+    let artifact = null;
+    try {
+        artifact = await buildArtifactFromInput({
+            input,
+            mode: sourceMode,
+            artifactDir: outDir,
+            workDir,
+            format,
+            outputFileName,
+        });
+    } finally {
+        await cleanupWorkDir(workDir);
+    }
+
+    console.log(`entry:   ${entryFilePath}`);
+    console.log(`root:    ${projectRoot}`);
+    console.log(`format:  ${artifact.format}`);
+    console.log(`outDir:  ${outDir}`);
+    console.log(`file:    ${artifact.artifactFilePath}`);
+
+    return {
+        ok: true,
+        command: "export",
+        entryFilePath,
+        projectRoot,
+        outDir,
+        artifactFilePath: artifact.artifactFilePath,
+        fileName: artifact.fileName,
+        format: artifact.format,
     };
 }
 
@@ -516,7 +594,7 @@ export async function runCli(argv, runtime = {}) {
     }
 
     if (options.command === "export") {
-        throw new Error("markos export is not available yet. The CLI currently supports only build and dev while MarkOS remains web-only.");
+        return runExportCommand(parsed);
     }
 
     throw new Error(`Unsupported command: ${options.command}`);
