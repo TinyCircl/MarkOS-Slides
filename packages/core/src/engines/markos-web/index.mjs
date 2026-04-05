@@ -2,19 +2,27 @@ import {spawn} from "node:child_process";
 import {copyFile, mkdir, readFile, readdir, rm, writeFile} from "node:fs/promises";
 import {basename, delimiter, dirname, extname, join, relative, resolve} from "node:path";
 import {fileURLToPath} from "node:url";
+import {chromium} from "playwright-core";
 import {writePreviewManifest} from "../../core/artifact-store.mjs";
 import {startManifestSiteServer} from "../../core/dev-server.mjs";
 import {getDeckCssFilePaths, MARKOS_THEME_WORK_DIRNAME, pathExists} from "../../core/deck-utils.mjs";
 import {parseDeck, getDeckTitle, getDeckViewport} from "./parser.mjs";
 import {getRenderedSlides, renderMarkosDocument} from "./render.mjs";
+import {writePptxFromExportModel} from "./pptx.mjs";
 
 export const MARKOS_WEB_ENGINE_NAME = "markos-web";
 
 const SKIPPED_SOURCE_EXTENSIONS = new Set([".css", ".md", ".markdown", ".mdx", ".vue", ".js", ".jsx", ".ts", ".tsx"]);
 const PACKAGE_ROOT = fileURLToPath(new URL("../../../", import.meta.url));
 const BUILTIN_ASSETS_DIR = join(PACKAGE_ROOT, "assets");
-const PDF_BROWSER_ENV_KEYS = ["MARKOS_PDF_BROWSER", "MARKOS_CHROME_PATH", "CHROME_PATH"];
-const PDF_BROWSER_NAMES_BY_PLATFORM = {
+const EXPORT_BROWSER_ENV_KEYS = [
+    "MARKOS_EXPORT_BROWSER",
+    "MARKOS_PPTX_BROWSER",
+    "MARKOS_PDF_BROWSER",
+    "MARKOS_CHROME_PATH",
+    "CHROME_PATH",
+];
+const EXPORT_BROWSER_NAMES_BY_PLATFORM = {
     darwin: [
         "Google Chrome",
         "Google Chrome Canary",
@@ -178,15 +186,15 @@ async function buildStaticSite({entryFilePath, outputDir, basePath, cwd}) {
     );
 }
 
-function resolvePdfBrowserPathCandidates(env = process.env) {
-    const explicit = PDF_BROWSER_ENV_KEYS
+function resolveExportBrowserPathCandidates(env = process.env) {
+    const explicit = EXPORT_BROWSER_ENV_KEYS
         .map((key) => env[key]?.trim())
         .filter(Boolean);
 
     if (process.platform === "darwin") {
         return uniqueValues([
             ...explicit,
-            ...PDF_BROWSER_NAMES_BY_PLATFORM.darwin.map((name) => `/Applications/${name}.app/Contents/MacOS/${name}`),
+            ...EXPORT_BROWSER_NAMES_BY_PLATFORM.darwin.map((name) => `/Applications/${name}.app/Contents/MacOS/${name}`),
         ]);
     }
 
@@ -211,12 +219,27 @@ function resolvePdfBrowserPathCandidates(env = process.env) {
         .filter(Boolean);
     return uniqueValues([
         ...explicit,
-        ...PDF_BROWSER_NAMES_BY_PLATFORM.linux.flatMap((name) => [
+        ...EXPORT_BROWSER_NAMES_BY_PLATFORM.linux.flatMap((name) => [
             name,
             ...pathDirs.map((dirPath) => join(dirPath, name)),
         ]),
         "/snap/bin/chromium",
     ]);
+}
+
+function buildBrowserRuntimeBudget(env = process.env) {
+    return Number.parseInt(
+        env.MARKOS_EXPORT_VIRTUAL_TIME_BUDGET_MS
+        || env.MARKOS_PDF_VIRTUAL_TIME_BUDGET_MS
+        || "3000",
+        10,
+    ) || 3000;
+}
+
+function maybePushNoSandbox(args, env = process.env) {
+    if (/^(1|true)$/i.test(String(env.MARKOS_PDF_NO_SANDBOX || env.MARKOS_EXPORT_NO_SANDBOX || "").trim())) {
+        args.push("--no-sandbox");
+    }
 }
 
 function buildPdfBrowserArgs(outputFilePath, exportUrl, env = process.env) {
@@ -225,34 +248,34 @@ function buildPdfBrowserArgs(outputFilePath, exportUrl, env = process.env) {
         "--disable-gpu",
         "--hide-scrollbars",
         "--run-all-compositor-stages-before-draw",
-        `--virtual-time-budget=${Number.parseInt(env.MARKOS_PDF_VIRTUAL_TIME_BUDGET_MS || "3000", 10) || 3000}`,
+        `--virtual-time-budget=${buildBrowserRuntimeBudget(env)}`,
         `--print-to-pdf=${outputFilePath}`,
         "--print-to-pdf-no-header",
     ];
-
-    if (/^(1|true)$/i.test(String(env.MARKOS_PDF_NO_SANDBOX || "").trim())) {
-        args.push("--no-sandbox");
-    }
-
+    maybePushNoSandbox(args, env);
     args.push(exportUrl);
     return args;
 }
 
-async function runPdfBrowser(command, args) {
+async function runBrowserCommand(command, args, {captureStdout = false} = {}) {
     return new Promise((resolvePromise, rejectPromise) => {
         const child = spawn(command, args, {
-            stdio: ["ignore", "ignore", "pipe"],
+            stdio: ["ignore", captureStdout ? "pipe" : "ignore", "pipe"],
         });
 
+        let stdout = "";
         let stderr = "";
 
         child.once("error", rejectPromise);
+        child.stdout?.on("data", (chunk) => {
+            stdout += String(chunk);
+        });
         child.stderr.on("data", (chunk) => {
             stderr += String(chunk);
         });
         child.once("close", (code) => {
             if (code === 0) {
-                resolvePromise();
+                resolvePromise({stdout, stderr});
                 return;
             }
 
@@ -267,7 +290,7 @@ async function runPdfBrowser(command, args) {
     });
 }
 
-async function renderPdfArtifact({entryFilePath, outputFilePath, cwd}) {
+async function prepareExportSite({entryFilePath, outputFilePath, cwd}) {
     const exportRootDir = join(dirname(outputFilePath), "__markos-export-site__");
     const sourceEntry = relative(cwd, entryFilePath).replace(/\\/g, "/");
 
@@ -297,43 +320,171 @@ async function renderPdfArtifact({entryFilePath, outputFilePath, cwd}) {
             port: 0,
         });
 
-        const exportUrl = new URL("export/", devServer.url).toString();
-        const args = buildPdfBrowserArgs(outputFilePath, exportUrl);
-        const candidates = resolvePdfBrowserPathCandidates();
-        let lastError = null;
-
-        for (const candidate of candidates) {
-            try {
-                await runPdfBrowser(candidate, args);
-                if (!await pathExists(outputFilePath)) {
-                    throw new Error(`PDF export finished but no file was written: ${outputFilePath}`);
-                }
-                return;
-            } catch (error) {
-                if (error?.code === "ENOENT") {
-                    lastError = error;
-                    continue;
-                }
-
-                const message = error instanceof Error ? error.message : String(error);
-                if (/spawn .*ENOENT/i.test(message)) {
-                    lastError = error;
-                    continue;
-                }
-
-                throw error;
-            }
-        }
-
-        throw new Error(
-            "No PDF browser executable was found. Set MARKOS_PDF_BROWSER to a Chrome/Chromium executable path.",
-            {cause: lastError ?? undefined},
-        );
-    } finally {
+        return {
+            exportRootDir,
+            exportUrl: new URL("export/", devServer.url).toString(),
+            async cleanup() {
+                await devServer?.stop?.().catch(() => {
+                });
+                await rm(exportRootDir, {recursive: true, force: true}).catch(() => {
+                });
+            },
+        };
+    } catch (error) {
         await devServer?.stop?.().catch(() => {
         });
         await rm(exportRootDir, {recursive: true, force: true}).catch(() => {
         });
+        throw error;
+    }
+}
+
+async function runBrowserAcrossCandidates(candidates, args, options = {}) {
+    let lastError = null;
+
+    for (const candidate of candidates) {
+        try {
+            return await runBrowserCommand(candidate, args, options);
+        } catch (error) {
+            if (error?.code === "ENOENT") {
+                lastError = error;
+                continue;
+            }
+
+            const message = error instanceof Error ? error.message : String(error);
+            if (/spawn .*ENOENT/i.test(message)) {
+                lastError = error;
+                continue;
+            }
+
+            throw error;
+        }
+    }
+
+    throw new Error(
+        "No export browser executable was found. Set MARKOS_EXPORT_BROWSER to a Chrome/Chromium executable path.",
+        {cause: lastError ?? undefined},
+    );
+}
+
+async function resolveBrowserExecutableForAutomation(candidates) {
+    for (const candidate of candidates) {
+        if (!candidate) {
+            continue;
+        }
+        if (candidate.includes("/") || candidate.includes("\\")) {
+            if (await pathExists(candidate)) {
+                return candidate;
+            }
+            continue;
+        }
+
+        const resolvedCandidate = await new Promise((resolvePromise) => {
+            const resolver = spawn(process.platform === "win32" ? "where" : "which", [candidate], {
+                stdio: ["ignore", "pipe", "ignore"],
+            });
+            let stdout = "";
+            resolver.once("error", () => resolvePromise(null));
+            resolver.stdout.on("data", (chunk) => {
+                stdout += String(chunk);
+            });
+            resolver.once("close", (code) => {
+                if (code !== 0) {
+                    resolvePromise(null);
+                    return;
+                }
+                const resolvedValue = stdout
+                    .split(/\r?\n/)
+                    .map((line) => line.trim())
+                    .find(Boolean);
+                resolvePromise(resolvedValue || null);
+            });
+        });
+
+        if (resolvedCandidate) {
+            return resolvedCandidate;
+        }
+    }
+
+    throw new Error("No export browser executable was found. Set MARKOS_EXPORT_BROWSER to a Chrome/Chromium executable path.");
+}
+
+async function collectExportModelFromBrowser(exportUrl) {
+    if (process.env.MARKOS_TEST_EXPORT_MODEL_JSON) {
+        return JSON.parse(process.env.MARKOS_TEST_EXPORT_MODEL_JSON);
+    }
+
+    const executablePath = await resolveBrowserExecutableForAutomation(resolveExportBrowserPathCandidates());
+    const launchArgs = [
+        "--disable-gpu",
+        "--hide-scrollbars",
+        "--run-all-compositor-stages-before-draw",
+    ];
+    maybePushNoSandbox(launchArgs);
+
+    const browser = await chromium.launch({
+        executablePath,
+        headless: true,
+        args: launchArgs,
+    });
+
+    try {
+        const page = await browser.newPage();
+        page.setDefaultNavigationTimeout(Math.max(5000, buildBrowserRuntimeBudget() * 3));
+        await page.goto(exportUrl, {
+            waitUntil: "domcontentloaded",
+        });
+        await page.waitForFunction(() => typeof window.__MARKOS_COLLECT_EXPORT_MODEL__ === "function");
+        await page.waitForSelector(".presentation.is-export > .slide-page[data-markos-role='slide']");
+        const model = await page.evaluate(async () => {
+            if (typeof window.__MARKOS_COLLECT_EXPORT_MODEL__ !== "function") {
+                throw new Error("MarkOS export collector is not available on the page.");
+            }
+            return await window.__MARKOS_COLLECT_EXPORT_MODEL__();
+        });
+        return model;
+    } finally {
+        await browser.close();
+    }
+}
+
+async function renderPdfArtifact({entryFilePath, outputFilePath, cwd}) {
+    const preparedSite = await prepareExportSite({
+        entryFilePath,
+        outputFilePath,
+        cwd,
+    });
+    try {
+        const args = buildPdfBrowserArgs(outputFilePath, preparedSite.exportUrl);
+        const candidates = resolveExportBrowserPathCandidates();
+        await runBrowserAcrossCandidates(candidates, args);
+        if (!await pathExists(outputFilePath)) {
+            throw new Error(`PDF export finished but no file was written: ${outputFilePath}`);
+        }
+    } finally {
+        await preparedSite.cleanup();
+    }
+}
+
+async function renderPptxArtifact({entryFilePath, outputFilePath, cwd}) {
+    const preparedSite = await prepareExportSite({
+        entryFilePath,
+        outputFilePath,
+        cwd,
+    });
+    try {
+        const collectionUrl = new URL(preparedSite.exportUrl);
+        collectionUrl.searchParams.set("collect", "1");
+        const exportModel = await collectExportModelFromBrowser(collectionUrl.toString());
+        await writePptxFromExportModel({
+            model: exportModel,
+            outputFilePath,
+        });
+        if (!await pathExists(outputFilePath)) {
+            throw new Error(`PPTX export finished but no file was written: ${outputFilePath}`);
+        }
+    } finally {
+        await preparedSite.cleanup();
     }
 }
 
@@ -347,7 +498,16 @@ async function exportArtifact({entryFilePath, format, outputFilePath, cwd}) {
         return;
     }
 
-    throw new Error(`Render format "${format}" is not supported by ${MARKOS_WEB_ENGINE_NAME}. Supported formats: "web", "pdf".`);
+    if (format === "pptx") {
+        await renderPptxArtifact({
+            entryFilePath,
+            outputFilePath,
+            cwd,
+        });
+        return;
+    }
+
+    throw new Error(`Render format "${format}" is not supported by ${MARKOS_WEB_ENGINE_NAME}. Supported formats: "web", "pdf", "pptx".`);
 }
 
 export const markosWebRenderEngine = {

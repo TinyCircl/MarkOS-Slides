@@ -157,13 +157,13 @@ function printHelp() {
         "  markos dev [deck] [--out-dir .markos-dev] [--base /] [--host 127.0.0.1] [--port 3030] [--no-open]",
         "  markos theme apply <theme> [deck]",
         "  markos theme preview <theme> <fixture> [--host 127.0.0.1] [--port 3030] [--no-open]",
-        "  markos export [deck] [--format pdf] [--out-dir dist] [--file-name name]",
+        "  markos export [deck] [--format pdf|pptx] [--out-dir dist] [--file-name name]",
         "",
         "Notes:",
         "  deck must be a directory containing slides.md.",
         `  theme apply writes theme: <theme> into slides.md and keeps slides.css for local overrides.`,
         "  theme preview renders packages/core/themes/<theme>/fixtures/<fixture>.md through the real MarkOS dev pipeline.",
-        "  export currently supports pdf.",
+        "  export currently supports pdf and pptx.",
         "",
         "Examples:",
         "  markos build .",
@@ -175,6 +175,7 @@ function printHelp() {
         "  markos theme apply Clay examples/tokyo3days",
         "  markos theme preview Cobalt comparison --port 3030",
         "  markos export examples/tokyo3days --format pdf",
+        "  markos export examples/tokyo3days --format pptx",
     ].join("\n"));
 }
 
@@ -356,8 +357,8 @@ async function runBuildCommand(rawOptions) {
 
 async function runExportCommand(rawOptions) {
     const format = String(rawOptions.format || "pdf").trim().toLowerCase() || "pdf";
-    if (format !== "pdf") {
-        throw new Error(`markos export currently supports only pdf. Received: ${format}`);
+    if (format !== "pdf" && format !== "pptx") {
+        throw new Error(`markos export currently supports only pdf and pptx. Received: ${format}`);
     }
 
     const {
@@ -379,7 +380,7 @@ async function runExportCommand(rawOptions) {
 
     const requestedBaseName = String(rawOptions.fileName || "").trim();
     const outputFileName = requestedBaseName
-        ? (requestedBaseName.toLowerCase().endsWith(".pdf") ? requestedBaseName : `${requestedBaseName}.pdf`)
+        ? (requestedBaseName.toLowerCase().endsWith(`.${format}`) ? requestedBaseName : `${requestedBaseName}.${format}`)
         : buildRenderOutputMetadata({
             ...input,
             format,

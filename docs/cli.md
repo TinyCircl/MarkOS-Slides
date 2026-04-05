@@ -88,9 +88,9 @@ Important output note:
 - `markos dev [deck] [--out-dir dir] [--work-dir dir] [--base /] [--host 127.0.0.1] [--port 3030] [--no-open] [--project-root dir] [--title name]`
 - `markos theme apply <theme> [deck]`
 - `markos theme preview <theme> <fixture> [--host 127.0.0.1] [--port 3030] [--no-open]`
-- `markos export [deck] [--format pdf] [--out-dir dir] [--work-dir dir] [--project-root dir] [--title name] [--file-name name]`
+- `markos export [deck] [--format pdf|pptx] [--out-dir dir] [--work-dir dir] [--project-root dir] [--title name] [--file-name name]`
 
-`markos export` currently supports `pdf`.
+`markos export` currently supports `pdf` and `pptx`.
 
 `deck` must be a directory that contains `slides.md`.
 
@@ -163,24 +163,26 @@ Examples:
 ```bash
 markos export examples/tokyo3days
 markos export examples/tokyo3days --format pdf
+markos export examples/tokyo3days --format pptx
 markos export examples/tokyo3days --out-dir build/pdf --file-name tokyo-itinerary
 ```
 
 Options:
 - `deck`: deck directory. Default: the current directory
-- `--format`: export format. Current supported value: `pdf`
+- `--format`: export format. Current supported values: `pdf`, `pptx`
 - `--out-dir`: output directory. Default: `dist/` next to the entry file
 - `--work-dir`: work directory used during export. Default: `.markos-work/<out-dir-name>/` next to the entry file
 - `--project-root`: directory containing the deck files. Default: the entry file directory
 - `--title`: fallback document title when the source does not provide one
-- `--file-name`: output file name. The `.pdf` suffix is added automatically when omitted
+- `--file-name`: output file name. The selected format suffix is added automatically when omitted
 
 Behavior:
 - resolves `slides.md` from the given deck directory
 - reuses the same local project input collection as `markos build`
 - renders through the real MarkOS export view so themes and deck-local CSS are preserved
-- uses a local Chrome / Chromium executable for PDF export
-- honors `MARKOS_PDF_BROWSER` when you want to point MarkOS at a specific browser binary
+- uses a local Chrome / Chromium executable for `pdf` printing and `pptx` DOM measurement
+- honors `MARKOS_EXPORT_BROWSER` when you want to point MarkOS at a specific browser binary
+- also accepts format-specific overrides such as `MARKOS_PDF_BROWSER` and `MARKOS_PPTX_BROWSER`
 - removes the temporary work directory after the export completes
 - ignores the output and work directories while watching
 
@@ -234,4 +236,4 @@ npm run check
 
 ## Scope Notes
 
-The CLI is currently for local authoring and web output only. The recommended local convention is one Markdown file with `slides.css` as the main local override layer and optional `overrides.css` as a final incremental override layer. For repository boundaries and non-goals, see the [Developer Guide](./developer-guide.md#scope-and-boundaries).
+The CLI is currently for local authoring, local export, and web output. The recommended local convention is one Markdown file with `slides.css` as the main local override layer and optional `overrides.css` as a final incremental override layer. For repository boundaries and non-goals, see the [Developer Guide](./developer-guide.md#scope-and-boundaries).

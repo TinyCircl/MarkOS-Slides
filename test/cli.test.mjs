@@ -36,19 +36,78 @@ async function writeDirectoryTheme(themesRoot, themeName, css = "") {
     return themeDir;
 }
 
-async function writeFakePdfBrowser(scriptPath) {
+async function writeFakeExportBrowser(scriptPath) {
+    const fakeExportModel = JSON.stringify({
+        deck: {
+            title: "Export Deck",
+            width: 1280,
+            height: 720,
+        },
+        slides: [
+            {
+                index: 0,
+                title: "Hello Export",
+                template: "default",
+                backgroundColor: "rgb(255, 255, 255)",
+                nodes: [
+                    {
+                        id: "slide-1.title",
+                        kind: "text",
+                        role: "title",
+                        layer: 3,
+                        order: 1,
+                        x: 72,
+                        y: 60,
+                        w: 1136,
+                        h: 56,
+                        text: "Hello Export",
+                        fontFamily: "Arial",
+                        fontSizePx: 42,
+                        fontWeight: "700",
+                        fontStyle: "normal",
+                        textAlign: "left",
+                        color: "rgb(17, 24, 39)",
+                    },
+                    {
+                        id: "slide-1.body",
+                        kind: "text",
+                        role: "p",
+                        layer: 3,
+                        order: 2,
+                        x: 72,
+                        y: 132,
+                        w: 720,
+                        h: 120,
+                        text: "Summary line for export.",
+                        fontFamily: "Arial",
+                        fontSizePx: 22,
+                        fontWeight: "400",
+                        fontStyle: "normal",
+                        textAlign: "left",
+                        color: "rgb(55, 65, 81)",
+                    },
+                ],
+            },
+        ],
+    });
     await writeFile(
         scriptPath,
         [
             "#!/bin/sh",
             "pdf_path=\"\"",
+            "dump_dom=0",
             "for arg in \"$@\"; do",
             "  case \"$arg\" in",
             "    --print-to-pdf=*) pdf_path=\"${arg#--print-to-pdf=}\" ;;",
+            "    --dump-dom) dump_dom=1 ;;",
             "  esac",
             "done",
-            "if [ -n \"$MARKOS_TEST_PDF_BROWSER_LOG\" ]; then",
-            "  printf '%s\\n' \"$@\" > \"$MARKOS_TEST_PDF_BROWSER_LOG\"",
+            "if [ -n \"$MARKOS_TEST_EXPORT_BROWSER_LOG\" ]; then",
+            "  printf '%s\\n' \"$@\" > \"$MARKOS_TEST_EXPORT_BROWSER_LOG\"",
+            "fi",
+            "if [ \"$dump_dom\" = \"1\" ]; then",
+            `  printf '%s\\n' '<!doctype html><html><body><script id="__MARKOS_EXPORT_MODEL__" type="application/json">${fakeExportModel}</script></body></html>'`,
+            "  exit 0",
             "fi",
             "printf '%s\\n' '%PDF-1.4' '%%EOF' > \"$pdf_path\"",
         ].join("\n"),
@@ -579,10 +638,10 @@ test("CLI export command generates a PDF artifact through the real export pipeli
     const tempRoot = await mkdtemp(join(os.tmpdir(), "markos-cli-export-"));
     const projectRoot = join(tempRoot, "project");
     const outDir = join(tempRoot, "pdf");
-    const fakeBrowserPath = join(tempRoot, "fake-pdf-browser");
+    const fakeBrowserPath = join(tempRoot, "fake-export-browser");
     const browserLogPath = join(tempRoot, "browser.log");
-    const previousBrowser = process.env.MARKOS_PDF_BROWSER;
-    const previousBrowserLog = process.env.MARKOS_TEST_PDF_BROWSER_LOG;
+    const previousBrowser = process.env.MARKOS_EXPORT_BROWSER;
+    const previousBrowserLog = process.env.MARKOS_TEST_EXPORT_BROWSER_LOG;
 
     try {
         await mkdir(projectRoot, {recursive: true});
@@ -602,9 +661,9 @@ test("CLI export command generates a PDF artifact through the real export pipeli
             ].join("\n"),
             "utf8",
         );
-        await writeFakePdfBrowser(fakeBrowserPath);
-        process.env.MARKOS_PDF_BROWSER = fakeBrowserPath;
-        process.env.MARKOS_TEST_PDF_BROWSER_LOG = browserLogPath;
+        await writeFakeExportBrowser(fakeBrowserPath);
+        process.env.MARKOS_EXPORT_BROWSER = fakeBrowserPath;
+        process.env.MARKOS_TEST_EXPORT_BROWSER_LOG = browserLogPath;
 
         const result = await runCli([
             "export",
@@ -637,14 +696,107 @@ test("CLI export command generates a PDF artifact through the real export pipeli
         );
     } finally {
         if (previousBrowser == null) {
-            delete process.env.MARKOS_PDF_BROWSER;
+            delete process.env.MARKOS_EXPORT_BROWSER;
         } else {
-            process.env.MARKOS_PDF_BROWSER = previousBrowser;
+            process.env.MARKOS_EXPORT_BROWSER = previousBrowser;
         }
         if (previousBrowserLog == null) {
-            delete process.env.MARKOS_TEST_PDF_BROWSER_LOG;
+            delete process.env.MARKOS_TEST_EXPORT_BROWSER_LOG;
         } else {
-            process.env.MARKOS_TEST_PDF_BROWSER_LOG = previousBrowserLog;
+            process.env.MARKOS_TEST_EXPORT_BROWSER_LOG = previousBrowserLog;
+        }
+        await rm(tempRoot, {recursive: true, force: true});
+    }
+});
+
+test("CLI export command generates a PPTX artifact through the DOM export pipeline", async () => {
+    const tempRoot = await mkdtemp(join(os.tmpdir(), "markos-cli-export-pptx-"));
+    const projectRoot = join(tempRoot, "project");
+    const outDir = join(tempRoot, "pptx");
+    const previousExportModel = process.env.MARKOS_TEST_EXPORT_MODEL_JSON;
+
+    try {
+        await mkdir(projectRoot, {recursive: true});
+        await writeFile(
+            join(projectRoot, "slides.md"),
+            [
+                "---",
+                "title: Export Deck",
+                "---",
+                "",
+                "# Hello Export",
+                "",
+                "Summary line for export.",
+            ].join("\n"),
+            "utf8",
+        );
+        process.env.MARKOS_TEST_EXPORT_MODEL_JSON = JSON.stringify({
+            deck: {
+                title: "Export Deck",
+                width: 1280,
+                height: 720,
+            },
+            slides: [
+                {
+                    index: 0,
+                    title: "Hello Export",
+                    template: "default",
+                    backgroundColor: "rgb(255, 255, 255)",
+                    nodes: [
+                        {
+                            id: "slide-1.title",
+                            kind: "text",
+                            role: "title",
+                            layer: 3,
+                            order: 1,
+                            x: 72,
+                            y: 60,
+                            w: 1136,
+                            h: 56,
+                            text: "Hello Export",
+                            fontFamily: "Arial",
+                            fontSizePx: 42,
+                            fontWeight: "700",
+                            fontStyle: "normal",
+                            textAlign: "left",
+                            color: "rgb(17, 24, 39)",
+                        },
+                    ],
+                },
+            ],
+        });
+
+        const result = await runCli([
+            "export",
+            projectRoot,
+            "--format",
+            "pptx",
+            "--out-dir",
+            outDir,
+            "--file-name",
+            "export-deck",
+        ]);
+
+        const artifactContents = await readFile(result.artifactFilePath);
+
+        assert.equal(result.ok, true);
+        assert.equal(result.command, "export");
+        assert.equal(result.format, "pptx");
+        assert.equal(result.fileName, "export-deck.pptx");
+        assert.equal(String(artifactContents.subarray(0, 2)), "PK");
+        await assert.rejects(
+            () => stat(join(outDir, "__markos-export-site__")),
+            /ENOENT/,
+        );
+        await assert.rejects(
+            () => stat(join(projectRoot, ".markos-work")),
+            /ENOENT/,
+        );
+    } finally {
+        if (previousExportModel == null) {
+            delete process.env.MARKOS_TEST_EXPORT_MODEL_JSON;
+        } else {
+            process.env.MARKOS_TEST_EXPORT_MODEL_JSON = previousExportModel;
         }
         await rm(tempRoot, {recursive: true, force: true});
     }

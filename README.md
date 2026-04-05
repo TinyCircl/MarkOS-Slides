@@ -1,6 +1,6 @@
 # MarkOS
 
-MarkOS is an open-source Markdown-to-slides toolchain focused on local authoring and static web output.
+MarkOS is an open-source Markdown-to-slides toolchain focused on local authoring, static web output, and local artifact export.
 
 This repository currently contains:
 - a reusable build core in `packages/core`
@@ -13,13 +13,16 @@ Hosted services, deployment pipelines, and other internal tooling are intentiona
 MarkOS currently supports:
 - `markos build`
 - `markos dev`
+- `markos export`
 - web output
+- local `pdf` export
+- local `pptx` export
 - a flat local deck layout with one Markdown file plus optional local CSS override layers
 
 MarkOS does not currently support:
-- `pdf`
-- `pptx`
-- a production `markos export` workflow
+- hosted export services
+- remote artifact management flows
+- a production publish pipeline
 
 ## Quick Start
 
@@ -58,6 +61,13 @@ Preview a built-in theme fixture through the real dev pipeline:
 npm run markos:theme-preview -- Cobalt comparison --port 3030
 ```
 
+Export the example deck:
+
+```bash
+npm run markos:export -- examples/tokyo3days --format pdf
+npm run markos:export -- examples/tokyo3days --format pptx
+```
+
 Run the full check suite:
 
 ```bash
@@ -92,4 +102,5 @@ For theme authors:
 
 For developers:
 - [Developer Guide](docs/developer-guide.md)
+- [PPTX Export Implementation](docs/pptx-export-implementation.md)
 - [Commit Convention](docs/COMMIT_CONVENTION.md)

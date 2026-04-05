@@ -107,6 +107,27 @@ function toClassName(...values) {
     return values.filter(Boolean).join(" ");
 }
 
+function tokenizeClassNames(value) {
+    return typeof value === "string"
+        ? value.split(/\s+/).map((token) => token.trim()).filter(Boolean)
+        : [];
+}
+
+function resolveSlideTemplate(slide) {
+    const tokens = [
+        ...tokenizeClassNames(slide.frontmatter?.class),
+        ...tokenizeClassNames(slide.frontmatter?.layoutClass),
+    ];
+    const namedTemplate = tokens.findLast((token) => token.endsWith("-slide"));
+    if (namedTemplate) {
+        return namedTemplate;
+    }
+
+    return typeof slide.frontmatter?.layout === "string" && slide.frontmatter.layout.trim()
+        ? slide.frontmatter.layout.trim()
+        : "default";
+}
+
 function renderSlideHtml(slide) {
     const layout = typeof slide.frontmatter.layout === "string" ? slide.frontmatter.layout : "default";
     const slideClass = typeof slide.frontmatter.class === "string" ? slide.frontmatter.class : undefined;
@@ -115,7 +136,7 @@ function renderSlideHtml(slide) {
 
     if (layout === "cover") {
         const className = toClassName("slidev-layout cover", slideClass);
-        return `<div class="${className}"${style}><div class="my-auto w-full">${renderMarkdown(slide.content)}</div></div>`;
+        return `<div class="${className}" data-markos-role="slide-layout" data-markos-layout="cover"${style}><div class="my-auto w-full" data-markos-role="cover-content">${renderMarkdown(slide.content)}</div></div>`;
     }
 
     if (layout === "two-cols") {
@@ -126,16 +147,16 @@ function renderSlideHtml(slide) {
             typeof slide.frontmatter.layoutClass === "string" ? slide.frontmatter.layoutClass : undefined,
         );
         return [
-            `<div class="${className}">`,
-            leftSection.header ? `<div class="two-cols-header">${leftSection.header}</div>` : "",
-            `<div class="${toClassName("col-left", slideClass)}">${leftSection.body}</div>`,
-            `<div class="${toClassName("col-right", slideClass)}">${renderMarkdown(sections.right)}</div>`,
+            `<div class="${className}" data-markos-role="slide-layout" data-markos-layout="two-cols">`,
+            leftSection.header ? `<div class="two-cols-header" data-markos-role="header">${leftSection.header}</div>` : "",
+            `<div class="${toClassName("col-left", slideClass)}" data-markos-role="column-left">${leftSection.body}</div>`,
+            `<div class="${toClassName("col-right", slideClass)}" data-markos-role="column-right">${renderMarkdown(sections.right)}</div>`,
             "</div>",
         ].join("");
     }
 
     const className = toClassName("slidev-layout default", slideClass);
-    return `<div class="${className}"${style}>${renderMarkdown(slide.content)}</div>`;
+    return `<div class="${className}" data-markos-role="slide-layout" data-markos-layout="default"${style}>${renderMarkdown(slide.content)}</div>`;
 }
 
 function extractSlideTitle(slide, index) {
@@ -179,6 +200,7 @@ export function getRenderedSlides(deck) {
     return deck.slides.map((slide, index) => ({
         index,
         title: extractSlideTitle(slide, index),
+        template: resolveSlideTemplate(slide),
         html: renderSlideHtml(slide),
         frontmatter: slide.frontmatter,
     }));
@@ -245,6 +267,12 @@ function buildRuntimeScript(payload) {
     return modePath(mode) + '?slide=' + String(slideIndex + 1);
   }
 
+  function shouldCollectExportModel() {
+    if (currentMode() !== 'export') return false;
+    const params = new URLSearchParams(window.location.search);
+    return params.get('collect') === '1';
+  }
+
   function updateViewportScale() {
     const canvas = document.getElementById('slide-canvas');
     if (!canvas || !deckData.viewport) return;
@@ -309,9 +337,374 @@ function buildRuntimeScript(payload) {
 
   function renderExport() {
     document.body.className = '';
-    app.innerHTML = '<main class="presentation is-export">' + slides.map((slide) => '<section class="slide-page">' + slide.html + '</section>').join('') + '</main>';
+    app.innerHTML = '<main class="presentation is-export">' + slides.map((slide) => '<section class="slide-page" data-markos-role="slide" data-markos-template="' + String(slide.template || 'default').replace(/"/g, '&quot;') + '" data-markos-slide-index="' + String(slide.index) + '" data-markos-slide-title="' + String(slide.title || '').replace(/"/g, '&quot;') + '">' + slide.html + '</section>').join('') + '</main>';
     document.title = deckData.title + ' Export';
+    if (shouldCollectExportModel()) {
+      void collectAndEmbedExportModel();
+    }
   }
+
+  function parsePx(value) {
+    const parsed = Number.parseFloat(String(value || '').replace('px', '').trim());
+    return Number.isFinite(parsed) ? parsed : 0;
+  }
+
+  function isTransparentColor(value) {
+    const normalized = String(value || '').trim().toLowerCase();
+    return !normalized || normalized === 'transparent' || normalized === 'rgba(0, 0, 0, 0)' || normalized === 'rgba(0,0,0,0)';
+  }
+
+  function isVisibleElement(element, style) {
+    const rect = element.getBoundingClientRect();
+    return style.display !== 'none'
+      && style.visibility !== 'hidden'
+      && Number.parseFloat(style.opacity || '1') > 0
+      && rect.width > 0.5
+      && rect.height > 0.5;
+  }
+
+  function toRelativeRect(rect, slideRect) {
+    return {
+      x: Math.max(0, rect.left - slideRect.left),
+      y: Math.max(0, rect.top - slideRect.top),
+      w: rect.width,
+      h: rect.height,
+    };
+  }
+
+  function firstFontFamily(value) {
+    return String(value || '')
+      .split(',')
+      .map((part) => part.trim().replace(/^['"]|['"]$/g, ''))
+      .find(Boolean) || 'Arial';
+  }
+
+  function borderMetrics(style) {
+    return {
+      topWidth: parsePx(style.borderTopWidth),
+      rightWidth: parsePx(style.borderRightWidth),
+      bottomWidth: parsePx(style.borderBottomWidth),
+      leftWidth: parsePx(style.borderLeftWidth),
+      topColor: style.borderTopColor,
+      rightColor: style.borderRightColor,
+      bottomColor: style.borderBottomColor,
+      leftColor: style.borderLeftColor,
+    };
+  }
+
+  function shapeTypeForElement(rect, style) {
+    const radius = Math.max(
+      parsePx(style.borderTopLeftRadius),
+      parsePx(style.borderTopRightRadius),
+      parsePx(style.borderBottomRightRadius),
+      parsePx(style.borderBottomLeftRadius),
+    );
+    const minSize = Math.min(rect.width, rect.height);
+    if (radius >= (minSize / 2) - 1 && Math.abs(rect.width - rect.height) <= 3) {
+      return 'ellipse';
+    }
+    if (radius > 2) {
+      return 'roundRect';
+    }
+    return 'rect';
+  }
+
+  function shouldCollectShape(element, slideElement) {
+    if (element === slideElement) return false;
+    if (element.dataset.markosExport === 'ignore') return false;
+    const style = getComputedStyle(element);
+    if (!isVisibleElement(element, style)) return false;
+    if (element.tagName === 'IMG') return false;
+    if (element.dataset.markosRole === 'slide-layout') return false;
+    if (element.dataset.markosRole === 'header') return false;
+    if (element.dataset.markosRole === 'column-left') return false;
+    if (element.dataset.markosRole === 'column-right') return false;
+
+    const borders = borderMetrics(style);
+    const hasVisibleBorder = (
+      (borders.topWidth > 0 && !isTransparentColor(borders.topColor))
+      || (borders.rightWidth > 0 && !isTransparentColor(borders.rightColor))
+      || (borders.bottomWidth > 0 && !isTransparentColor(borders.bottomColor))
+      || (borders.leftWidth > 0 && !isTransparentColor(borders.leftColor))
+    );
+    const hasVisibleFill = !isTransparentColor(style.backgroundColor);
+    const hasVisibleShadow = style.boxShadow && style.boxShadow !== 'none';
+
+    return hasVisibleFill || hasVisibleBorder || hasVisibleShadow;
+  }
+
+  function collectShapeNodes(slideElement, slideRect, slideIndex) {
+    const nodes = [];
+    let order = 0;
+
+    for (const element of slideElement.querySelectorAll('*')) {
+      if (!shouldCollectShape(element, slideElement)) continue;
+
+      const style = getComputedStyle(element);
+      const rect = element.getBoundingClientRect();
+      const relative = toRelativeRect(rect, slideRect);
+      const borders = borderMetrics(style);
+      const borderSides = [
+        borders.topWidth > 0 && !isTransparentColor(borders.topColor),
+        borders.rightWidth > 0 && !isTransparentColor(borders.rightColor),
+        borders.bottomWidth > 0 && !isTransparentColor(borders.bottomColor),
+        borders.leftWidth > 0 && !isTransparentColor(borders.leftColor),
+      ];
+      const visibleBorderCount = borderSides.filter(Boolean).length;
+      const fillColor = style.backgroundColor;
+
+      if (visibleBorderCount === 1 && isTransparentColor(fillColor)) {
+        if (borderSides[0]) {
+          nodes.push({
+            id: element.dataset.markosNodeId || 'slide-' + String(slideIndex + 1) + '.shape.' + String(++order),
+            kind: 'shape',
+            role: element.dataset.markosRole || 'accent-bar',
+            order,
+            shape: 'rect',
+            x: relative.x,
+            y: relative.y,
+            w: relative.w,
+            h: borders.topWidth,
+            fillColor: borders.topColor,
+            lineColor: 'transparent',
+            lineWidthPx: 0,
+            borderRadiusPx: 0,
+          });
+          continue;
+        }
+        if (borderSides[1]) {
+          nodes.push({
+            id: element.dataset.markosNodeId || 'slide-' + String(slideIndex + 1) + '.shape.' + String(++order),
+            kind: 'shape',
+            role: element.dataset.markosRole || 'accent-bar',
+            order,
+            shape: 'rect',
+            x: relative.x + relative.w - borders.rightWidth,
+            y: relative.y,
+            w: borders.rightWidth,
+            h: relative.h,
+            fillColor: borders.rightColor,
+            lineColor: 'transparent',
+            lineWidthPx: 0,
+            borderRadiusPx: 0,
+          });
+          continue;
+        }
+        if (borderSides[2]) {
+          nodes.push({
+            id: element.dataset.markosNodeId || 'slide-' + String(slideIndex + 1) + '.shape.' + String(++order),
+            kind: 'shape',
+            role: element.dataset.markosRole || 'accent-bar',
+            order,
+            shape: 'rect',
+            x: relative.x,
+            y: relative.y + relative.h - borders.bottomWidth,
+            w: relative.w,
+            h: borders.bottomWidth,
+            fillColor: borders.bottomColor,
+            lineColor: 'transparent',
+            lineWidthPx: 0,
+            borderRadiusPx: 0,
+          });
+          continue;
+        }
+        if (borderSides[3]) {
+          nodes.push({
+            id: element.dataset.markosNodeId || 'slide-' + String(slideIndex + 1) + '.shape.' + String(++order),
+            kind: 'shape',
+            role: element.dataset.markosRole || 'accent-bar',
+            order,
+            shape: 'rect',
+            x: relative.x,
+            y: relative.y,
+            w: borders.leftWidth,
+            h: relative.h,
+            fillColor: borders.leftColor,
+            lineColor: 'transparent',
+            lineWidthPx: 0,
+            borderRadiusPx: 0,
+          });
+          continue;
+        }
+      }
+
+      nodes.push({
+        id: element.dataset.markosNodeId || 'slide-' + String(slideIndex + 1) + '.shape.' + String(++order),
+        kind: 'shape',
+        role: element.dataset.markosRole || 'panel',
+        order,
+        shape: shapeTypeForElement(rect, style),
+        x: relative.x,
+        y: relative.y,
+        w: relative.w,
+        h: relative.h,
+        fillColor,
+        lineColor: visibleBorderCount > 0 ? (borders.leftColor || borders.topColor || borders.rightColor || borders.bottomColor) : 'transparent',
+        lineWidthPx: Math.max(borders.topWidth, borders.rightWidth, borders.bottomWidth, borders.leftWidth),
+        borderRadiusPx: Math.max(
+          parsePx(style.borderTopLeftRadius),
+          parsePx(style.borderTopRightRadius),
+          parsePx(style.borderBottomRightRadius),
+          parsePx(style.borderBottomLeftRadius),
+        ),
+      });
+    }
+
+    return nodes;
+  }
+
+  function collectTextNodes(slideElement, slideRect, slideIndex) {
+    const nodes = [];
+    let order = 0;
+    const selector = 'h1,h2,h3,h4,h5,h6,p,figcaption,pre,ul,ol,td,th';
+
+    for (const element of slideElement.querySelectorAll(selector)) {
+      if (element.dataset.markosExport === 'ignore') continue;
+      if ((element.tagName === 'TD' || element.tagName === 'TH') && element.closest('table')?.dataset.markosExport === 'ignore') continue;
+      if ((element.tagName === 'P' || element.tagName === 'FIGCAPTION' || element.tagName === 'PRE') && element.closest('blockquote,article,aside,section')) {
+        // Still collect these. The surrounding panel shape is exported separately.
+      }
+
+      const style = getComputedStyle(element);
+      if (!isVisibleElement(element, style)) continue;
+
+      let text = '';
+      let role = element.dataset.markosRole || element.tagName.toLowerCase();
+
+      if (element.tagName === 'UL' || element.tagName === 'OL') {
+        const items = Array.from(element.children)
+          .filter((child) => child.tagName === 'LI')
+          .map((child) => child.innerText.trim())
+          .filter(Boolean);
+        if (items.length === 0) continue;
+        text = items.map((item) => '• ' + item).join('\\\\n');
+        role = 'list';
+      } else {
+        text = element.innerText.trim();
+      }
+
+      if (!text) continue;
+
+      const rect = element.getBoundingClientRect();
+      const relative = toRelativeRect(rect, slideRect);
+      nodes.push({
+        id: element.dataset.markosNodeId || 'slide-' + String(slideIndex + 1) + '.text.' + String(++order),
+        kind: 'text',
+        role,
+        order,
+        x: relative.x,
+        y: relative.y,
+        w: relative.w,
+        h: relative.h,
+        text,
+        fontFamily: firstFontFamily(style.fontFamily),
+        fontSizePx: parsePx(style.fontSize),
+        fontWeight: style.fontWeight,
+        fontStyle: style.fontStyle,
+        textAlign: style.textAlign,
+        color: style.color,
+      });
+    }
+
+    return nodes;
+  }
+
+  function collectImageNodes(slideElement, slideRect, slideIndex) {
+    const nodes = [];
+    let order = 0;
+
+    for (const element of slideElement.querySelectorAll('img')) {
+      if (element.dataset.markosExport === 'ignore') continue;
+      const style = getComputedStyle(element);
+      if (!isVisibleElement(element, style)) continue;
+      const rect = element.getBoundingClientRect();
+      const relative = toRelativeRect(rect, slideRect);
+      const src = element.currentSrc || element.src || '';
+      if (!src) continue;
+
+      nodes.push({
+        id: element.dataset.markosNodeId || 'slide-' + String(slideIndex + 1) + '.image.' + String(++order),
+        kind: 'image',
+        role: element.dataset.markosRole || 'image',
+        order,
+        x: relative.x,
+        y: relative.y,
+        w: relative.w,
+        h: relative.h,
+        src,
+      });
+    }
+
+    return nodes;
+  }
+
+  function resolveSlideBackground(slideElement) {
+    const layoutElement = slideElement.querySelector('[data-markos-role="slide-layout"]') || slideElement.firstElementChild || slideElement;
+    const style = getComputedStyle(layoutElement);
+    return isTransparentColor(style.backgroundColor) ? 'rgb(255, 255, 255)' : style.backgroundColor;
+  }
+
+  async function waitForExportAssets() {
+    if (document.fonts && typeof document.fonts.ready?.then === 'function') {
+      try {
+        await document.fonts.ready;
+      } catch {}
+    }
+
+    const imagePromises = Array.from(document.images).map((image) => {
+      if (image.complete) return Promise.resolve();
+      return new Promise((resolve) => {
+        image.addEventListener('load', resolve, { once: true });
+        image.addEventListener('error', resolve, { once: true });
+        window.setTimeout(resolve, 1500);
+      });
+    });
+    await Promise.all(imagePromises);
+  }
+
+  function buildExportModelSnapshot() {
+    const slideElements = Array.from(document.querySelectorAll('.presentation.is-export > .slide-page[data-markos-role="slide"]'));
+    return {
+      deck: {
+        title: deckData.title,
+        width: Number(deckData.viewport?.canvasWidth) || 1280,
+        height: Number(deckData.viewport?.canvasHeight) || 720,
+      },
+      slides: slideElements.map((slideElement, slideIndex) => {
+        const slideRect = slideElement.getBoundingClientRect();
+        const shapeNodes = collectShapeNodes(slideElement, slideRect, slideIndex).map((node) => ({...node, layer: 1}));
+        const imageNodes = collectImageNodes(slideElement, slideRect, slideIndex).map((node) => ({...node, layer: 2}));
+        const textNodes = collectTextNodes(slideElement, slideRect, slideIndex).map((node) => ({...node, layer: 3}));
+        return {
+          index: slideIndex,
+          title: slideElement.dataset.markosSlideTitle || ('Slide ' + String(slideIndex + 1)),
+          template: slideElement.dataset.markosTemplate || 'default',
+          backgroundColor: resolveSlideBackground(slideElement),
+          nodes: [...shapeNodes, ...imageNodes, ...textNodes],
+        };
+      }),
+    };
+  }
+
+  function appendExportModelScript(model) {
+    const existing = document.getElementById('__MARKOS_EXPORT_MODEL__');
+    if (existing) existing.remove();
+    const script = document.createElement('script');
+    script.id = '__MARKOS_EXPORT_MODEL__';
+    script.type = 'application/json';
+    script.textContent = JSON.stringify(model);
+    document.body.appendChild(script);
+  }
+
+  async function collectAndEmbedExportModel() {
+    await waitForExportAssets();
+    const model = buildExportModelSnapshot();
+    appendExportModelScript(model);
+    window.__MARKOS_EXPORT_MODEL__ = model;
+    return model;
+  }
+
+  window.__MARKOS_COLLECT_EXPORT_MODEL__ = collectAndEmbedExportModel;
 
   function render() {
     const mode = currentMode();

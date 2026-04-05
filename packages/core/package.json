@@ -31,6 +31,8 @@
   },
   "dependencies": {
     "marked": "^16.4.2",
+    "playwright-core": "^1.59.1",
+    "pptxgenjs": "^4.0.1",
     "yaml": "^2.8.3"
   },
   "publishConfig": {

@@ -64,7 +64,7 @@ These principles guide authoring, theme design, examples, and validation across 
 
 - `packages/core/src`: input normalization, build pipeline, engine wiring, manifest site integration, and shared config
 - `packages/core/assets`: built-in static assets shipped with the core
-- `packages/cli/src`: command parsing and local authoring workflow for `markos build` and `markos dev`
+- `packages/cli/src`: command parsing and local authoring workflow for `markos build`, `markos dev`, `markos export`, and theme tooling
 - `src/`: compatibility entry points that re-export the workspace packages
 - `examples/`: runnable example projects
 - `packages/core/themes/`: built-in shared theme source files bundled with the core package
@@ -87,23 +87,24 @@ In scope:
 - reusable slide build logic in `packages/core`
 - the local authoring CLI in `packages/cli`
 - examples, tests, and docs needed to use and validate the OSS toolchain
-- built-in assets and render-engine code required for web output
+- built-in assets and render-engine code required for web output and local artifact export
 
 Current product boundary:
 
 - `markos build`
 - `markos dev`
-- web output only
+- `markos export`
+- web output
+- local `pdf` export
+- local `pptx` export
 
 Not part of the current OSS surface:
 
-- `pdf` or `pptx` output
-- a production `markos export` workflow
 - hosted preview, publish, or artifact management flows
 - HTTP or gRPC service adapters
 - deployment automation, cloud setup, or internal bootstrap tooling
 
-The current architecture is optimized for local authoring and static web output, not hosted services.
+The current architecture is optimized for local authoring, local artifact export, and static web output, not hosted services.
 
 Open an issue or design note before implementing changes that:
 
@@ -118,6 +119,7 @@ Near term:
 
 - stabilize the public core API surface
 - improve the local authoring experience for `build` and `dev`
+- keep `pdf` and `pptx` export aligned with the real web render pipeline
 - keep examples, tests, and docs aligned with the actual CLI behavior
 - make the repository easier for external contributors to navigate
 
@@ -129,8 +131,6 @@ Later:
 
 Not planned right now:
 
-- `pdf` or `pptx` output
-- a production `markos export` workflow
 - hosted preview or publish services
 - deployment or cloud automation inside this repository
 
@@ -172,3 +172,4 @@ Release decisions:
 
 - [Commit Convention](./COMMIT_CONVENTION.md): commit message format
 - [Theme Authoring](./theme-authoring.md): reusable theme and template contract
+- [PPTX Export Architecture](./pptx-export-implementation.md): current local editable PowerPoint export architecture

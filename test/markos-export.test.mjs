@@ -5,7 +5,7 @@ import {mkdir, mkdtemp, rm, writeFile} from "node:fs/promises";
 import {join} from "node:path";
 import {markosWebRenderEngine} from "../src/engines/markos-web/index.mjs";
 
-test("markos-web rejects non-web artifact exports", async () => {
+test("markos-web rejects unsupported artifact exports", async () => {
     const tempRoot = await mkdtemp(join(os.tmpdir(), "markos-export-"));
     const workDir = join(tempRoot, "work");
 
@@ -17,11 +17,11 @@ test("markos-web rejects non-web artifact exports", async () => {
         await assert.rejects(
             () => markosWebRenderEngine.exportArtifact({
                 entryFilePath,
-                format: "pdf",
-                outputFilePath: join(tempRoot, "demo.pdf"),
+                format: "svg",
+                outputFilePath: join(tempRoot, "demo.svg"),
                 cwd: workDir,
             }),
-            /Only "web" is currently available/,
+            /Supported formats: "web", "pdf", "pptx"/,
         );
     } finally {
         await rm(tempRoot, {recursive: true, force: true});
